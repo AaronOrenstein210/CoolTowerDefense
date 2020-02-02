@@ -1,6 +1,8 @@
 # Created on 27 January 2020
 # Created by
 
+import math
+
 
 # Reads a level file and compiles the enemy path
 class LevelReader:
@@ -18,7 +20,7 @@ class LevelReader:
         pass
 
 
-LINE, CIRCLE = 0, 1
+START, LINE, CIRCLE = range(3)
 
 
 # Stores data for a specific segment of the enemy path
@@ -30,16 +32,53 @@ class Path:
     def move(self, pos, d):
         pass
 
+    def get_start(self):
+        pass
+
+    def get_end(self):
+        pass
+
 
 class Line(Path):
-    def __init__(self):
+    def __init__(self, start=(0, 0), end=(0, 0)):
         Path.__init__(self)
         self.idx = LINE
-        self.start = self.end = [0, 0]
+        self.start = start
+        self.end = end
+
+    def get_start(self):
+        return self.start
+
+    def get_end(self):
+        return self.end
 
 
 class Circle(Path):
+    COLORS = ((255, 255, 255), (175, 175, 0), (200, 0, 0), (0, 200, 0), (0, 0, 200))
+
     def __init__(self):
         Path.__init__(self)
         self.idx = CIRCLE
         self.center, self.radius = [0, 0], 0
+        self.theta_i, self.theta_f = 0, 2 * math.pi
+
+    def get_start(self):
+        return [self.center[0] + self.radius * math.cos(self.theta_i),
+                self.center[1] - self.radius * math.sin(self.theta_i)]
+
+    def get_end(self):
+        return [self.center[0] + self.radius * math.cos(self.theta_f),
+                self.center[1] - self.radius * math.sin(self.theta_f)]
+
+
+class Start(Path):
+    def __init__(self, pos=(0, 0)):
+        Path.__init__(self)
+        self.pos = pos
+        self.idx = START
+
+    def get_start(self):
+        return self.pos
+
+    def get_end(self):
+        return self.pos
