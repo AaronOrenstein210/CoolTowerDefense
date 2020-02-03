@@ -1,7 +1,6 @@
 # Created on 27 January 2020
 # Created by Kyle Doster
 from LevelReader import LevelReader as Read
-from Read import surface as bg
 import pygame as pg
 
 
@@ -26,7 +25,7 @@ class LevelDriver:
 
     # Draw the screen
     def draw(self):
-        self.mainSurface.blit(bg, (0, 0))
+        self.mainSurface.blit(self.lr.surface, (0, 0))
         for i in self.enemies:
             self.mainSurface.blit(i.image, (i.pos[0], i.pos[1]))
         for i in self.towers:
