@@ -5,6 +5,7 @@ from struct import pack, unpack
 from sys import byteorder
 import math
 import pygame as pg
+import data
 
 
 # Reads a level file and compiles the enemy path
@@ -16,8 +17,25 @@ class LevelReader:
     # Return a new position for the enemy
     # Moves an enemy given its position and distance to be travelled
     # Mostly just coordinates the path's various segments
-    def move(self, pos, d):
-        pass
+    def move(self, enemy, dt):
+        d = enemy.v * dt / 1000
+        while d > 0:
+            to_end = self.paths[enemy.path].length * (1 - enemy.progress)
+            if d >= to_end:
+                enemy.path += 1
+                enemy.progress = 0
+                if enemy.path >= len(self.paths):
+                    print("Lost a Life")
+                    return False
+            else:
+                enemy.progress += d / self.paths[enemy.path].length
+            d -= to_end
+        enemy.pos = self.paths[enemy.path].get_pos(enemy.progress)
+        return True
+
+    def draw_surface(self):
+        from data import off_x, off_y, screen_w
+        self.surface = draw_paths(pg.Rect(off_x, off_y, screen_w, screen_w), self.paths)
 
     # Loads a level from bytes
     def load_from_bytes(self, file_data):
@@ -30,7 +48,7 @@ class LevelReader:
             else:
                 print("Unknown path type")
                 break
-            # Read path data
+            # Read path path_data
             file_data = file_data[1:]
             num_bytes = self.paths[-1].num_bytes
             if len(file_data) < num_bytes:
@@ -39,8 +57,7 @@ class LevelReader:
             else:
                 self.paths[-1].from_bytes(file_data[:num_bytes])
                 file_data = file_data[num_bytes:]
-        from data import off_x, off_y, screen_w
-        self.surface = draw_paths(pg.Rect(off_x, off_y, screen_w, screen_w), self.paths)
+        self.draw_surface()
 
 
 def draw_paths(rect, paths):
@@ -86,15 +103,15 @@ def draw_paths(rect, paths):
 START, LINE, CIRCLE = range(3)
 
 
-# Stores data for a specific segment of the enemy path
+# Stores path_data for a specific segment of the enemy path
 class Path:
     def __init__(self):
         self.idx = 0
         self.num_bytes = 0
+        self.length = 0
 
-    # Move an enemy along this path segment
-    def move(self, pos, d):
-        pass
+    def get_pos(self, progress):
+        return [0, 0]
 
     def get_start(self):
         pass
@@ -105,7 +122,7 @@ class Path:
     def to_bytes(self):
         return self.idx.to_bytes(1, byteorder)
 
-    def from_bytes(self, data):
+    def from_bytes(self, path_data):
         pass
 
 
@@ -117,6 +134,10 @@ class Line(Path):
         self.start = start
         self.end = end
 
+    def get_pos(self, progress):
+        dx, dy = self.end[0] - self.start[0], self.end[1] - self.start[1]
+        return [self.start[0] + dx * progress, self.start[1] + dy * progress]
+
     def get_start(self):
         return self.start
 
@@ -126,9 +147,10 @@ class Line(Path):
     def to_bytes(self):
         return super().to_bytes() + pack('f' * 4, *self.start, *self.end)
 
-    def from_bytes(self, data):
-        self.start = unpack('f' * 2, data[:8])
-        self.end = unpack('f' * 2, data[8:])
+    def from_bytes(self, path_data):
+        self.start = unpack('f' * 2, path_data[:8])
+        self.end = unpack('f' * 2, path_data[8:])
+        self.length = data.get_distance(self.start, self.end)
 
 
 class Circle(Path):
@@ -141,6 +163,10 @@ class Circle(Path):
         self.center, self.radius = [0, 0], 0
         self.theta_i, self.theta_f = 0, 2 * math.pi
 
+    def get_pos(self, progress):
+        theta = self.theta_i + (self.theta_f - self.theta_i) * progress
+        return [self.center[0] + self.radius * math.cos(theta), self.center[1] - self.radius * math.sin(theta)]
+
     def get_start(self):
         return [self.center[0] + self.radius * math.cos(self.theta_i),
                 self.center[1] - self.radius * math.sin(self.theta_i)]
@@ -152,9 +178,10 @@ class Circle(Path):
     def to_bytes(self):
         return super().to_bytes() + pack('f' * 5, *self.center, self.radius, self.theta_i, self.theta_f)
 
-    def from_bytes(self, data):
-        self.center = unpack('f' * 2, data[:8])
-        self.radius, self.theta_i, self.theta_f = unpack('f' * 3, data[8:])
+    def from_bytes(self, path_data):
+        self.center = unpack('f' * 2, path_data[:8])
+        self.radius, self.theta_i, self.theta_f = unpack('f' * 3, path_data[8:])
+        self.length = abs((self.theta_f - self.theta_i) * self.radius)
 
 
 class Start(Path):
@@ -173,8 +200,8 @@ class Start(Path):
     def to_bytes(self):
         return super().to_bytes() + pack('f' * 2, *self.pos)
 
-    def from_bytes(self, data):
-        self.pos = unpack('f' * 2, data)
+    def from_bytes(self, path_data):
+        self.pos = unpack('f' * 2, path_data)
 
 
 constructors = {START: Start, LINE: Line, CIRCLE: Circle}

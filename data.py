@@ -14,7 +14,8 @@ lvlDriver = None
 
 
 # Resizes screen
-def resize(w, h):
+# @param resize_driver boolean tells whether to resize the level driver or not
+def resize(w, h, resize_driver):
     global screen_w, off_x, off_y
     if w >= h:
         screen_w = h
@@ -25,7 +26,11 @@ def resize(w, h):
         off_x = 0
         off_y = (h - w) // 2
     pg.display.set_mode((w, h), RESIZABLE)
-    # TODO: resize towers, enemies, projectile, and screen
+    if resize_driver:
+        lvlDriver.lr.draw_surface()
+        for i in lvlDriver.enemies + lvlDriver.towers + lvlDriver.projectiles:
+            img_dim = (int(i.dim[0] * screen_w), int(i.dim[1] * screen_w))
+            i.image = pg.transform.scale(i.image, img_dim)
 
 
 # Returns mouse position in relation to the game screen
@@ -34,6 +39,7 @@ def get_mouse_pos():
     return [pos[0] - off_x, pos[1] - off_y]
 
 
+# Tools
 # Gets the angle from p1 to p2, which are points in PIXEL coordinates
 def get_angle_pixels(p1, p2):
     dx = p2[0] - p1[0]
@@ -46,6 +52,12 @@ def get_angle_pixels(p1, p2):
     if dx < 0:
         theta = math.pi - theta
     return theta % TWO_PI
+
+
+# Returns distance between two points
+def get_distance(p1, p2):
+    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+    return math.sqrt(dx * dx + dy * dy)
 
 
 # Gets the biggest font that fits the text within max_w and max_h
