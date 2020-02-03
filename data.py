@@ -1,22 +1,51 @@
 # Created on 27 January 2020
 # Created by
 
+import math
 import pygame as pg
 from pygame.locals import RESIZABLE
 
+TWO_PI = 2 * math.pi
+
 MIN_W = screen_w = 500
+# Offsets needed to keep the game screen square
+off_x, off_y = 0, 0
 lvlDriver = None
 
 
+# Resizes screen
 def resize(w, h):
-    global screen_w
-    dw, dh = abs(w - screen_w), abs(h - screen_w)
-    if dw >= dh:
-        screen_w = min(w, MIN_W)
+    global screen_w, off_x, off_y
+    if w >= h:
+        screen_w = h
+        off_x = (w - h) // 2
+        off_y = 0
     else:
-        screen_w = min(h, MIN_W)
-    pg.display.set_mode((screen_w, screen_w), RESIZABLE)
+        screen_w = w
+        off_x = 0
+        off_y = (h - w) // 2
+    pg.display.set_mode((w, h), RESIZABLE)
     # TODO: resize towers, enemies, projectile, and screen
+
+
+# Returns mouse position in relation to the game screen
+def get_mouse_pos():
+    pos = pg.mouse.get_pos()
+    return [pos[0] - off_x, pos[1] - off_y]
+
+
+# Gets the angle from p1 to p2, which are points in PIXEL coordinates
+def get_angle_pixels(p1, p2):
+    dx = p2[0] - p1[0]
+    # Negative to account for flipped pixel coords
+    dy = -(p2[1] - p1[1])
+    r = math.sqrt(dx * dx + dy * dy)
+    if r == 0:
+        return 0
+    theta = math.asin(dy / r)
+    if dx < 0:
+        theta = math.pi - theta
+    return theta % TWO_PI
 
 
 # Gets the biggest font that fits the text within max_w and max_h
