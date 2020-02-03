@@ -52,8 +52,8 @@ def draw_paths(rect, paths):
             pos_i = [int(p.start[0] * rect.w), int(p.start[1] * rect.h)]
             pos_f = [int(p.end[0] * rect.w), int(p.end[1] * rect.h)]
             pg.draw.line(s, (255, 255, 255), pos_i, pos_f, w)
-            pg.draw.rect(s, (255, 255, 255), (pos_i[0] - w / 2, pos_i[1] - w // 2, w, w))
-            pg.draw.rect(s, (255, 255, 255), (pos_f[0] - w / 2, pos_f[1] - w // 2, w, w))
+            for pos in [pos_i, pos_f]:
+                pg.draw.circle(s, (255, 255, 255), pos, w * 3 // 4)
         elif p.idx == CIRCLE:
             from data import TWO_PI
             c = [int(p.center[0] * rect.w), int(p.center[1] * rect.h)]

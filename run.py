@@ -229,11 +229,21 @@ def new_level():
                 pos_ = [min(max(i, 0), 1) for i in pos]
                 if current.idx == START:
                     current.pos = pos_
+                    for i in range(2):
+                        if abs(.5 - current.pos[i]) < .025:
+                            current.pos[i] = .5
                 elif current.idx == LINE:
                     current.end = pos_
-                    for i in range(2):
-                        if abs(current.end[i] - current.start[i]) < .025:
-                            current.end[i] = current.start[i]
+                    dx, dy = current.end[0] - current.start[0], current.end[1] - current.start[1]
+                    if abs(dx) < .025:
+                        current.end[0] = current.start[0]
+                    if abs(dy) < .025:
+                        current.end[1] = current.start[1]
+                    if abs(abs(dx) - abs(dy)) < .025:
+                        r = math.sqrt(dx * dx + dy * dy)
+                        delta = r * math.sqrt(2) / 2
+                        current.end[0] = current.start[0] + math.copysign(delta, dx)
+                        current.end[1] = current.start[1] + math.copysign(delta, dy)
                 elif current.idx == CIRCLE:
                     data.TWO_PI = 2 * math.pi
                     if mode == 0:
@@ -280,11 +290,16 @@ def new_level():
                         elif dtheta < -math.pi:
                             dtheta += data.TWO_PI
                         current.theta_f += dtheta
+                        diff = current.theta_f - current.theta_i
                         ten_pi = data.TWO_PI * 5
-                        if current.theta_f > ten_pi + current.theta_i:
+                        if diff > ten_pi:
                             current.theta_f = ten_pi + current.theta_i
-                        elif current.theta_f < -ten_pi + current.theta_i:
+                        elif diff < -ten_pi:
                             current.theta_f = -ten_pi + current.theta_i
+                        half_pi, quarter_pi = math.pi / 2, math.pi / 4
+                        factor = (diff + quarter_pi) // half_pi
+                        if abs(diff - half_pi * factor) < half_pi / 10:
+                            current.theta_f = factor * half_pi + current.theta_i
                 pg.display.get_surface().blit(draw_paths(rect, paths + [current]),
                                               (rect.x + data.off_x, rect.y + data.off_y))
         pg.display.flip()
