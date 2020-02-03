@@ -9,7 +9,6 @@ class LevelDriver:
     def __init__(self):
         self.enemies = self.towers = self.projectiles = []
         self.lr = Read()
-        self.mainSurface = pg.display.get_surface()
 
     # Called every iteration of the while loop
     def tick(self, dt):
@@ -25,10 +24,11 @@ class LevelDriver:
 
     # Draw the screen
     def draw(self):
-        self.mainSurface.blit(self.lr.surface, (0, 0))
+        d = pg.display.get_surface()
+        d.blit(self.lr.surface, (0, 0))
         for i in self.enemies:
-            self.mainSurface.blit(i.image, (i.pos[0], i.pos[1]))
+            d.blit(i.image, (i.pos[0], i.pos[1]))
         for i in self.towers:
-            self.mainSurface.blit(i.IMG, (i.pos[0], i.pos[1]))
+            d.blit(i.IMG, (i.pos[0], i.pos[1]))
         for i in self.projectiles:
-            self.mainSurface.blit(i.IMG, (i.pos[0], i.pos[1]))
+            d.blit(i.IMG, (i.pos[0], i.pos[1]))
