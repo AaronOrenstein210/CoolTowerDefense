@@ -3,11 +3,11 @@
 
 import Projectile
 from Enemy import Enemy
-import pygame, sys, random
+import pygame
 import math
 import data
 
-WINDOW = 500  # this is temporary
+WINDOW = data.screen_w
 # Defines a tower
 
 
@@ -17,31 +17,32 @@ class Tower:
         self.pos = (x, y)
 
         if self.type == 1:
-            # w = (get width of image)
-            # h = (get height)
-            size = data.resize(w, h)
-            self.IMG = pygame.transform.scale(pygame.image.load('tower1.png'), (size[0], size[1]))
+            self.IMG = pygame.transform.scale(pygame.image.load('duckTower1.png'), (WINDOW*0.05, WINDOW*0.05))
             # radius
-            self.range = 0.1*WINDOW  # change the way I do this
+            self.range = 0.29*WINDOW
+            self.countdown = 1000
         elif self.type == 2:
-            self.IMG = data.resize(pygame.image.load('tower2.png'))
+            self.IMG = pygame.transform.scale(pygame.image.load('duckTower2.png'), (WINDOW*0.05, WINDOW*0.05))
             # radius
-            self.range = 0.1*WINDOW  # change the way I do this
+            self.range = 0.29*WINDOW
+            self.countdown = 500
         elif self.type == 3:
-            self.IMG = data.resize(pygame.image.load('tower3.png'))
+            self.IMG = pygame.transform.scale(pygame.image.load('duckTowerBallista.png'), (WINDOW*0.05, WINDOW*0.05))
             # radius
-            self.range = 0.1*WINDOW  # change the way I do this
+            self.range = 0.43*WINDOW
+            self.countdown = 3000
         elif self.type == 4:
-            self.IMG = data.resize(pygame.image.load('tower4.png'))
+            self.IMG = pygame.transform.scale(pygame.image.load('duckAAGun.png'), (WINDOW*0.05, WINDOW*0.05))
             # radius
-            self.range = 0.1*WINDOW  # change the way I do this
+            self.range = 0.7*WINDOW
+            self.countdown = 2130
 
     def shoot(self, enemy):  # given an enemy, shoots at them
         proj = Projectile.Projectile(self.type)
-        pos = enemy.getPos()
+        pos = enemy.getpos()
         if self.withinRange(pos[0], pos[1]):
             enemy.hit(proj.getDamage())
-            # probably add animation later
+            proj.animate(self.pos, pos)
 
     def getIMG(self):
         return self.IMG
@@ -59,4 +60,8 @@ class Tower:
         return False
 
     def tick(self, dt):
-        pass
+        self.countdown -= 1
+        en = Enemy(0, 0, 1)  # get nearby enemy somehow
+        if self.countdown == 0:
+            self.shoot(en)
+        data.lvlDriver.tick()  # ?
