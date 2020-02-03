@@ -1,0 +1,26 @@
+Tower Info
+(In order of tier)
+
+duckTower1.png
+	Properties
+		Range: .29 of window
+		Damage: 1
+		Speed: 1 second
+
+duckTower2.png
+	Properties
+		Range: .29
+		Damage: 2
+		Speed: .5 seconds
+
+duckTowerBallista.png
+	Properties
+		Range: .43
+		Damage: 3
+		Speed: 1.22 seconds
+
+duckAAGun.png
+	Properties
+		Range: .7
+		Damage: 5
+		Speed: 2.13 seconds
