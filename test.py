@@ -1,12 +1,3 @@
-def main():
-    text = "Hello World"
-
-    def change():
-        return "Changed World"
-
-    print(text)
-    text = change()
-    print(text)
-
-
-main()
+d = v = 0
+r = 1
+print(d, v, r)
