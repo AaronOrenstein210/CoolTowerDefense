@@ -38,16 +38,17 @@ class Tower:
             self.countdown = 2130
 
     def shoot(self, enemy):  # given an enemy, shoots at them
-        proj = Projectile.Projectile(self.type)
-        pos = enemy.getpos()
-        if self.withinRange(pos[0], pos[1]):
+        proj = Projectile.Projectile(self.type, self.pos[0], self.pos[1])
+        epos = enemy.getpos()
+        proj.setAngle(self.getAngle(epos[0], epos[1]))
+        if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
-            proj.animate(self.pos, pos)
+            proj.tick()
 
     def getIMG(self):
         return self.IMG
 
-    def getAngle(self, x, y):
+    def getAngle(self, x, y):  # i don't know if I'll end up needing this method or not
         ratio = (self.pos[y] - y) / (self.pos[0] - x)
         return math.atan(ratio)
 
@@ -59,9 +60,19 @@ class Tower:
             return True
         return False
 
+    def restartCount(self):
+        if self.t == 1:
+            self.countdown = 1000
+        elif self.t == 2:
+            self.countdown = 500
+        elif self.t == 3:
+            self.countdown = 3000
+        elif self.t == 4:
+            self.countdown = 2130
+
     def tick(self, dt):
-        self.countdown -= 1
-        en = Enemy(0, 0, 1)  # get nearby enemy somehow
-        if self.countdown == 0:
+        self.countdown -= dt
+        en = data.lvlDriver.enemies[0]
+        if self.countdown <= 0:
+            self.restartCount()
             self.shoot(en)
-        data.lvlDriver.tick()  # ?

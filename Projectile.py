@@ -3,13 +3,17 @@
 # Defines a projectile
 import pygame
 import data
+import math
 
 WINDOW = data.screen_w
 
 
 class Projectile:
-    def __init__(self, t):  # t determines type of projectile
+    def __init__(self, t, x, y):  # t determines type of projectile
         self.type = t
+        self.speed = 0.3
+        self.angle = 0
+        self.pos = (x, y)
         if self.type == 1:
             self.IMG = pygame.transform.scale(pygame.image.load('projectile1.png'), (WINDOW*0.01, WINDOW*0.01))
             self.damage = 1
@@ -26,11 +30,15 @@ class Projectile:
     def getIMG(self):
         return self.IMG
 
+    def setAngle(self, ang):
+        self.angle = ang
+
     def getDamage(self):
         return self.damage
 
-    def animate(self, startPos, endPos):
-        pass
-
     def tick(self, dt):
-        pass
+        d = (self.speed * dt) / 1000
+        dx = d * math.cos(self.angle)
+        dy = d * math.sin(self.angle)
+        self.pos = (self.pos[0] + dx, self.pos[1] + dy)
+        return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1
