@@ -7,7 +7,7 @@ import pygame as pg
 from pygame.locals import *
 import data
 from LevelReader import *
-from LevelDriver import LevelDriver
+from MyLevelDriver import LevelDriver
 
 pg.init()
 data.lvlDriver = LevelDriver()
@@ -22,9 +22,9 @@ def run_level():
         time += dt
         for e in pg.event.get():
             if e.type == QUIT:
-                exit(0)
+                return
             elif e.type == VIDEORESIZE:
-                data.resize(e.w, e.h)
+                data.resize(e.w, e.h, True)
         data.lvlDriver.tick(dt)
         pg.display.flip()
 
@@ -42,25 +42,26 @@ def main_screen():
         font = data.get_scaled_font(data.screen_w, half_w, data.get_widest_string(text, "Times New Roman"),
                                     "Times New Roman")
         text_s = font.render(text[0], 1, (255, 255, 255))
-        rects[choose] = text_s.get_rect(centerx=half_w, bottom=half_w)
+        rects[choose] = text_s.get_rect(centerx=half_w + data.off_x, bottom=half_w + data.off_y)
         d.blit(text_s, rects[choose])
         text_s = font.render(text[1], 1, (255, 255, 255))
-        rects[new] = text_s.get_rect(centerx=half_w, top=half_w)
+        rects[new] = text_s.get_rect(centerx=half_w + data.off_x, top=half_w + data.off_y)
         d.blit(text_s, rects[new])
 
     draw()
     while True:
         for e in pg.event.get():
             if e.type == QUIT:
-                exit(0)
+                return
             elif e.type == RESIZABLE:
-                data.resize(e.w, e.h)
+                data.resize(e.w, e.h, False)
                 draw()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
                 pos = pg.mouse.get_pos()
                 if rects[choose].collidepoint(*pos):
-                    choose_level()
-                    run_level()
+                    while choose_level():
+                        run_level()
+                    draw()
                 elif rects[new].collidepoint(*pos):
                     new_level()
                     draw()
@@ -109,20 +110,20 @@ def choose_level():
     def draw():
         d = pg.display.get_surface()
         d.fill((0, 0, 0))
-        item_w = data.screen_w // row_len
-        back_img = pg.transform.scale(pg.image.load("back.png"), (item_w, item_w))
-        digit_w = item_w // 5
+        lvl_w = data.screen_w // row_len
+        back_img = pg.transform.scale(pg.image.load("back.png"), (lvl_w, lvl_w))
+        digit_w = lvl_w // 5
         font = data.get_scaled_font(digit_w * 3, digit_w * 3, "0")
         numbers = []
         for num in range(9):
             numbers.append(font.render(str(num), 1, (255, 255, 255)))
         for j in range(len(levels)):
             row, col = j // row_len, j % row_len
-            d.blit(back_img, (col * item_w, row * item_w, row_len, row_len))
+            d.blit(back_img, (col * lvl_w + data.off_x, row * lvl_w + data.off_y, row_len, row_len))
             j += 1
             digits = len(str(j))
             for k, val in enumerate(str(j)):
-                center = [int(item_w * (col + .5)), int(item_w * (row + .5))]
+                center = [int(lvl_w * (col + .5)) + data.off_x, int(lvl_w * (row + .5)) + data.off_y]
                 if digits == 2:
                     center[0] += k - 1.5
                 elif digits == 3:
@@ -133,9 +134,9 @@ def choose_level():
     while True:
         for e in pg.event.get():
             if e.type == QUIT:
-                exit(0)
+                return False
             elif e.type == VIDEORESIZE:
-                data.resize(e.w, e.h)
+                data.resize(e.w, e.h, False)
                 draw()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
                 pos = data.get_mouse_pos()
@@ -143,7 +144,7 @@ def choose_level():
                 idx = (pos[0] // item_w) + (pos[1] // item_w) * 10
                 if idx < len(levels):
                     data.lvlDriver.lr.load_from_bytes(levels[idx])
-                    return
+                    return True
         pg.display.flip()
 
 
@@ -183,9 +184,9 @@ def new_level():
     while True:
         for e in pg.event.get():
             if e.type == QUIT:
-                exit(0)
+                return
             elif e.type == VIDEORESIZE:
-                data.resize(e.w, e.h)
+                data.resize(e.w, e.h, False)
                 draw()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
                 pos = data.get_mouse_pos()
@@ -229,11 +230,21 @@ def new_level():
                 pos_ = [min(max(i, 0), 1) for i in pos]
                 if current.idx == START:
                     current.pos = pos_
+                    for i in range(2):
+                        if abs(.5 - current.pos[i]) < .025:
+                            current.pos[i] = .5
                 elif current.idx == LINE:
                     current.end = pos_
-                    for i in range(2):
-                        if abs(current.end[i] - current.start[i]) < .025:
-                            current.end[i] = current.start[i]
+                    dx, dy = current.end[0] - current.start[0], current.end[1] - current.start[1]
+                    if abs(dx) < .025:
+                        current.end[0] = current.start[0]
+                    if abs(dy) < .025:
+                        current.end[1] = current.start[1]
+                    if abs(abs(dx) - abs(dy)) < .025:
+                        r = math.sqrt(dx * dx + dy * dy)
+                        delta = r * math.sqrt(2) / 2
+                        current.end[0] = current.start[0] + math.copysign(delta, dx)
+                        current.end[1] = current.start[1] + math.copysign(delta, dy)
                 elif current.idx == CIRCLE:
                     data.TWO_PI = 2 * math.pi
                     if mode == 0:
@@ -242,10 +253,7 @@ def new_level():
                         for i in range(2):
                             if abs(end[i] - pos[i]) < .025:
                                 pos[i] = end[i]
-                        # Calculate displacement
-                        dx, dy = pos[0] - end[0], pos[1] - end[1]
-                        # Circle radius
-                        r = math.sqrt(dx * dx + dy * dy)
+                        r = data.get_distance(end, pos)
                         # Set initial circle angle
                         current.theta_i = data.get_angle_pixels(pos, end)
                         current.theta_f = current.theta_i + data.TWO_PI
@@ -280,11 +288,16 @@ def new_level():
                         elif dtheta < -math.pi:
                             dtheta += data.TWO_PI
                         current.theta_f += dtheta
+                        diff = current.theta_f - current.theta_i
                         ten_pi = data.TWO_PI * 5
-                        if current.theta_f > ten_pi + current.theta_i:
+                        if diff > ten_pi:
                             current.theta_f = ten_pi + current.theta_i
-                        elif current.theta_f < -ten_pi + current.theta_i:
+                        elif diff < -ten_pi:
                             current.theta_f = -ten_pi + current.theta_i
+                        half_pi, quarter_pi = math.pi / 2, math.pi / 4
+                        factor = (diff + quarter_pi) // half_pi
+                        if abs(diff - half_pi * factor) < half_pi / 10:
+                            current.theta_f = factor * half_pi + current.theta_i
                 pg.display.get_surface().blit(draw_paths(rect, paths + [current]),
                                               (rect.x + data.off_x, rect.y + data.off_y))
         pg.display.flip()
