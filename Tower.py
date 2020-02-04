@@ -48,7 +48,7 @@ class Tower:
     def getIMG(self):
         return self.IMG
 
-    def getAngle(self, x, y):  # i don't know if I'll end up needing this method or not
+    def getAngle(self, x, y):
         ratio = (self.pos[y] - y) / (self.pos[0] - x)
         return math.atan(ratio)
 
@@ -61,13 +61,13 @@ class Tower:
         return False
 
     def restartCount(self):
-        if self.t == 1:
+        if self.type == 1:
             self.countdown = 1000
-        elif self.t == 2:
+        elif self.type == 2:
             self.countdown = 500
-        elif self.t == 3:
+        elif self.type == 3:
             self.countdown = 3000
-        elif self.t == 4:
+        elif self.type == 4:
             self.countdown = 2130
 
     def tick(self, dt):
