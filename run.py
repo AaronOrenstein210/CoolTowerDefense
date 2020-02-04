@@ -7,7 +7,7 @@ import pygame as pg
 from pygame.locals import *
 import data
 from LevelReader import *
-from MyLevelDriver import LevelDriver
+from LevelDriver import LevelDriver
 
 pg.init()
 data.lvlDriver = LevelDriver()
