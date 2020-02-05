@@ -7,7 +7,7 @@ import pygame as pg
 # Runs the level
 class LevelDriver:
     def __init__(self):
-        self.enemies = self.towers = self.projectiles = []
+        self.enemies, self.towers, self.projectiles = [], [], []
         self.lr = Read()
 
     # Called every iteration of the while loop
