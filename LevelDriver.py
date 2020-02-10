@@ -3,8 +3,9 @@
 from LevelReader import LevelReader as Read
 import pygame as pg
 from Enemy import Enemy
-from Tower import Tower
+from Tower import Tower, DuckTower
 from random import uniform
+import data
 
 
 def rand_pos():
@@ -14,9 +15,10 @@ def rand_pos():
 # Runs the level
 class LevelDriver:
     def __init__(self):
+        self.data = data
         rand1 = rand_pos()
         rand2 = rand_pos()
-        self.enemies, self.towers, self.projectiles = [Enemy(rand1[0], rand1[1], 1)], [Tower(1, rand2[0], rand2[1])], []
+        self.enemies, self.towers, self.projectiles = [], [DuckTower(rand2[0] * data.screen_w, rand2[1] * data.screen_w)], []
         self.lr = Read()
 
     # Called every iteration of the while loop
