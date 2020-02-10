@@ -2,7 +2,6 @@
 # Created by Isabelle Early
 
 import Projectile
-from Enemy import Enemy
 import pygame
 import math
 import data
@@ -12,63 +11,165 @@ WINDOW = data.screen_w
 
 
 class Tower:
-    def __init__(self, t, x, y):  # t is a variable determining the type of tower
-        self.type = t
+    def __init__(self, x, y):  # t is a variable determining the type of tower
         self.pos = (x, y)
 
-        if self.type == 1:
-            self.IMG = pygame.transform.scale(pygame.image.load('duckTower1.png'), (WINDOW*0.05, WINDOW*0.05))
-            # radius
-            self.range = 0.29*WINDOW
-            self.countdown = 1000
-        elif self.type == 2:
-            self.IMG = pygame.transform.scale(pygame.image.load('duckTower2.png'), (WINDOW*0.05, WINDOW*0.05))
-            # radius
-            self.range = 0.29*WINDOW
-            self.countdown = 500
-        elif self.type == 3:
-            self.IMG = pygame.transform.scale(pygame.image.load('duckTowerBallista.png'), (WINDOW*0.05, WINDOW*0.05))
-            # radius
-            self.range = 0.43*WINDOW
-            self.countdown = 3000
-        elif self.type == 4:
-            self.IMG = pygame.transform.scale(pygame.image.load('duckAAGun.png'), (WINDOW*0.05, WINDOW*0.05))
-            # radius
-            self.range = 0.7*WINDOW
-            self.countdown = 2130
-
     def shoot(self, enemy):  # given an enemy, shoots at them
-        proj = Projectile.Projectile(self.type, self.pos[0], self.pos[1])
-        epos = enemy.getpos()
-        proj.setAngle(self.getAngle(epos[0], epos[1]))
-        if self.withinRange(epos[0], epos[1]):
-            enemy.hit(proj.getDamage())
-            proj.tick()
+        pass
 
     def getIMG(self):
-        return self.IMG
+        pass
 
     def getAngle(self, x, y):
         ratio = (self.pos[y] - y) / (self.pos[0] - x)
         return math.atan(ratio)
 
-    def withinRange(self, x, y):  # given a position, returns whether that position is within range
-        xVal = self.pos[0] - x
-        yVal = self.pos[1] - y
-        dist = (xVal**2 + yVal**2)**0.5
-        if dist <= self.range:
+    def withinRange(self, x, y, r):
+        xval = self.pos[0] - x
+        yval = self.pos[1] - y
+        dist = (xval**2 + yval**2)**0.5
+        if dist <= r:
             return True
         return False
 
     def restartCount(self):
-        if self.type == 1:
-            self.countdown = 1000
-        elif self.type == 2:
-            self.countdown = 500
-        elif self.type == 3:
-            self.countdown = 3000
-        elif self.type == 4:
-            self.countdown = 2130
+        pass
+
+    def tick(self, dt):
+        pass
+
+
+class DuckTower(Tower):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.IMG = pygame.transform.scale(pygame.image.load('duckTower1.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        # radius
+        self.range = 0.29 * WINDOW
+        self.countdown = 1000
+
+    def shoot(self, enemy):
+        proj = Projectile.Projectile1(self.pos[0], self.pos[1])
+        epos = enemy.getpos()
+        proj.setAngle(self.getAngle(epos[0], epos[1]))
+        if self.withinRange(epos[0], epos[1]):
+            enemy.hit(proj.getDamage())
+
+    def getIMG(self):
+        return self.IMG
+
+    def getAngle(self, x, y):
+        super().getAngle(x, y)
+
+    def withinRange(self, x, y):
+        super().withinRange(x, y, self.range)
+
+    def restartCount(self):
+        self.countdown = 1000
+
+    def tick(self, dt):
+        self.countdown -= dt
+        en = data.lvlDriver.enemies[0]
+        if self.countdown <= 0:
+            self.restartCount()
+            self.shoot(en)
+
+
+class DuckTower2(Tower):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.IMG = pygame.transform.scale(pygame.image.load('duckTower2.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        # radius
+        self.range = 0.29 * WINDOW
+        self.countdown = 500
+
+    def shoot(self, enemy):
+        proj = Projectile.Projectile2(self.pos[0], self.pos[1])  # change
+        epos = enemy.getpos()
+        proj.setAngle(self.getAngle(epos[0], epos[1]))
+        if self.withinRange(epos[0], epos[1]):
+            enemy.hit(proj.getDamage())
+
+    def getIMG(self):
+        return self.IMG
+
+    def getAngle(self, x, y):
+        super().getAngle(x, y)
+
+    def withinRange(self, x, y):
+        super().withinRange(x, y, self.range)
+
+    def restartCount(self):
+        self.countdown = 500
+
+    def tick(self, dt):
+        self.countdown -= dt
+        en = data.lvlDriver.enemies[0]
+        if self.countdown <= 0:
+            self.restartCount()
+            self.shoot(en)
+
+
+class DuckTowerAA(Tower):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.IMG = pygame.transform.scale(pygame.image.load('duckAAGun.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        # radius
+        self.range = 0.7 * WINDOW
+        self.countdown = 2130
+
+    def shoot(self, enemy):
+        proj = Projectile.Projectile3(self.pos[0], self.pos[1])  # change
+        epos = enemy.getpos()
+        proj.setAngle(self.getAngle(epos[0], epos[1]))
+        if self.withinRange(epos[0], epos[1]):
+            enemy.hit(proj.getDamage())
+
+    def getIMG(self):
+        return self.IMG
+
+    def getAngle(self, x, y):
+        super().getAngle(x, y)
+
+    def withinRange(self, x, y):
+        super().withinRange(x, y, self.range)
+
+    def restartCount(self):
+        self.countdown = 2130
+
+    def tick(self, dt):
+        self.countdown -= dt
+        en = data.lvlDriver.enemies[0]
+        if self.countdown <= 0:
+            self.restartCount()
+            self.shoot(en)
+
+
+class DuckTowerBallista(Tower):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.IMG = pygame.transform.scale(pygame.image.load('duckTowerBallista.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        # radius
+        self.range = 0.43 * WINDOW
+        self.countdown = 1220
+
+    def shoot(self, enemy):
+        proj = Projectile.Projectile4(self.pos[0], self.pos[1])  # change
+        epos = enemy.getpos()
+        proj.setAngle(self.getAngle(epos[0], epos[1]))
+        if self.withinRange(epos[0], epos[1]):
+            enemy.hit(proj.getDamage())
+
+    def getIMG(self):
+        return self.IMG
+
+    def getAngle(self, x, y):
+        super().getAngle(x, y)
+
+    def withinRange(self, x, y):
+        super().withinRange(x, y, self.range)
+
+    def restartCount(self):
+        self.countdown = 1220
 
     def tick(self, dt):
         self.countdown -= dt
