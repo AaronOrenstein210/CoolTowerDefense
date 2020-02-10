@@ -18,14 +18,15 @@ class LevelDriver:
         self.data = data
         rand1 = rand_pos()
         rand2 = rand_pos()
-        self.enemies, self.towers, self.projectiles = [], [DuckTower(rand2[0] * data.screen_w, rand2[1] * data.screen_w)], []
+        self.enemies, self.towers, self.projectiles = [Enemy(rand1[0] * data.screen_w, rand1[1] * data.screen_w, 1)], [DuckTower(rand2[0] * data.screen_w, rand2[1] * data.screen_w)], []
         self.lr = Read()
 
     # Called every iteration of the while loop
     def tick(self, dt):
         # Move all enemies, and update towers/projectiles
         for i in self.enemies:
-            i.x, i.y = self.lr.move(i, dt)
+            if not self.lr.move(i, dt):
+                enemies.remove(i)
         for i in self.towers:
             i.tick(dt)
         for i in self.projectiles:

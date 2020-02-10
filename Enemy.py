@@ -10,6 +10,8 @@ class Enemy:
     def __init__(self, x, y, strength):
         self.x = x  # x position
         self.y = y  # y position
+        self.path = 0
+        self.progress = 0
         self.strength = strength
         if self.strength == 1:
             self.image = pygame.transform.scale(pygame.image.load("enemy1.png"), (int(data.screen_w * .05), int(data.screen_w * .05)))
