@@ -2,23 +2,32 @@
 # Created by Kyle Doster
 from LevelReader import LevelReader as Read
 import pygame as pg
+from Enemy import Enemy
+from Tower import Tower
+from random import uniform
+
+
+def rand_pos():
+    return uniform(.1, .9), uniform(.1, .9)
 
 
 # Runs the level
 class LevelDriver:
     def __init__(self):
-        self.enemies, self.towers, self.projectiles = [], [], []
+        rand1 = rand_pos()
+        rand2 = rand_pos()
+        self.enemies, self.towers, self.projectiles = [Enemy(rand1[0], rand1[1], 1)], [Tower(1, rand2[0], rand2[1])], []
         self.lr = Read()
 
     # Called every iteration of the while loop
     def tick(self, dt):
         # Move all enemies, and update towers/projectiles
         for i in self.enemies:
-            i.pos = self.lr.move(i.pos, i.d)
+            i.x, i.y = self.lr.move(i, dt)
         for i in self.towers:
-            i.tick()
+            i.tick(dt)
         for i in self.projectiles:
-            i.tick()
+            i.tick(dt)
         # Redraw the screen
         self.draw()
 
@@ -27,7 +36,7 @@ class LevelDriver:
         d = pg.display.get_surface()
         d.blit(self.lr.surface, (0, 0))
         for i in self.enemies:
-            d.blit(i.image, (i.pos[0], i.pos[1]))
+            d.blit(i.image, (i.x, i.y))
         for i in self.towers:
             d.blit(i.IMG, (i.pos[0], i.pos[1]))
         for i in self.projectiles:
