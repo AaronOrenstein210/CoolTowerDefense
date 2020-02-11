@@ -71,7 +71,7 @@ class DuckTower(Tower):
         self.countdown -= dt
         en = None
         if len(data.lvlDriver.enemies) > 0:
-            en = data.lvlDriver.enemies[0]
+            en = data.lvlDriver.enemies[0]  # change this
             if self.countdown <= 0:
                 self.restartCount()
                 self.shoot(en)
