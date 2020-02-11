@@ -115,7 +115,7 @@ def choose_level():
         digit_w = lvl_w // 5
         font = data.get_scaled_font(digit_w * 3, digit_w * 3, "0")
         numbers = []
-        for num in range(9):
+        for num in range(10):
             numbers.append(font.render(str(num), 1, (255, 255, 255)))
         for j in range(len(levels)):
             row, col = j // row_len, j % row_len

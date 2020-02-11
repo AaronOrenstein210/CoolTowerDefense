@@ -10,13 +10,15 @@ class Enemy:
     def __init__(self, x, y, strength):
         self.x = x  # x position
         self.y = y  # y position
+        self.path = 0
+        self.progress = 0
         self.strength = strength
         if self.strength == 1:
-            self.image = pygame.transform.scale(pygame.image.load("enemy1.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy1.png"), (int(data.screen_w * .05), int(data.screen_w * .05)))
         elif self.strength == 2:
-            self.image = pygame.transform.scale(pygame.image.load("enemy2.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy2.png"), (int(data.screen_w * .05), int(data.screen_w * .05)))
         elif self.strength == 3:
-            self.image = pygame.transform.scale(pygame.image.load("enemy3.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy3.png"), (int(data.screen_w * .05), int(data.screen_w * .05)))
         if self.strength == 1:
             self.velocity = 5    # 5% of screen width per second (20 seconds to move across the screen)
         elif self.strength == 2:
