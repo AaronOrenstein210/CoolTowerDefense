@@ -22,7 +22,7 @@ class Tower:
         pass
 
     def getAngle(self, x, y):
-        ratio = (self.pos[0] - y) / (self.pos[0] - x)
+        ratio = (self.pos[1] - y) / (self.pos[0] - x)
         return math.atan(ratio)
 
     def withinRange(self, x, y, r):
