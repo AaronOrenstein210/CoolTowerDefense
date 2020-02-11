@@ -144,6 +144,7 @@ def choose_level():
                 idx = (pos[0] // item_w) + (pos[1] // item_w) * 10
                 if idx < len(levels):
                     data.lvlDriver.lr.load_from_bytes(levels[idx])
+                    data.lvlDriver.setStart(data.lvlDriver.lr.Start().pos)
                     return True
         pg.display.flip()
 

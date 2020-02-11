@@ -11,6 +11,9 @@ class Enemy:
     def __init__(self, x, y, strength):
         self.pos = (x, y)
         self.strength = strength
+        self.path = 0
+        self.progress = 0
+
         if self.strength == 1:
             self.image = pygame.transform.scale(pygame.image.load("enemy1.png"), (int(WINDOW * 0.05), int(WINDOW * 0.05)))
             self.velocity = 5  # 5% of screen width per second (20 seconds to move across the screen)
