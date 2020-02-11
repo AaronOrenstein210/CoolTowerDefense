@@ -1,6 +1,7 @@
 # Created on 27 January 2020
 # Created by Kyle Doster
 from LevelReader import LevelReader as Read
+from LevelReader import *
 import pygame as pg
 from Enemy import Enemy
 from Tower import Tower, DuckTower
@@ -16,10 +17,11 @@ def rand_pos():
 class LevelDriver:
     def __init__(self):
         self.data = data
-        rand1 = rand_pos()
-        rand2 = rand_pos()
-        self.enemies, self.towers, self.projectiles = [Enemy(rand1[0] * data.screen_w, rand1[1] * data.screen_w, 1)], [DuckTower(rand2[0] * data.screen_w, rand2[1] * data.screen_w)], []
         self.lr = Read()
+        rand = rand_pos()
+        temp = rand_pos()
+        self.start = temp
+        self.enemies, self.towers, self.projectiles = [Enemy(self.start[0] * data.screen_w, self.start[1] * data.screen_w, 1)], [DuckTower(rand[0] * data.screen_w, rand[1] * data.screen_w)], []
 
     # Called every iteration of the while loop
     def tick(self, dt):
@@ -44,3 +46,7 @@ class LevelDriver:
             d.blit(i.IMG, (i.pos[0], i.pos[1]))
         for i in self.projectiles:
             d.blit(i.IMG, (i.pos[0], i.pos[1]))
+
+
+    def setStart(self, pos):
+        self.start = pos
