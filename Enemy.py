@@ -6,8 +6,8 @@ import pygame
 
 #  Defines an enemy
 class Enemy:
-    def __init__(self, pos, strength):
-        self.pos = pos
+    def __init__(self, x, y, strength):
+        self.pos = (x, y)
         self.strength = strength
         if self.strength == 1:
             self.image = pygame.transform.scale(pygame.image.load("enemy1.png"))
