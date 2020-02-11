@@ -8,7 +8,7 @@ WINDOW = data.screen_w
 
 #  Defines an enemy
 class Enemy:
-    def __init__(self, x, y, strength, path, progress):
+    def __init__(self, x, y, strength):
         self.pos = (x, y)
         self.strength = strength
         self.path = 0
