@@ -26,7 +26,7 @@ class LevelDriver:
         # Move all enemies, and update towers/projectiles
         for i in self.enemies:
             if not self.lr.move(i, dt):
-                enemies.remove(i)
+                self.enemies.remove(i)
         for i in self.towers:
             i.tick(dt)
         for i in self.projectiles:

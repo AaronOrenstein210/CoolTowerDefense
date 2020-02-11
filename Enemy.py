@@ -10,19 +10,19 @@ class Enemy:
         self.pos = pos
         self.strength = strength
         if self.strength == 1:
-            self.img = pygame.transform.scale(pygame.image.load("enemy1.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy1.png"))
             self.v = 5  # 5% of screen width per second (20 seconds to move across the screen)
         elif self.strength == 2:
-            self.img = pygame.transform.scale(pygame.image.load("enemy2.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy2.png"))
             self.v = 10  # 10% of screen width per second (10 seconds to move across the screen)
         elif self.strength == 3:
-            self.img = pygame.transform.scale(pygame.image.load("enemy3.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy3.png"))
             self.v = 20  # 20% of screen width per second (5 seconds to move across the screen)
         elif self.strength == 4:
-            self.img = pygame.transform.scale(pygame.image.load("enemy4.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy4.png"))
             self.v = 30  # 30% of screen width per second
         elif self.strength == 5:
-            self.img = pygame.transform.scale(pygame.image.load("enemy5.png"))
+            self.image = pygame.transform.scale(pygame.image.load("enemy5.png"))
             self.v = 40  # 40% of screen width per second
 
     #  This method reduces the strength by the damage amount
@@ -42,7 +42,7 @@ class Enemy:
 
     # Returns image
     def return_image(self):
-        return self.img
+        return self.image
 
     # Gets Velocity
     def get_velocity(self):
