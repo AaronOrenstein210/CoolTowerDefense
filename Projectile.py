@@ -80,6 +80,8 @@ class Projectile3(Projectile):
         super().__init__(x, y)
         self.speed = 0.3
         self.angle = 0
+        self.IMG = pygame.transform.scale(pygame.image.load('projectile3.png'), (WINDOW * 0.01, WINDOW * 0.01))
+        self.damage = 3
 
     def getIMG(self):
         return self.IMG
