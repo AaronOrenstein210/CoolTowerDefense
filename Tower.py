@@ -13,6 +13,7 @@ WINDOW = data.screen_w
 class Tower:
     def __init__(self, x, y):  # t is a variable determining the type of tower
         self.pos = (x, y)
+        self.IMG = None
 
     def shoot(self, enemy):  # given an enemy, shoots at them
         pass
@@ -42,7 +43,7 @@ class Tower:
 class DuckTower(Tower):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.IMG = pygame.transform.scale(pygame.image.load('duckTower1.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        self.IMG = pygame.transform.scale(pygame.image.load('duckTower1.png'), (int(WINDOW * 0.05), int(WINDOW * 0.05)))
         # radius
         self.range = 0.29 * WINDOW
         self.countdown = 1000
@@ -68,10 +69,12 @@ class DuckTower(Tower):
 
     def tick(self, dt):
         self.countdown -= dt
-        en = data.lvlDriver.enemies[0]
-        if self.countdown <= 0:
-            self.restartCount()
-            self.shoot(en)
+        en = None
+        if len(data.lvlDriver.enemies) > 0:
+            en = data.lvlDriver.enemies[0]
+            if self.countdown <= 0:
+                self.restartCount()
+                self.shoot(en)
 
 
 class DuckTower2(Tower):
