@@ -43,7 +43,7 @@ class Tower:
 class DuckTower(Tower):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.IMG = pygame.transform.scale(pygame.image.load('duckTower1.png'), (int(WINDOW * 0.05), int(WINDOW * 0.05)))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/duckTower1.png'), (int(WINDOW * 0.05), int(WINDOW * 0.05)))
         # radius
         self.range = 0.29 * WINDOW
         self.countdown = 1000
@@ -80,7 +80,7 @@ class DuckTower(Tower):
 class DuckTower2(Tower):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.IMG = pygame.transform.scale(pygame.image.load('duckTower2.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/duckTower2.png'), (WINDOW * 0.05, WINDOW * 0.05))
         # radius
         self.range = 0.29 * WINDOW
         self.countdown = 500
@@ -115,7 +115,7 @@ class DuckTower2(Tower):
 class DuckTowerAA(Tower):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.IMG = pygame.transform.scale(pygame.image.load('duckAAGun.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/duckAAGun.png'), (WINDOW * 0.05, WINDOW * 0.05))
         # radius
         self.range = 0.7 * WINDOW
         self.countdown = 2130
@@ -150,7 +150,7 @@ class DuckTowerAA(Tower):
 class DuckTowerBallista(Tower):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.IMG = pygame.transform.scale(pygame.image.load('duckTowerBallista.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/duckTowerBallista.png'), (WINDOW * 0.05, WINDOW * 0.05))
         # radius
         self.range = 0.43 * WINDOW
         self.countdown = 1220
