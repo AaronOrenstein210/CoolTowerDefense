@@ -18,23 +18,23 @@ class Enemy:
         self.progress = 0
 
         if self.strength == 1:
-            self.image = pygame.transform.scale(pygame.image.load("enemy1.png"),
+            self.image = pygame.transform.scale(pygame.image.load("res/enemy1.png"),
                                                 (int(WINDOW * 0.05), int(WINDOW * 0.05)))
             self.velocity = 5  # 5% of screen width per second (20 seconds to move across the screen)
         elif self.strength == 2:
-            self.image = pygame.transform.scale(pygame.image.load("enemy2.png"),
+            self.image = pygame.transform.scale(pygame.image.load("res/enemy2.png"),
                                                 (int(WINDOW * 0.05), int(WINDOW * 0.05)))
             self.velocity = 10  # 10% of screen width per second (10 seconds to move across the screen)
         elif self.strength == 3:
-            self.image = pygame.transform.scale(pygame.image.load("enemy3.png"),
+            self.image = pygame.transform.scale(pygame.image.load("res/enemy3.png"),
                                                 (int(WINDOW * 0.05), int(WINDOW * 0.05)))
             self.velocity = 20  # 20% of screen width per second (5 seconds to move across the screen)
         elif self.strength == 4:
-            self.image = pygame.transform.scale(pygame.image.load("enemy4.png"),
+            self.image = pygame.transform.scale(pygame.image.load("res/enemy4.png"),
                                                 (int(WINDOW * 0.05), int(WINDOW * 0.05)))
             self.velocity = 30  # 30% of screen width per second
         elif self.strength == 5:
-            self.image = pygame.transform.scale(pygame.image.load("enemy5.png"),
+            self.image = pygame.transform.scale(pygame.image.load("res/enemy5.png"),
                                                 (int(WINDOW * 0.05), int(WINDOW * 0.05)))
             self.velocity = 40  # 40% of screen width per second
 
