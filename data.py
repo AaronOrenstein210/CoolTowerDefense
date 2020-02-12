@@ -11,6 +11,25 @@ MIN_W = screen_w = 500
 # Offsets needed to keep the game screen square
 off_x, off_y = 0, 0
 lvlDriver = None
+enemies, towers = {}, {}
+
+
+def init():
+    from inspect import getmembers, isclass
+    from MyLevelDriver import LevelDriver
+    global lvlDriver
+    lvlDriver = LevelDriver()
+
+    import MyObjects
+    global enemies, towers
+    # Compile a list of enemies and towers
+    enemies.clear()
+    towers.clear()
+    for name, obj in getmembers(MyObjects):
+        if isclass(obj):
+            if "MyObjects" in str(obj):
+                # The constructor automatically adds the item to the list
+                obj()
 
 
 # Resizes screen
@@ -30,7 +49,8 @@ def resize(w, h, resize_driver):
         lvlDriver.lr.draw_surface()
         for i in lvlDriver.enemies + lvlDriver.towers + lvlDriver.projectiles:
             img_dim = (int(i.dim[0] * screen_w), int(i.dim[1] * screen_w))
-            i.image = pg.transform.scale(i.image, img_dim)
+            i.img = pg.transform.scale(i.img, img_dim)
+            i.blit_img = pg.transform.rotate(i.img, i.angle)
 
 
 # Returns mouse position in relation to the game screen
@@ -60,16 +80,42 @@ def get_distance(p1, p2):
     return math.sqrt(dx * dx + dy * dy)
 
 
-# Gets the biggest font that fits the text within max_w and max_h
+# Gets the biggest font size that fits the text within max_w and max_h
 def get_scaled_font(max_w, max_h, text, font_name="Times New Roman"):
-    font_size = 0
+    font_size = 1
     font = pg.font.SysFont(font_name, font_size)
     w, h = font.size(text)
+    min_size = max_size = 1
     while (max_w == -1 or w < max_w) and (max_h == -1 or h < max_h):
-        font_size += 1
+        font_size *= 2
+        min_size = max_size
+        max_size = font_size
         font = pg.font.SysFont(font_name, font_size)
         w, h = font.size(text)
-    return pg.font.SysFont(font_name, font_size - 1)
+    if font_size == 1:
+        return font
+    while True:
+        font_size = (max_size + min_size) // 2
+        font = pg.font.SysFont(font_name, font_size)
+        w, h = font.size(text)
+        # Too small
+        if (max_w == -1 or w < max_w) and (max_h == -1 or h < max_h):
+            # Check if the next size is too big
+            font_ = pg.font.SysFont(font_name, font_size + 1)
+            w, h = font_.size(text)
+            if (max_w == -1 or w < max_w) and (max_h == -1 or h < max_h):
+                min_size = font_size + 1
+            else:
+                return font
+        # Too big
+        else:
+            # Check if the previous size is too small
+            font_ = pg.font.SysFont(font_name, font_size - 1)
+            w, h = font_.size(text)
+            if (max_w == -1 or w < max_w) and (max_h == -1 or h < max_h):
+                return font
+            else:
+                max_size = font_size - 1
 
 
 def get_widest_string(strs, font_type="Times New Roman"):

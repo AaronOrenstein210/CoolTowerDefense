@@ -1,38 +1,22 @@
+from MyAbstracts import Enemy, Tower, Projectile
 import data
-from MyProjectile import Projectile
-from MySprite import Sprite
 
-towers = {}
+# Enemies
+ENEMY_1 = 0
 
 
-class Tower(Sprite):
-    def __init__(self, idx, pos, dim=(.1, .1), cooldown=1000, img=""):
-        super().__init__(pos, dim, img)
+class Enemy1(Enemy):
+    def __init__(self, pos=(0, 0)):
+        super().__init__(ENEMY_1, pos, img="duckBase.png")
 
-        self.idx = idx
 
-        self.cooldown = cooldown
-        self.timer = 0
-
-    def set_pos(self, x, y):
-        self.pos = [x, y]
-
-    def tick(self, dt):
-        projectiles = []
-        self.timer += dt
-        while self.timer > self.cooldown:
-            self.timer -= self.cooldown
-            if len(data.lvlDriver.enemies) > 0:
-                projectiles += self.on_shoot(data.lvlDriver.enemies[0].pos)
-        return projectiles
-
-    def on_shoot(self, enemy_pos):
-        pass
+# Towers
+TOWER_1, TOWER_2, BALLISTA, AAGUN = range(4)
 
 
 class Tower1(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(0, pos, img="duckTower1.png")
+        super().__init__(TOWER_1, pos, img="duckTower1.png")
 
     def on_shoot(self, enemy_pos):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy_pos))]
@@ -44,7 +28,7 @@ class Tower1(Tower):
 
 class Tower2(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(0, pos, dim=(.07, .07), cooldown=750, img="duckTower2.png")
+        super().__init__(TOWER_2, pos, dim=(.07, .07), cooldown=750, img="duckTower2.png")
 
     def on_shoot(self, enemy_pos):
         pos1 = [self.pos[0] + .05, self.pos[1] + .05]
@@ -58,7 +42,7 @@ class Tower2(Tower):
 
 class Ballista(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(0, pos, dim=(.125, .125), cooldown=2500, img="duckTowerBallista.png")
+        super().__init__(BALLISTA, pos, dim=(.125, .125), cooldown=2500, img="duckTowerBallista.png")
 
     def on_shoot(self, enemy_pos):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy_pos))]
@@ -70,7 +54,7 @@ class Ballista(Tower):
 
 class AAGun(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(0, pos, dim=(.05, .1), cooldown=400, img="duckAAGun.png")
+        super().__init__(AAGUN, pos, dim=(.05, .1), cooldown=400, img="duckAAGun.png")
 
     def on_shoot(self, enemy_pos):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy_pos)),
