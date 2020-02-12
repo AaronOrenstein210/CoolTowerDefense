@@ -10,7 +10,7 @@ from LevelReader import *
 from MyLevelDriver import LevelDriver
 
 pg.init()
-data.lvlDriver = LevelDriver()
+data.init()
 pg.display.set_mode((data.MIN_W, data.MIN_W), RESIZABLE)
 
 
@@ -31,22 +31,20 @@ def run_level():
 
 # Runs main screen
 def main_screen():
-    new, choose = 1, 0
-    rects = [None, None]
+    play, new_lvl, new_list = range(3)
+    options = ["Play", "New Level", "New Enemy List"]
+    option_h = min(data.screen_w // len(options), data.screen_w // 5)
 
     def draw():
         d = pg.display.get_surface()
         d.fill((0, 0, 0))
-        half_w = data.screen_w // 2
-        text = ["Select a Level", "Create a new Level"]
-        font = data.get_scaled_font(data.screen_w, half_w, data.get_widest_string(text, "Times New Roman"),
-                                    "Times New Roman")
-        text_s = font.render(text[0], 1, (255, 255, 255))
-        rects[choose] = text_s.get_rect(centerx=half_w + data.off_x, bottom=half_w + data.off_y)
-        d.blit(text_s, rects[choose])
-        text_s = font.render(text[1], 1, (255, 255, 255))
-        rects[new] = text_s.get_rect(centerx=half_w + data.off_x, top=half_w + data.off_y)
-        d.blit(text_s, rects[new])
+        off_y = (data.screen_w - option_h * len(options)) // 2 + data.off_y
+        center_x = data.screen_w // 2 + data.off_x
+        font = data.get_scaled_font(data.screen_w, option_h, data.get_widest_string(options))
+        for i, string in enumerate(options):
+            text_s = font.render(string, 1, (255, 255, 255))
+            text_rect = text_s.get_rect(center=(center_x, int(option_h * (i + .5)) + off_y))
+            d.blit(text_s, text_rect)
 
     draw()
     while True:
@@ -55,19 +53,28 @@ def main_screen():
                 return
             elif e.type == RESIZABLE:
                 data.resize(e.w, e.h, False)
+                option_h = min(data.screen_w // len(options), data.screen_w // 5)
                 draw()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
-                pos = pg.mouse.get_pos()
-                if rects[choose].collidepoint(*pos):
-                    while choose_level():
-                        run_level()
-                    draw()
-                elif rects[new].collidepoint(*pos):
-                    new_level()
-                    draw()
+                pos = data.get_mouse_pos()
+                if 0 <= pos[0] <= data.screen_w:
+                    margin = (data.screen_w - option_h * len(options)) // 2
+                    pos[1] -= margin
+                    idx = pos[1] // option_h
+                    if idx == play:
+                        while choose_level():
+                            run_level()
+                        draw()
+                    elif idx == new_lvl:
+                        new_level()
+                        draw()
+                    elif idx == new_list:
+                        new_enemy_list()
+                        draw()
         pg.display.flip()
 
 
+# TODO: Two columns, select level and spawn list
 # Runs level selection screen
 def choose_level():
     # Load all levels
@@ -115,7 +122,7 @@ def choose_level():
         digit_w = lvl_w // 5
         font = data.get_scaled_font(digit_w * 3, digit_w * 3, "0")
         numbers = []
-        for num in range(9):
+        for num in range(10):
             numbers.append(font.render(str(num), 1, (255, 255, 255)))
         for j in range(len(levels)):
             row, col = j // row_len, j % row_len
@@ -143,7 +150,8 @@ def choose_level():
                 item_w = data.screen_w // row_len
                 idx = (pos[0] // item_w) + (pos[1] // item_w) * 10
                 if idx < len(levels):
-                    data.lvlDriver.lr.load_from_bytes(levels[idx])
+                    data.lvlDriver.lr.load(levels[idx])
+                    data.lvlDriver.reset()
                     return True
         pg.display.flip()
 
@@ -300,6 +308,139 @@ def new_level():
                             current.theta_f = factor * half_pi + current.theta_i
                 pg.display.get_surface().blit(draw_paths(rect, paths + [current]),
                                               (rect.x + data.off_x, rect.y + data.off_y))
+        pg.display.flip()
+
+
+# Runs screen to set spawn order
+def new_enemy_list():
+    spawns = []
+    current = Spawn()
+
+    rects = {"Count": Rect(0, 0, 0, 0), "Time": Rect(0, 0, 0, 0),
+             "Model": Rect(0, 0, 0, 0), "Flip": Rect(0, 0, 0, 0),
+             "Add": Rect(0, 0, 0, 0), "Delete": Rect(0, 0, 0, 0), "Save": Rect(0, 0, 0, 0),
+             "Current": Rect(0, 0, 0, 0), "Timeline": Rect(0, 0, 0, 0)}
+    selected = "Count"
+    model_names = {LINEAR: "Linear", PARABOLIC: "Parabolic",
+                   EXPONENTIAL: "Exponential"}
+    models = list(model_names.keys())
+    model_idx = 0
+
+    show_cursor = True
+
+    def resize():
+        w = data.screen_w
+        rects["Current"] = Rect(w // 20 + data.off_x, w * 3 // 8 + data.off_y, w * 9 // 10, w // 4)
+        rects["Timeline"] = Rect(w // 20 + data.off_x, w * 17 // 24 + data.off_y, w * 9 // 10, w // 4)
+        # TODO: set rect dims
+        fifteenth = w // 15
+        twentieth = w // 20
+        rects["Count"] = Rect(twentieth * 2 + data.off_x, fifteenth + data.off_y, twentieth * 7, fifteenth)
+        rects["Time"] = rects["Count"].move(twentieth * 9, 0)
+        rects["Model"] = rects["Count"].move(0, fifteenth)
+        rects["Flip"] = rects["Model"].move(twentieth * 9, 0)
+        rects["Add"] = Rect(twentieth * 2 + data.off_x, fifteenth * 4 + data.off_y, twentieth * 4, fifteenth)
+        rects["Delete"] = rects["Add"].move(twentieth * 6, 0)
+        rects["Save"] = rects["Delete"].move(twentieth * 6, 0)
+        draw()
+
+    def draw():
+        d = pg.display.get_surface()
+        d.fill((0, 0, 0))
+        # Draw current timeline
+        r = rects["Current"]
+        d.blit(current.get_img(*r.size), r.topleft)
+        # Draw entire timeline
+        max_time = sum(e_.duration for e_ in spawns + [current])
+        start_time = 0
+        r = rects["Timeline"]
+        for e_ in spawns + [current]:
+            if max_time != 0:
+                w = r.w * e_.duration // max_time
+                x = r.w * start_time // max_time + r.x
+            else:
+                w = r.w
+                x = r.x
+            d.blit(e_.get_img(w, r.h), (x, r.y))
+            start_time += e_.duration
+        # Draw text for number of spawns
+        text = "{}{} Enemies".format(current.num_enemies, "|" if selected == "Count" and show_cursor else "")
+        color_ = (255, 255, 255) if current.num_enemies >= 1 else (255, 0, 0)
+        draw_text(text, rects["Count"], d, color_=color_)
+        # Draw text for duration
+        text = "Over {}{}ms".format(current.duration, "|" if selected == "Time" and show_cursor else "")
+        color_ = (255, 255, 255) if current.duration >= 100 else (255, 0, 0)
+        draw_text(text, rects["Time"], d, color_=color_)
+        # Outline either the enemy count or duration
+        pg.draw.rect(d, (200, 200, 0), rects[selected], 2)
+        # Draw text for model and flip button
+        draw_text(model_names[current.model], rects["Model"], d)
+        draw_text("Reverse", rects["Flip"], d)
+        # Draw add, delete, and save buttons
+        for string in ["Add", "Delete", "Save"]:
+            draw_text(string, rects[string], d)
+
+    def draw_text(text, rect, surface, color_=(255, 255, 255)):
+        font = data.get_scaled_font(*rect.size, text)
+        text_s = font.render(text, 1, color_)
+        text_rect = text_s.get_rect(center=rect.center)
+        surface.blit(text_s, text_rect)
+
+    resize()
+    while True:
+        # Update whether to show the cursor or not
+        temp = show_cursor
+        show_cursor = (pg.time.get_ticks() // 400) % 2 == 0
+        if temp != show_cursor:
+            draw()
+        for e in pg.event.get():
+            if e.type == QUIT:
+                return
+            elif e.type == VIDEORESIZE:
+                data.resize(e.w, e.h, False)
+                resize()
+            elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
+                # Offset is include in the rectangles
+                pos = pg.mouse.get_pos()
+                if rects["Count"].collidepoint(*pos):
+                    selected = "Count"
+                elif rects["Time"].collidepoint(*pos):
+                    selected = "Time"
+                elif rects["Model"].collidepoint(*pos):
+                    model_idx = (model_idx + 1) % len(models)
+                    current.model = models[model_idx]
+                elif rects["Flip"].collidepoint(*pos):
+                    current.flip = not current.flip
+                elif rects["Add"].collidepoint(*pos):
+                    if current.num_enemies >= 1 and current.duration >= 100:
+                        spawns.append(current)
+                        current = Spawn()
+                elif rects["Delete"].collidepoint(*pos):
+                    print("Delete")
+                elif rects["Save"].collidepoint(*pos):
+                    with open("custom_spawns.bin", "wb+") as file:
+                        file.write(len(spawns).to_bytes(1, byteorder))
+                        for s in spawns:
+                            file.write(s.to_bytes())
+                    return
+                else:
+                    continue
+                draw()
+            elif e.type == KEYUP:
+                if e.key == K_BACKSPACE:
+                    if selected == "Count":
+                        current.num_enemies = current.num_enemies // 10
+                    else:
+                        current.duration = current.duration // 10
+                elif pg.key.name(e.key).isnumeric():
+                    val = int(pg.key.name(e.key))
+                    if selected == "Count":
+                        current.num_enemies = min(current.num_enemies * 10 + val, 99)
+                    else:
+                        current.duration = min(current.duration * 10 + val, 10000)
+                else:
+                    continue
+                draw()
         pg.display.flip()
 
 

@@ -1,5 +1,5 @@
 # Created on 27 January 2020
-# Created by
+# Created by Poopy
 
 from struct import pack, unpack
 from sys import byteorder
@@ -30,7 +30,7 @@ class LevelReader:
             else:
                 enemy.progress += d / self.paths[enemy.path].length
             d -= to_end
-        enemy.pos = self.paths[enemy.path].get_pos(enemy.progress)
+        enemy.set_pos(self.paths[enemy.path].get_pos(enemy.progress))
         return True
 
     def draw_surface(self):
@@ -38,7 +38,7 @@ class LevelReader:
         self.surface = draw_paths(pg.Rect(off_x, off_y, screen_w, screen_w), self.paths)
 
     # Loads a level from bytes
-    def load_from_bytes(self, file_data):
+    def load(self, file_data):
         self.paths.clear()
         while len(file_data) > 0:
             # Get the path type and initialize its object
@@ -202,6 +202,68 @@ class Start(Path):
 
     def from_bytes(self, path_data):
         self.pos = unpack('f' * 2, path_data)
+
+
+# Stores enemy data for spawning enemies
+LINEAR, PARABOLIC, EXPONENTIAL = range(3)
+# Input fraction between 0 and 1
+get_y = {LINEAR: lambda t: t,
+         PARABOLIC: lambda t: t * t,
+         EXPONENTIAL: lambda t: math.exp(t) - 1}
+# Return fraction between 0 and 1
+get_t = {LINEAR: lambda y: y,
+         PARABOLIC: lambda y: math.sqrt(y),
+         EXPONENTIAL: lambda y: math.log(y + 1)}
+
+
+class Spawn:
+    def __init__(self, enemy_count=1, duration=1000, model=LINEAR, flip=False):
+        self.num_enemies = enemy_count
+        # Length of spawn sections in milliseconds
+        self.duration = duration
+        self.model = model
+        self.flip = flip
+
+    @property
+    def y_to_count(self):
+        # Gets the conversion from model function value to enemy count
+        return self.num_enemies / get_y[self.model](1)
+
+    def get_img(self, w, h):
+        s = pg.Surface((w, h))
+        # Draw some pretty lines
+        pg.draw.line(s, (255, 255, 255), (0, h // 2), (w - 1, h // 2))
+        pg.draw.line(s, (255, 255, 255), (0, 0), (0, h - 1))
+        pg.draw.line(s, (255, 255, 255), (w - 1, 0), (w - 1, h - 1))
+        # Draw each enemy spawn time
+        y_i, y_f = h // 4, h * 3 // 4
+        for i in range(self.num_enemies):
+            dx = int((w - 1) * self.get_time(i + 1))
+            pg.draw.line(s, (0, 200, 0), (dx, y_i), (dx, y_f))
+        return s
+
+    def get_count(self, t):
+        if self.flip:
+            t = 1 - t
+        return get_y[self.model](t / self.duration) * self.y_to_count + 1
+
+    def get_time(self, count):
+        y = (count - 1) / self.y_to_count
+        t = get_t[self.model](y)
+        return t if not self.flip else 1 - t
+
+    def to_bytes(self):
+        result = self.num_enemies.to_bytes(1, byteorder) + self.duration.to_bytes(2, byteorder)
+        result += self.model.to_bytes(1, byteorder) + self.flip.to_bytes(1, byteorder)
+        return result
+
+    def from_bytes(self, enemy_data):
+        if len(enemy_data) != 5:
+            print("Data contains {} bytes, should contain 5".format(len(enemy_data)))
+        self.num_enemies = int.from_bytes(enemy_data[0], byteorder)
+        self.duration = int.from_bytes(enemy_data[1:3], byteorder)
+        self.model = int.from_bytes(enemy_data[3], byteorder)
+        self.flip = bool.from_bytes(enemy_data[4], byteorder)
 
 
 constructors = {START: Start, LINE: Line, CIRCLE: Circle}
