@@ -8,6 +8,8 @@ from pygame.locals import RESIZABLE
 TWO_PI = 2 * math.pi
 
 MIN_W = screen_w = 500
+LEVELS = "saves/levels.bin"
+SPAWNS = "saves/spawn_lists.bin"
 # Offsets needed to keep the game screen square
 off_x, off_y = 0, 0
 lvlDriver = None

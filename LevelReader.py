@@ -18,7 +18,7 @@ class LevelReader:
     # Moves an enemy given its position and distance to be travelled
     # Mostly just coordinates the path's various segments
     def move(self, enemy, dt):
-        d = enemy.velocity * dt / 1000
+        d = enemy.v * dt / 1000
         while d > 0:
             to_end = self.paths[enemy.path].length * (1 - enemy.progress)
             if d >= to_end:

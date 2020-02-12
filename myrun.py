@@ -7,7 +7,6 @@ import pygame as pg
 from pygame.locals import *
 import data
 from LevelReader import *
-from MyLevelDriver import LevelDriver
 
 pg.init()
 data.init()
@@ -74,13 +73,12 @@ def main_screen():
         pg.display.flip()
 
 
-# TODO: Two columns, select level and spawn list
 # Runs level selection screen
 def choose_level():
     # Load all levels
     levels = []
-    if isfile("custom_levels.bin"):
-        with open("custom_levels.bin", 'rb') as file:
+    if isfile(data.LEVELS):
+        with open(data.LEVELS, 'rb') as file:
             file_data = file.read()
         # Loop through the data
         while len(file_data) > 0:
@@ -111,40 +109,70 @@ def choose_level():
                         break
             levels.append(file_data[1:byte_pos])
             file_data = file_data[byte_pos:]
+    spawns = []
+    if isfile(data.SPAWNS):
+        with open(data.SPAWNS, 'rb') as file:
+            file_data = file.read()
+        print(file_data)
+        # Loop through data
+        while len(file_data) > 0:
+            num_spawns = int.from_bytes(file_data[0:1], byteorder)
+            num_bytes = num_spawns * 5 + 1
+            if len(file_data) < num_bytes:
+                print("Missing Bytes")
+                file_data = ""
+            else:
+                spawns.append(file_data[:num_bytes])
+                file_data = file_data[num_bytes:]
 
-    row_len = 10
+    lvls, enemies = 0, 1
+    surfaces = [pg.Surface, pg.Surface]
+    rects = [pg.Rect(0, 0, 0, 0), pg.Rect(0, 0, 0, 0)]
+    off = [0] * 2
+
+    row_len = 5
+    margin = 10
+
+    def resize():
+        half_w = data.screen_w // 2
+        # Define rectangles
+        rects[lvls] = pg.Rect(data.off_x, data.off_y, half_w - margin, data.screen_w)
+        rects[enemies] = rects[lvls].move(half_w + margin, 0)
+        # Set up parts of the surfaces
+        lvl_w = rects[lvls].w // row_len
+        back_img = pg.transform.scale(pg.image.load("res/back.png"), (lvl_w, lvl_w))
+        font = data.get_scaled_font(lvl_w * 3 // 5, lvl_w * 3 // 5, "999")
+        # Set up surfaces and rectangles
+        for j in (lvls, enemies):
+            arr = levels if j == lvls else spawns
+            num_rows = len(arr) // row_len + 1
+            surfaces[j] = pg.Surface((rects[j].w, lvl_w * num_rows))
+            for k in range(len(arr)):
+                row, col = k // row_len, k % row_len
+                text = font.render(str(k + 1), 1, (255, 255, 255))
+                text_rect = text.get_rect(center=(int((col + .5) * lvl_w), int((row + .5) * lvl_w)))
+                surfaces[j].blit(back_img, (col * lvl_w, row * lvl_w))
+                surfaces[j].blit(text, text_rect)
+            off[j] = 0
+        draw()
 
     def draw():
         d = pg.display.get_surface()
         d.fill((0, 0, 0))
-        lvl_w = data.screen_w // row_len
-        back_img = pg.transform.scale(pg.image.load("back.png"), (lvl_w, lvl_w))
-        digit_w = lvl_w // 5
-        font = data.get_scaled_font(digit_w * 3, digit_w * 3, "0")
-        numbers = []
-        for num in range(10):
-            numbers.append(font.render(str(num), 1, (255, 255, 255)))
-        for j in range(len(levels)):
-            row, col = j // row_len, j % row_len
-            d.blit(back_img, (col * lvl_w + data.off_x, row * lvl_w + data.off_y, row_len, row_len))
-            j += 1
-            digits = len(str(j))
-            for k, val in enumerate(str(j)):
-                center = [int(lvl_w * (col + .5)) + data.off_x, int(lvl_w * (row + .5)) + data.off_y]
-                if digits == 2:
-                    center[0] += k - 1.5
-                elif digits == 3:
-                    center[0] += (k - 2) * 1.5
-                d.blit(numbers[int(val)], numbers[int(val)].get_rect(center=center))
+        half_w = data.screen_w // 2
+        for j in (lvls, enemies):
+            d.blit(surfaces[j], rects[j].topleft, area=((0, off[j]), rects[j].size))
+        pg.draw.line(d, (200, 200, 0), [half_w + data.off_x, data.off_y],
+                     [half_w + data.off_x, data.screen_w + data.off_y], int(margin * .9))
 
-    draw()
+    resize()
     while True:
         for e in pg.event.get():
             if e.type == QUIT:
                 return False
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, False)
-                draw()
+                resize()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
                 pos = data.get_mouse_pos()
                 item_w = data.screen_w // row_len
@@ -217,7 +245,7 @@ def new_level():
                 else:
                     idx = pos[1] * len(types) // data.screen_w
                     if idx >= len(types) - 1:
-                        with open("custom_levels.bin", "ab+") as file:
+                        with open(data.LEVELS, "ab+") as file:
                             file.write(len(paths).to_bytes(1, byteorder))
                             for p in paths:
                                 file.write(p.to_bytes())
@@ -418,7 +446,7 @@ def new_enemy_list():
                 elif rects["Delete"].collidepoint(*pos):
                     print("Delete")
                 elif rects["Save"].collidepoint(*pos):
-                    with open("custom_spawns.bin", "wb+") as file:
+                    with open(data.SPAWNS, "ab+") as file:
                         file.write(len(spawns).to_bytes(1, byteorder))
                         for s in spawns:
                             file.write(s.to_bytes())
