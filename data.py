@@ -18,20 +18,21 @@ enemies, towers = {}, {}
 
 def init():
     from inspect import getmembers, isclass
-    from MyLevelDriver import LevelDriver
+    from LevelDriver import LevelDriver
     global lvlDriver
     lvlDriver = LevelDriver()
 
-    import MyObjects
-    global enemies, towers
-    # Compile a list of enemies and towers
-    enemies.clear()
-    towers.clear()
-    for name, obj in getmembers(MyObjects):
-        if isclass(obj):
-            if "MyObjects" in str(obj):
-                # The constructor automatically adds the item to the list
-                obj()
+    if str(LevelDriver) == "MyLevelDriver.LevelDriver":
+        import MyObjects
+        global enemies, towers
+        # Compile a list of enemies and towers
+        enemies.clear()
+        towers.clear()
+        for name, obj in getmembers(MyObjects):
+            if isclass(obj):
+                if "MyObjects" in str(obj):
+                    # The constructor automatically adds the item to the list
+                    obj()
 
 
 # Resizes screen
