@@ -18,7 +18,7 @@ class LevelReader:
     # Moves an enemy given its position and distance to be travelled
     # Mostly just coordinates the path's various segments
     def move(self, enemy, dt):
-        d = enemy.v * dt / 1000
+        d = enemy.velocity * dt / 1000
         while d > 0:
             to_end = self.paths[enemy.path].length * (1 - enemy.progress)
             if d >= to_end:
@@ -30,7 +30,7 @@ class LevelReader:
             else:
                 enemy.progress += d / self.paths[enemy.path].length
             d -= to_end
-        enemy.set_pos(self.paths[enemy.path].get_pos(enemy.progress))
+        enemy.set_pos(*self.paths[enemy.path].get_pos(enemy.progress))
         return True
 
     def draw_surface(self):
