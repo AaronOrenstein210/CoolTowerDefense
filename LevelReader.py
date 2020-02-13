@@ -6,6 +6,7 @@ from sys import byteorder
 import math
 import pygame as pg
 import data
+from MyObjects import Enemy1
 
 
 # Reads a level file and compiles the enemy path
@@ -13,6 +14,25 @@ class LevelReader:
     def __init__(self):
         self.surface = None
         self.paths = []
+        self.spawn_list = []
+
+    # TODO: Missing Path
+    def get_enemy_spawns(self, t_i, t_f):
+        spawns = []
+        for spawn in self.spawn_list:
+            if spawn.duration < t_i:
+                t_i -= spawn.duration
+                t_f -= spawn.duration
+            elif spawn.duration >= t_f:
+                for i in range(spawn.get_count(t_f) - spawn.get_count(t_i)):
+                    spawns.append(Enemy1())
+                break
+            else:
+                for i in range(spawn.get_count(spawn.duration) - spawn.get_count(t_i)):
+                    spawns.append(Enemy1())
+                t_i = 0
+                t_f -= spawn.duration
+        return spawns
 
     # Return a new position for the enemy
     # Moves an enemy given its position and distance to be travelled
@@ -34,69 +54,108 @@ class LevelReader:
         return True
 
     def draw_surface(self):
-        from data import off_x, off_y, screen_w
-        self.surface = draw_paths(pg.Rect(off_x, off_y, screen_w, screen_w), self.paths)
+        from data import screen_w
+        self.surface = draw_paths(screen_w, self.paths)
 
-    # Loads a level from bytes
-    def load(self, file_data):
-        self.paths.clear()
-        while len(file_data) > 0:
-            # Get the path type and initialize its object
-            idx = int.from_bytes(file_data[:1], byteorder)
-            if idx in constructors.keys():
-                self.paths.append(constructors[idx]())
-            else:
-                print("Unknown path type")
-                break
-            # Read path path_data
-            file_data = file_data[1:]
-            num_bytes = self.paths[-1].num_bytes
-            if len(file_data) < num_bytes:
-                print("Expected {} bytes, found {} bytes".format(num_bytes, len(file_data)))
-                break
-            else:
-                self.paths[-1].from_bytes(file_data[:num_bytes])
-                file_data = file_data[num_bytes:]
+    def load(self, path_data, spawn_data):
+        self.paths = load_paths(path_data)
+        self.spawn_list = load_spawn_list(spawn_data)
         self.draw_surface()
 
 
-def draw_paths(rect, paths):
-    s = pg.Surface(rect.size)
+# Loads a level from bytes
+def load_paths(file_data):
+    paths = []
+    num = int.from_bytes(file_data[:1], byteorder)
+    file_data = file_data[1:]
+    for i in range(num):
+        if len(file_data) == 0:
+            print("Missing bytes")
+            break
+        # Get the path type and initialize its object
+        idx = int.from_bytes(file_data[:1], byteorder)
+        if idx in constructors.keys():
+            paths.append(constructors[idx]())
+        else:
+            print("Unknown path type")
+            break
+        # Read path data
+        file_data = file_data[1:]
+        num_bytes = paths[-1].num_bytes
+        if len(file_data) < num_bytes:
+            print("Expected {} bytes, found {} bytes".format(num_bytes, len(file_data)))
+            break
+        else:
+            paths[-1].from_bytes(file_data[:num_bytes])
+            file_data = file_data[num_bytes:]
+    return paths
+
+
+# Draws a list of paths
+def draw_paths(w, paths):
+    s = pg.Surface((w, w))
     s.fill((0, 175, 0))
-    w = rect.w // 40
+    line_w = w // 40
     for p in paths:
         if p.idx == LINE:
-            pos_i = [int(p.start[0] * rect.w), int(p.start[1] * rect.h)]
-            pos_f = [int(p.end[0] * rect.w), int(p.end[1] * rect.h)]
-            pg.draw.line(s, (255, 255, 255), pos_i, pos_f, w)
+            pos_i = [int(p.start[0] * w), int(p.start[1] * w)]
+            pos_f = [int(p.end[0] * w), int(p.end[1] * w)]
+            pg.draw.line(s, (255, 255, 255), pos_i, pos_f, line_w)
             for pos in [pos_i, pos_f]:
-                pg.draw.circle(s, (255, 255, 255), pos, w * 3 // 4)
+                pg.draw.circle(s, (255, 255, 255), pos, line_w * 3 // 4)
         elif p.idx == CIRCLE:
             from data import TWO_PI
-            c = [int(p.center[0] * rect.w), int(p.center[1] * rect.h)]
-            rad = int(p.radius * rect.w)
+            c = [int(p.center[0] * w), int(p.center[1] * w)]
+            rad = int(p.radius * w)
             # Get theta range
             d_theta = p.theta_f - p.theta_i
             sign = math.copysign(1, d_theta)
             d_theta = abs(d_theta)
             # Break theta range into full circles
             loop = -1
-            while d_theta >= TWO_PI:
+            while d_theta >= TWO_PI and loop < len(p.COLORS) - 1:
                 loop += 1
                 d_theta -= TWO_PI
             # Draw the highest full circle
             if loop >= 0:
-                pg.draw.circle(s, p.COLORS[loop], c, rad, min(w, rad))
+                pg.draw.circle(s, p.COLORS[loop], c, rad, min(line_w, rad))
             # Draw the other sections
             if d_theta > 0 and loop < len(p.COLORS) - 1:
                 top_left = [c[0] - rad, c[1] - rad]
                 thetas = [p.theta_i, p.theta_i + d_theta * sign]
                 theta_min, theta_max = min(thetas), max(thetas)
                 pg.draw.arc(s, p.COLORS[loop + 1], (*top_left, rad * 2, rad * 2), theta_min,
-                            theta_max, min(w, rad))
+                            theta_max, min(line_w, rad))
         elif p.idx == START:
-            pos = [int(p.pos[0] * rect.w), int(p.pos[1] * rect.h)]
-            pg.draw.circle(s, (0, 200, 200), pos, w)
+            pos = [int(p.pos[0] * w), int(p.pos[1] * w)]
+            pg.draw.circle(s, (0, 200, 200), pos, line_w)
+    return s
+
+
+# Loads a spawn list from bytes
+def load_spawn_list(file_data):
+    spawn_list = []
+    num = int.from_bytes(file_data[0:1], byteorder)
+    file_data = file_data[1:]
+    if len(file_data) < num * 5:
+        print("Not enough bytes")
+    else:
+        for i in range(num):
+            spawn_list.append(spawn_from_bytes(file_data[:5]))
+            file_data = file_data[5:]
+    return spawn_list
+
+
+# Draws a spawn list
+def draw_spawn_list(w, h, spawn_list):
+    s = pg.Surface((w, h))
+    max_time = sum(i.duration for i in spawn_list)
+    start_time = 0
+    for i in spawn_list:
+        w_ = w * i.duration // max_time
+        x = w * start_time // max_time
+        s.blit(i.get_img(w_, h), (x, 0))
+        start_time += i.duration
     return s
 
 
@@ -243,9 +302,10 @@ class Spawn:
         return s
 
     def get_count(self, t):
+        t /= self.duration
         if self.flip:
             t = 1 - t
-        return get_y[self.model](t / self.duration) * self.y_to_count + 1
+        return int(get_y[self.model](t) * self.y_to_count + 1)
 
     def get_time(self, count):
         y = (count - 1) / self.y_to_count
@@ -257,13 +317,15 @@ class Spawn:
         result += self.model.to_bytes(1, byteorder) + self.flip.to_bytes(1, byteorder)
         return result
 
-    def from_bytes(self, enemy_data):
-        if len(enemy_data) != 5:
-            print("Data contains {} bytes, should contain 5".format(len(enemy_data)))
-        self.num_enemies = int.from_bytes(enemy_data[0], byteorder)
-        self.duration = int.from_bytes(enemy_data[1:3], byteorder)
-        self.model = int.from_bytes(enemy_data[3], byteorder)
-        self.flip = bool.from_bytes(enemy_data[4], byteorder)
+
+def spawn_from_bytes(enemy_data):
+    if len(enemy_data) != 5:
+        print("Data contains {} bytes, should contain 5".format(len(enemy_data)))
+    num_enemies = int.from_bytes(enemy_data[0:1], byteorder)
+    duration = int.from_bytes(enemy_data[1:3], byteorder)
+    model = int.from_bytes(enemy_data[3:4], byteorder)
+    flip = bool.from_bytes(enemy_data[4:5], byteorder)
+    return Spawn(enemy_count=num_enemies, duration=duration, model=model, flip=flip)
 
 
 constructors = {START: Start, LINE: Line, CIRCLE: Circle}

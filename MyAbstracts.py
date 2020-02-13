@@ -12,6 +12,7 @@ class Sprite:
         self.dim = dim
         self.angle = angle
 
+        img = "res/" + img
         img_dim = (int(dim[0] * data.screen_w), int(dim[1] * data.screen_w))
         if isfile(img) and (img.endswith(".png") or img.endswith(".jpg")):
             self.img = pg.transform.scale(pg.image.load(img), img_dim)

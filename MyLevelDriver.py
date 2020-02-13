@@ -14,10 +14,11 @@ def rand_pos():
 # Runs the level
 class LevelDriver:
     def __init__(self):
-        self.enemies = [Enemy1()]
-        self.towers = [Tower1(rand_pos()), Tower2(rand_pos()), Ballista(rand_pos()), AAGun(rand_pos())]
+        self.enemies = []
+        self.towers = []  # [Tower1(rand_pos()), Tower2(rand_pos()), Ballista(rand_pos()), AAGun(rand_pos())]
         self.projectiles = []
         self.lr = Read()
+        self.time = 0
 
         # Called every iteration of the while loop
 
@@ -26,7 +27,7 @@ class LevelDriver:
         if len(self.lr.paths) > 0:
             return self.lr.paths[0].get_start()
         else:
-            return [0,0]
+            return [0, 0]
 
     def tick(self, dt):
         # Move all enemies, and update towers/projectiles
@@ -42,18 +43,18 @@ class LevelDriver:
                 if i.polygon.collides_polygon(j.polygon):
                     self.projectiles.remove(i)
                     self.enemies.remove(j)
-                    if randint(1, 10) != 10:
-                        self.enemies.append(Enemy1())
-                    if randint(1, 5) == 1:
-                        self.enemies.append(Enemy1())
                     break
+        # Get all enemy spawns
+        self.enemies += self.lr.get_enemy_spawns(self.time, self.time + dt)
+        self.time += dt
         # Redraw the screen
         self.draw()
 
     def reset(self):
-        self.enemies = [Enemy1()]
-        self.towers = [Tower1(rand_pos()), Tower2(rand_pos()), Ballista(rand_pos()), AAGun(rand_pos())]
-        self.projectiles = []
+        self.enemies.clear()
+        self.towers.clear()
+        self.projectiles.clear()
+        self.time = 0
 
     # Draw the screen
     def draw(self):
