@@ -45,9 +45,9 @@ class Enemy:
             self.strength = 0
         return self.strength
 
-    #   Move method
-    #   def move(self, x, y):
-        #   self.pos = (x, y)
+
+    def set_pos(self, x, y):
+        self.pos = (x, y)
 
     # Gets position
     def getpos(self):
