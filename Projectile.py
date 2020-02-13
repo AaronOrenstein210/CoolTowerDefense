@@ -30,7 +30,7 @@ class Projectile1(Projectile):
         super().__init__(x, y)
         self.speed = 0.3
         self.angle = 0
-        self.IMG = pygame.transform.scale(pygame.image.load('res/projectile1.png'), (int(WINDOW * 0.01), int(WINDOW * 0.01)))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/baseProj.png'), (int(WINDOW * 0.01), int(WINDOW * 0.01)))
         self.damage = 1
 
     def getIMG(self):
@@ -55,7 +55,7 @@ class Projectile2(Projectile):
         super().__init__(x, y)
         self.speed = 0.3
         self.angle = 0
-        self.IMG = pygame.transform.scale(pygame.image.load('res/projectile2.png'), (WINDOW * 0.01, WINDOW * 0.01))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/baseProj.png'), (WINDOW * 0.01, WINDOW * 0.01))
         self.damage = 2
 
     def getIMG(self):
@@ -80,7 +80,7 @@ class Projectile3(Projectile):
         super().__init__(x, y)
         self.speed = 0.3
         self.angle = 0
-        self.IMG = pygame.transform.scale(pygame.image.load('res/projectile3.png'), (WINDOW * 0.01, WINDOW * 0.01))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/baseProj.png'), (WINDOW * 0.01, WINDOW * 0.01))
         self.damage = 3
 
     def getIMG(self):
@@ -105,7 +105,7 @@ class Projectile4(Projectile):
         super().__init__(x, y)
         self.speed = 0.3
         self.angle = 0
-        self.IMG = pygame.transform.scale(pygame.image.load('projectile4.png'), (WINDOW * 0.01, WINDOW * 0.01))
+        self.IMG = pygame.transform.scale(pygame.image.load('baseProj.png'), (WINDOW * 0.01, WINDOW * 0.01))
         self.damage = 5
 
     def getIMG(self):
