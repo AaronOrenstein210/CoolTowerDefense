@@ -18,7 +18,7 @@ enemies, towers = {}, {}
 
 def init():
     from inspect import getmembers, isclass
-    from MyLevelDriver import LevelDriver
+    from LevelDriver import LevelDriver
     global lvlDriver
     lvlDriver = LevelDriver()
 

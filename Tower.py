@@ -54,6 +54,7 @@ class DuckTower(Tower):
         proj.setAngle(self.getAngle(epos[0], epos[1]))
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
+            proj.tick()
 
     def getIMG(self):
         return self.IMG
@@ -69,7 +70,6 @@ class DuckTower(Tower):
 
     def tick(self, dt):
         self.countdown -= dt
-        en = None
         if len(data.lvlDriver.enemies) > 0:
             en = data.lvlDriver.enemies[0]  # change this
             if self.countdown <= 0:
@@ -86,11 +86,12 @@ class DuckTower2(Tower):
         self.countdown = 500
 
     def shoot(self, enemy):
-        proj = Projectile.Projectile2(self.pos[0], self.pos[1])  # change
+        proj = Projectile.Projectile2(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
+            proj.tick()
 
     def getIMG(self):
         return self.IMG
@@ -106,10 +107,11 @@ class DuckTower2(Tower):
 
     def tick(self, dt):
         self.countdown -= dt
-        en = data.lvlDriver.enemies[0]
-        if self.countdown <= 0:
-            self.restartCount()
-            self.shoot(en)
+        if len(data.lvlDriver.enemies) > 0:
+            en = data.lvlDriver.enemies[0]
+            if self.countdown <= 0:
+                self.restartCount()
+                self.shoot(en)
 
 
 class DuckTowerAA(Tower):
@@ -121,11 +123,12 @@ class DuckTowerAA(Tower):
         self.countdown = 2130
 
     def shoot(self, enemy):
-        proj = Projectile.Projectile3(self.pos[0], self.pos[1])  # change
+        proj = Projectile.Projectile3(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
+            proj.tick()
 
     def getIMG(self):
         return self.IMG
@@ -141,10 +144,11 @@ class DuckTowerAA(Tower):
 
     def tick(self, dt):
         self.countdown -= dt
-        en = data.lvlDriver.enemies[0]
-        if self.countdown <= 0:
-            self.restartCount()
-            self.shoot(en)
+        if len(data.lvlDriver.enemies) > 0:
+            en = data.lvlDriver.enemies[0]
+            if self.countdown <= 0:
+                self.restartCount()
+                self.shoot(en)
 
 
 class DuckTowerBallista(Tower):
@@ -156,11 +160,12 @@ class DuckTowerBallista(Tower):
         self.countdown = 1220
 
     def shoot(self, enemy):
-        proj = Projectile.Projectile4(self.pos[0], self.pos[1])  # change
+        proj = Projectile.Projectile4(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
+            proj.tick()
 
     def getIMG(self):
         return self.IMG
@@ -176,7 +181,8 @@ class DuckTowerBallista(Tower):
 
     def tick(self, dt):
         self.countdown -= dt
-        en = data.lvlDriver.enemies[0]
-        if self.countdown <= 0:
-            self.restartCount()
-            self.shoot(en)
+        if len(data.lvlDriver.enemies) > 0:
+            en = data.lvlDriver.enemies[0]
+            if self.countdown <= 0:
+                self.restartCount()
+                self.shoot(en)
