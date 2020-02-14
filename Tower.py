@@ -25,7 +25,7 @@ class DuckTower(Tower):
         proj = Projectile.Projectile1(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
+        proj.tick(1000 - self.countdown)
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
 
@@ -53,7 +53,7 @@ class DuckTower2(Tower):
         proj = Projectile.Projectile2(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
+        proj.tick(500 - self.countdown)
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
 
@@ -81,7 +81,7 @@ class DuckTowerAA(Tower):
         proj = Projectile.Projectile3(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
+        proj.tick(2130 - self.countdown)
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
 
@@ -110,7 +110,7 @@ class DuckTowerBallista(Tower):
         proj = Projectile.Projectile4(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
+        proj.tick(1220 - self.countdown)
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
 

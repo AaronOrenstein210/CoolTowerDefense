@@ -37,20 +37,28 @@ class Tower:
 
 
 class Projectile:
-    def __init__(self, x, y):  # t determines type of projectile
+    def __init__(self, x=0, y=0):  # t determines type of projectile
         self.pos = (x, y)
+        self.IMG = None
+        self.angle = 0  # default values
+        self.damage = 0
+        self.speed = 1
 
     def getIMG(self):
-        pass
+        return self.IMG
 
     def setAngle(self, ang):
-        pass
+        self.angle = ang
 
     def getDamage(self):
-        pass
+        return self.damage
 
     def tick(self, dt):
-        pass
+        d = (self.speed * dt) / 1000
+        dx = d * math.cos(self.angle)
+        dy = d * math.sin(self.angle)
+        self.pos = (self.pos[0] + dx, self.pos[1] + dy)
+        return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1
 
 
 class Enemy:
