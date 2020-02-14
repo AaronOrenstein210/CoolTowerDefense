@@ -14,6 +14,7 @@ SPAWNS = "saves/spawn_lists.bin"
 off_x, off_y = 0, 0
 lvlDriver = None
 enemies, towers = {}, {}
+my = True
 
 
 def init():
@@ -22,11 +23,14 @@ def init():
     global lvlDriver
     lvlDriver = LevelDriver()
 
+    global my
+    my = "MyLevelDriver" in str(LevelDriver)
+
     global enemies, towers
     # Compile a list of enemies and towers
     enemies.clear()
     towers.clear()
-    if "MyLevelDriver.LevelDriver" in str(LevelDriver):
+    if my:
         import MyObjects
         for name, obj in getmembers(MyObjects):
             if isclass(obj):

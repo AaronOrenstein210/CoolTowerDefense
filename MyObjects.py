@@ -1,33 +1,43 @@
+import pygame as pg
 from MyAbstracts import Enemy, Tower, Projectile
 import data
 
 # Enemies
-ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5 = range(5)
+ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5, TEST_ENEMY = range(6)
 
 
 class Enemy1(Enemy):
-    def __init__(self, pos=(0, 0)):
-        super().__init__(ENEMY_1, pos, v=.25, img="enemy1.png")
+    def __init__(self):
+        super().__init__(ENEMY_1, v=.25, img="enemy1.png")
 
 
 class Enemy2(Enemy):
-    def __init__(self, pos=(0, 0)):
-        super().__init__(ENEMY_2, pos, v=.3, img="enemy2.png")
+    def __init__(self):
+        super().__init__(ENEMY_2, v=.3, img="enemy2.png")
 
 
 class Enemy3(Enemy):
-    def __init__(self, pos=(0, 0)):
-        super().__init__(ENEMY_3, pos, v=.4, img="enemy3.png")
+    def __init__(self):
+        super().__init__(ENEMY_3, v=.4, img="enemy3.png")
 
 
 class Enemy4(Enemy):
-    def __init__(self, pos=(0, 0)):
-        super().__init__(ENEMY_4, pos, v=.55, img="enemy4.png")
+    def __init__(self):
+        super().__init__(ENEMY_4, v=.55, img="enemy4.png")
 
 
 class Enemy5(Enemy):
-    def __init__(self, pos=(0, 0)):
-        super().__init__(ENEMY_5, pos, v=.75, img="enemy5.png")
+    def __init__(self):
+        super().__init__(ENEMY_5, v=.75, img="enemy5.png")
+
+
+class TestEnemy(Enemy):
+    def __init__(self):
+        super().__init__(TEST_ENEMY, v=1.5, dim=(.05, .05))
+        r = self.img.get_rect()
+        self.img = pg.Surface(r.size, pg.SRCALPHA)
+        pg.draw.circle(self.img, (0, 0, 0), r.center, r.w // 2)
+        self.blit_img = self.img
 
 
 # Towers

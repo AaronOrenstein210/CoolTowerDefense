@@ -58,7 +58,6 @@ class LevelReader:
                 enemy.path += 1
                 enemy.progress = 0
                 if enemy.path >= len(self.paths):
-                    print("Lost a Life")
                     return False
             else:
                 enemy.progress += d / self.paths[enemy.path].length

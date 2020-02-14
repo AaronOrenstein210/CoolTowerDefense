@@ -30,7 +30,7 @@ def run_level():
                 return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
-            else:
+            elif data.my:
                 data.lvlDriver.handle_event(e)
         data.lvlDriver.tick(dt)
         pg.display.flip()
@@ -204,8 +204,11 @@ def choose_level():
                             d.blit(surfaces[i], rect.topleft, area=((0, -off[i]), rect.size))
                             break
             elif e.type == KEYUP and e.key == K_RETURN and -1 not in selected:
-                data.lvlDriver.reset()
-                data.lvlDriver.lr.set_level(*[level_data[i][selected[i]] for i in range(2)])
+                if data.my:
+                    data.lvlDriver.set_level(*[level_data[i][selected[i]] for i in range(2)])
+                else:
+                    data.lvlDriver.reset()
+                    data.lvlDriver.lr.set_level(*[level_data[i][selected[i]] for i in range(2)])
                 return True
         pg.display.flip()
 
