@@ -11,7 +11,7 @@ class Tower:
         self.pos = (x, y)
         self.IMG = None
 
-    def shoot(self, enemy):  # given an enemy, shoots at them
+    def shoot(self, enemy, dt):  # given an enemy, shoots at them
         pass
 
     def getIMG(self):
