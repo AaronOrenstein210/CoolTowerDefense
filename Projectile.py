@@ -10,101 +10,34 @@ WINDOW = data.screen_w
 
 
 class Projectile1(Projectile):
-    def __init__(self, x, y):
-        super().__init__(x, y)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.speed = 0.3
-        self.angle = 0
         self.IMG = pygame.transform.scale(pygame.image.load('res/baseProj.png'),
-                                          (int(WINDOW * 0.01), int(WINDOW * 0.01)))
+                                            (int(WINDOW * 0.01), int(WINDOW * 0.01)))
         self.damage = 1
-
-    def getIMG(self):
-        return self.IMG
-
-    def setAngle(self, ang):
-        self.angle = ang
-
-    def getDamage(self):
-        return self.damage
-
-    def tick(self, dt):
-        d = (self.speed * dt) / 1000
-        dx = d * math.cos(self.angle)
-        dy = d * math.sin(self.angle)
-        self.pos = (self.pos[0] + dx, self.pos[1] + dy)
-        return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1
 
 
 class Projectile2(Projectile):
-    def __init__(self, x, y):
-        super().__init__(x, y)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.speed = 0.3
-        self.angle = 0
         self.IMG = pygame.transform.scale(pygame.image.load('res/baseProj.png'), (WINDOW * 0.01, WINDOW * 0.01))
         self.damage = 2
 
-    def getIMG(self):
-        return self.IMG
-
-    def setAngle(self, ang):
-        self.angle = ang
-
-    def getDamage(self):
-        return self.damage
-
-    def tick(self, dt):
-        d = (self.speed * dt) / 1000
-        dx = d * math.cos(self.angle)
-        dy = d * math.sin(self.angle)
-        self.pos = (self.pos[0] + dx, self.pos[1] + dy)
-        return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1
-
 
 class Projectile3(Projectile):
-    def __init__(self, x, y):
-        super().__init__(x, y)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.speed = 0.3
-        self.angle = 0
         self.IMG = pygame.transform.scale(pygame.image.load('res/smallProj.png'), (WINDOW * 0.01, WINDOW * 0.01))
         self.damage = 3
 
-    def getIMG(self):
-        return self.IMG
-
-    def setAngle(self, ang):
-        self.angle = ang
-
-    def getDamage(self):
-        return self.damage
-
-    def tick(self, dt):
-        d = (self.speed * dt) / 1000
-        dx = d * math.cos(self.angle)
-        dy = d * math.sin(self.angle)
-        self.pos = (self.pos[0] + dx, self.pos[1] + dy)
-        return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1
-
 
 class Projectile4(Projectile):
-    def __init__(self, x, y):
-        super().__init__(x, y)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.speed = 0.3
-        self.angle = 0
         self.IMG = pygame.transform.scale(pygame.image.load('smallProj.png'), (WINDOW * 0.01, WINDOW * 0.01))
         self.damage = 5
 
-    def getIMG(self):
-        return self.IMG
-
-    def setAngle(self, ang):
-        self.angle = ang
-
-    def getDamage(self):
-        return self.damage
-
-    def tick(self, dt):
-        d = (self.speed * dt) / 1000
-        dx = d * math.cos(self.angle)
-        dy = d * math.sin(self.angle)
-        self.pos = (self.pos[0] + dx, self.pos[1] + dy)
-        return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1

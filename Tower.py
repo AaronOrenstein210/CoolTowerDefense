@@ -21,11 +21,11 @@ class DuckTower(Tower):
         self.range = 0.29 * WINDOW
         self.countdown = 1000
 
-    def shoot(self, enemy):
+    def shoot(self, enemy, dt):
         proj = Projectile.Projectile1(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
+        proj.tick(dt)
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
 
@@ -38,13 +38,13 @@ class DuckTower(Tower):
             en = data.lvlDriver.enemies[0]  # change this
             if self.countdown <= 0:
                 self.restartCount()
-                self.shoot(en)
+                self.shoot(en, dt)
 
 
 class DuckTower2(Tower):
     def __init__(self, **kwargs):
         super().__init__(TOWER_2, **kwargs)
-        self.IMG = pygame.transform.scale(pygame.image.load('res/duckTower2.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/duckTower2.png'), (int(WINDOW * 0.05), int(WINDOW * 0.05)))
         # radius
         self.range = 0.29 * WINDOW
         self.countdown = 500
@@ -72,7 +72,7 @@ class DuckTower2(Tower):
 class DuckTowerAA(Tower):
     def __init__(self, **kwargs):
         super().__init__(AAGUN, **kwargs)
-        self.IMG = pygame.transform.scale(pygame.image.load('res/duckAAGun.png'), (WINDOW * 0.05, WINDOW * 0.05))
+        self.IMG = pygame.transform.scale(pygame.image.load('res/duckAAGun.png'), (int(WINDOW * 0.05), int(WINDOW ** 0.05)))
         # radius
         self.range = 0.7 * WINDOW
         self.countdown = 2130
@@ -101,7 +101,7 @@ class DuckTowerBallista(Tower):
     def __init__(self, **kwargs):
         super().__init__(BALLISTA, **kwargs)
         self.IMG = pygame.transform.scale(pygame.image.load('res/duckTowerBallista.png'),
-                                          (WINDOW * 0.05, WINDOW * 0.05))
+                                          (int(WINDOW * 0.05), int(WINDOW * 0.05)))
         # radius
         self.range = 0.43 * WINDOW
         self.countdown = 1220
