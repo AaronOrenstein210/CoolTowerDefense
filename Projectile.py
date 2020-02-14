@@ -4,25 +4,9 @@
 import pygame
 import data
 import math
+import Abstract
 
 WINDOW = data.screen_w
-
-
-class Projectile:
-    def __init__(self, x, y):  # t determines type of projectile
-        self.pos = (x, y)
-
-    def getIMG(self):
-        pass
-
-    def setAngle(self, ang):
-        pass
-
-    def getDamage(self):
-        pass
-
-    def tick(self, dt):
-        pass
 
 
 class Projectile1(Projectile):

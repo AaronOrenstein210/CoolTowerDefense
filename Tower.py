@@ -5,6 +5,7 @@ import Projectile
 import pygame
 import math
 import data
+import Abstract
 
 WINDOW = data.screen_w
 # Defines a tower

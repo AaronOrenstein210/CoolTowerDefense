@@ -1,10 +1,12 @@
 import pygame
 import math
+import data
+
+WINDOW = data.screen_w
 
 class Tower:
     def __init__(self, x, y):  # t is a variable determining the type of tower
         self.pos = (x, y)
-        self.IMG = None
 
     def shoot(self, enemy):  # given an enemy, shoots at them
         pass
