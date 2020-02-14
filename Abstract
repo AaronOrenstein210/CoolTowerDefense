@@ -1,5 +1,5 @@
 import pygame
-import data
+import math
 
 class Tower:
     def __init__(self, x, y):  # t is a variable determining the type of tower
