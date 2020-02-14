@@ -9,37 +9,6 @@ import data
 WINDOW = data.screen_w
 # Defines a tower
 
-
-class Tower:
-    def __init__(self, x, y):  # t is a variable determining the type of tower
-        self.pos = (x, y)
-        self.IMG = None
-
-    def shoot(self, enemy):  # given an enemy, shoots at them
-        pass
-
-    def getIMG(self):
-        pass
-
-    def getAngle(self, x, y):
-        ratio = (self.pos[1] - y) / (self.pos[0] - x)
-        return math.atan(ratio)
-
-    def withinRange(self, x, y, r):
-        xval = self.pos[0] - x
-        yval = self.pos[1] - y
-        dist = (xval**2 + yval**2)**0.5
-        if dist <= r:
-            return True
-        return False
-
-    def restartCount(self):
-        pass
-
-    def tick(self, dt):
-        pass
-
-
 class DuckTower(Tower):
     def __init__(self, x, y):
         super().__init__(x, y)
@@ -52,9 +21,9 @@ class DuckTower(Tower):
         proj = Projectile.Projectile1(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
+        proj.tick()
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
-            proj.tick()
 
     def getIMG(self):
         return self.IMG
@@ -89,9 +58,9 @@ class DuckTower2(Tower):
         proj = Projectile.Projectile2(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
+        proj.tick()
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
-            proj.tick()
 
     def getIMG(self):
         return self.IMG
@@ -126,9 +95,9 @@ class DuckTowerAA(Tower):
         proj = Projectile.Projectile3(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
+        proj.tick()
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
-            proj.tick()
 
     def getIMG(self):
         return self.IMG
@@ -163,9 +132,9 @@ class DuckTowerBallista(Tower):
         proj = Projectile.Projectile4(self.pos[0], self.pos[1])
         epos = enemy.getpos()
         proj.setAngle(self.getAngle(epos[0], epos[1]))
+        proj.tick()
         if self.withinRange(epos[0], epos[1]):
             enemy.hit(proj.getDamage())
-            proj.tick()
 
     def getIMG(self):
         return self.IMG
