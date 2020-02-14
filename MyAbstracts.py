@@ -70,17 +70,14 @@ class Enemy(Sprite):
         self.path = self.progress = 0
         self.v = v
 
-        data.enemies[idx] = self
-
 
 class Tower(Sprite):
     def __init__(self, idx, pos, dim=(.1, .1), cooldown=1000, img=""):
         super().__init__(pos, dim, img)
+        self.idx = idx
 
         self.cooldown = cooldown
         self.timer = 0
-
-        data.towers[idx] = self
 
     def tick(self, dt):
         projectiles = []

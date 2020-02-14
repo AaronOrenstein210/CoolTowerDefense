@@ -2,12 +2,32 @@ from MyAbstracts import Enemy, Tower, Projectile
 import data
 
 # Enemies
-ENEMY_1 = 0
+ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5 = range(5)
 
 
 class Enemy1(Enemy):
     def __init__(self, pos=(0, 0)):
-        super().__init__(ENEMY_1, pos, img="duckBase.png")
+        super().__init__(ENEMY_1, pos, v=.25, img="enemy1.png")
+
+
+class Enemy2(Enemy):
+    def __init__(self, pos=(0, 0)):
+        super().__init__(ENEMY_2, pos, v=.3, img="enemy2.png")
+
+
+class Enemy3(Enemy):
+    def __init__(self, pos=(0, 0)):
+        super().__init__(ENEMY_3, pos, v=.4, img="enemy3.png")
+
+
+class Enemy4(Enemy):
+    def __init__(self, pos=(0, 0)):
+        super().__init__(ENEMY_4, pos, v=.55, img="enemy4.png")
+
+
+class Enemy5(Enemy):
+    def __init__(self, pos=(0, 0)):
+        super().__init__(ENEMY_5, pos, v=.75, img="enemy5.png")
 
 
 # Towers

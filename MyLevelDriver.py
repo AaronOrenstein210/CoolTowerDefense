@@ -2,6 +2,7 @@
 # Created by Kyle Doster
 from LevelReader import LevelReader as Read
 import pygame as pg
+from pygame.locals import *
 from random import uniform, randint
 from MyObjects import *
 import data
@@ -49,6 +50,20 @@ class LevelDriver:
         self.time += dt
         # Redraw the screen
         self.draw()
+
+    def handle_event(self, e):
+        if e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
+            pos = data.get_mouse_pos()
+            pos = [p / data.screen_w for p in pos]
+            num = randint(1, 10)
+            if num > 6:
+                self.towers.append(Tower1(pos=pos))
+            elif num > 3:
+                self.towers.append(Tower2(pos=pos))
+            elif num > 1:
+                self.towers.append(Ballista(pos=pos))
+            else:
+                self.towers.append(AAGun(pos=pos))
 
     def reset(self):
         self.enemies.clear()

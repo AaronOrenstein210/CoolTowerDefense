@@ -3,10 +3,10 @@
 
 from struct import pack, unpack
 from sys import byteorder
+from random import uniform
 import math
 import pygame as pg
 import data
-from MyObjects import Enemy1
 
 
 # Reads a level file and compiles the enemy path
@@ -16,7 +16,6 @@ class LevelReader:
         self.paths = []
         self.spawn_list = []
 
-    # TODO: Missing Path
     def get_enemy_spawns(self, t_i, t_f):
         spawns = []
         for spawn in self.spawn_list:
@@ -24,12 +23,26 @@ class LevelReader:
                 t_i -= spawn.duration
                 t_f -= spawn.duration
             elif spawn.duration >= t_f:
-                for i in range(spawn.get_count(t_f) - spawn.get_count(t_i)):
-                    spawns.append(Enemy1())
+                for i in range(abs(spawn.get_count(t_f) - spawn.get_count(t_i))):
+                    num = uniform(0, 1)
+                    for key in spawn.chances.keys():
+                        val = spawn.chances[key]
+                        if val < num:
+                            num -= val
+                        else:
+                            spawns.append(data.enemies[key]())
+                            break
                 break
             else:
-                for i in range(spawn.get_count(spawn.duration) - spawn.get_count(t_i)):
-                    spawns.append(Enemy1())
+                for i in range(abs(spawn.get_count(spawn.duration) - spawn.get_count(t_i))):
+                    num = uniform(0, 1)
+                    for key in spawn.chances.keys():
+                        val = spawn.chances[key]
+                        if val < num:
+                            num -= val
+                        else:
+                            spawns.append(data.enemies[key]())
+                            break
                 t_i = 0
                 t_f -= spawn.duration
         return spawns
@@ -38,7 +51,7 @@ class LevelReader:
     # Moves an enemy given its position and distance to be travelled
     # Mostly just coordinates the path's various segments
     def move(self, enemy, dt):
-        d = enemy.velocity * dt / 1000
+        d = enemy.v * dt / 1000
         while d > 0:
             to_end = self.paths[enemy.path].length * (1 - enemy.progress)
             if d >= to_end:
@@ -50,16 +63,16 @@ class LevelReader:
             else:
                 enemy.progress += d / self.paths[enemy.path].length
             d -= to_end
-        enemy.set_pos(*self.paths[enemy.path].get_pos(enemy.progress))
+        enemy.set_pos(self.paths[enemy.path].get_pos(enemy.progress))
         return True
 
     def draw_surface(self):
         from data import screen_w
         self.surface = draw_paths(screen_w, self.paths)
 
-    def load(self, path_data, spawn_data):
-        self.paths = load_paths(path_data)
-        self.spawn_list = load_spawn_list(spawn_data)
+    def set_level(self, paths, spawn_list):
+        self.paths = paths
+        self.spawn_list = spawn_list
         self.draw_surface()
 
 
@@ -81,14 +94,12 @@ def load_paths(file_data):
             break
         # Read path data
         file_data = file_data[1:]
-        num_bytes = paths[-1].num_bytes
-        if len(file_data) < num_bytes:
-            print("Expected {} bytes, found {} bytes".format(num_bytes, len(file_data)))
+        try:
+            file_data = paths[-1].from_bytes(file_data)
+        except IndexError:
+            print("Missing Bytes")
             break
-        else:
-            paths[-1].from_bytes(file_data[:num_bytes])
-            file_data = file_data[num_bytes:]
-    return paths
+    return paths, file_data
 
 
 # Draws a list of paths
@@ -137,13 +148,18 @@ def load_spawn_list(file_data):
     spawn_list = []
     num = int.from_bytes(file_data[0:1], byteorder)
     file_data = file_data[1:]
-    if len(file_data) < num * 5:
-        print("Not enough bytes")
-    else:
-        for i in range(num):
-            spawn_list.append(spawn_from_bytes(file_data[:5]))
-            file_data = file_data[5:]
-    return spawn_list
+    for i in range(num):
+        if len(file_data) == 0:
+            print("Missing Bytes")
+            break
+        try:
+            temp = Spawn()
+            file_data = temp.from_bytes(file_data)
+            spawn_list.append(temp)
+        except IndexError:
+            print("Missing Bytes")
+            break
+    return spawn_list, file_data
 
 
 # Draws a spawn list
@@ -166,7 +182,6 @@ START, LINE, CIRCLE = range(3)
 class Path:
     def __init__(self):
         self.idx = 0
-        self.num_bytes = 0
         self.length = 0
 
     def get_pos(self, progress):
@@ -182,14 +197,13 @@ class Path:
         return self.idx.to_bytes(1, byteorder)
 
     def from_bytes(self, path_data):
-        pass
+        return ""
 
 
 class Line(Path):
     def __init__(self, start=(0, 0), end=(0, 0)):
         super().__init__()
         self.idx = LINE
-        self.num_bytes = 16
         self.start = start
         self.end = end
 
@@ -208,8 +222,9 @@ class Line(Path):
 
     def from_bytes(self, path_data):
         self.start = unpack('f' * 2, path_data[:8])
-        self.end = unpack('f' * 2, path_data[8:])
+        self.end = unpack('f' * 2, path_data[8:16])
         self.length = data.get_distance(self.start, self.end)
+        return path_data[16:]
 
 
 class Circle(Path):
@@ -218,7 +233,6 @@ class Circle(Path):
     def __init__(self):
         super().__init__()
         self.idx = CIRCLE
-        self.num_bytes = 20
         self.center, self.radius = [0, 0], 0
         self.theta_i, self.theta_f = 0, 2 * math.pi
 
@@ -239,15 +253,15 @@ class Circle(Path):
 
     def from_bytes(self, path_data):
         self.center = unpack('f' * 2, path_data[:8])
-        self.radius, self.theta_i, self.theta_f = unpack('f' * 3, path_data[8:])
+        self.radius, self.theta_i, self.theta_f = unpack('f' * 3, path_data[8:20])
         self.length = abs((self.theta_f - self.theta_i) * self.radius)
+        return path_data[20:]
 
 
 class Start(Path):
     def __init__(self, pos=(0, 0)):
         super().__init__()
         self.idx = START
-        self.num_bytes = 8
         self.pos = pos
 
     def get_start(self):
@@ -260,7 +274,8 @@ class Start(Path):
         return super().to_bytes() + pack('f' * 2, *self.pos)
 
     def from_bytes(self, path_data):
-        self.pos = unpack('f' * 2, path_data)
+        self.pos = unpack('f' * 2, path_data[:8])
+        return path_data[8:]
 
 
 # Stores enemy data for spawning enemies
@@ -282,6 +297,12 @@ class Spawn:
         self.duration = duration
         self.model = model
         self.flip = flip
+        # Dictionary containing chances to spawn each enemy type
+        self.chances = {}
+        for key in data.enemies.keys():
+            self.chances[key] = 0
+        from MyObjects import ENEMY_1
+        self.chances[ENEMY_1] = 1
 
     @property
     def y_to_count(self):
@@ -315,17 +336,32 @@ class Spawn:
     def to_bytes(self):
         result = self.num_enemies.to_bytes(1, byteorder) + self.duration.to_bytes(2, byteorder)
         result += self.model.to_bytes(1, byteorder) + self.flip.to_bytes(1, byteorder)
+        result += len(self.chances.keys()).to_bytes(1, byteorder)
+        for key in self.chances.keys():
+            result += key.to_bytes(1, byteorder)
+            result += pack('f', self.chances[key])
         return result
 
-
-def spawn_from_bytes(enemy_data):
-    if len(enemy_data) != 5:
-        print("Data contains {} bytes, should contain 5".format(len(enemy_data)))
-    num_enemies = int.from_bytes(enemy_data[0:1], byteorder)
-    duration = int.from_bytes(enemy_data[1:3], byteorder)
-    model = int.from_bytes(enemy_data[3:4], byteorder)
-    flip = bool.from_bytes(enemy_data[4:5], byteorder)
-    return Spawn(enemy_count=num_enemies, duration=duration, model=model, flip=flip)
+    def from_bytes(self, enemy_data):
+        if len(enemy_data) < 6:
+            print("Missing Bytes")
+            return ""
+        self.num_enemies = int.from_bytes(enemy_data[0:1], byteorder)
+        self.duration = int.from_bytes(enemy_data[1:3], byteorder)
+        self.model = int.from_bytes(enemy_data[3:4], byteorder)
+        self.flip = bool.from_bytes(enemy_data[4:5], byteorder)
+        dict_len = int.from_bytes(enemy_data[5:6], byteorder)
+        enemy_data = enemy_data[6:]
+        for i in range(dict_len):
+            if len(enemy_data) < 5:
+                print("Missing Bytes")
+                return ""
+            else:
+                key = int.from_bytes(enemy_data[:1], byteorder)
+                val = unpack('f', enemy_data[1:5])
+                self.chances[key] = val[0]
+                enemy_data = enemy_data[5:]
+        return enemy_data
 
 
 constructors = {START: Start, LINE: Line, CIRCLE: Circle}

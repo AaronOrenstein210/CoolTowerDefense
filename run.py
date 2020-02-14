@@ -13,6 +13,12 @@ data.init()
 pg.display.set_mode((data.MIN_W, data.MIN_W), RESIZABLE)
 
 
+# Main function which helps specific ui screens release their variables
+def main():
+    while choose_level():
+        run_level()
+
+
 # Runs current level
 def run_level():
     time = pg.time.get_ticks()
@@ -24,14 +30,10 @@ def run_level():
                 return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
+            else:
+                data.lvlDriver.handle_event(e)
         data.lvlDriver.tick(dt)
         pg.display.flip()
-
-
-# Main function which helps specific ui screens release their variables
-def main():
-    while choose_level():
-        run_level()
 
 
 # Runs level selection screen
@@ -44,48 +46,15 @@ def choose_level():
             file_data = file.read()
         # Loop through the data
         while len(file_data) > 0:
-            # Get the number of paths for this level
-            num_paths = int.from_bytes(file_data[0:1], byteorder)
-            byte_pos = 1
-            # Get data for each path
-            for i in range(num_paths):
-                # Make sure the path data is there
-                if len(file_data) == 0:
-                    print("Missing path data")
-                    file_data = ""
-                    break
-                else:
-                    # Get path type
-                    path_type = int.from_bytes(file_data[byte_pos:byte_pos + 1], byteorder)
-                    byte_pos += 1
-                    # Make sure path type is valid
-                    if path_type in constructors.keys():
-                        # Get path data and make sure it exists
-                        num_bytes = constructors[path_type]().num_bytes
-                        if len(file_data) < num_bytes:
-                            print("Missing path data")
-                            break
-                        else:
-                            byte_pos += num_bytes
-                    else:
-                        print("Unknown path type")
-                        file_data = ""
-                        break
-            level_data[levels].append(file_data[:byte_pos])
-            file_data = file_data[byte_pos:]
+            arr, file_data = load_paths(file_data)
+            level_data[levels].append(arr)
     if isfile(data.SPAWNS):
         with open(data.SPAWNS, 'rb') as file:
             file_data = file.read()
         # Loop through data
         while len(file_data) > 0:
-            num_spawns = int.from_bytes(file_data[0:1], byteorder)
-            num_bytes = num_spawns * 5 + 1
-            if len(file_data) < num_bytes:
-                print("Missing Bytes")
-                file_data = ""
-            else:
-                level_data[spawns].append(file_data[:num_bytes])
-                file_data = file_data[num_bytes:]
+            arr, file_data = load_spawn_list(file_data)
+            level_data[spawns].append(arr)
 
     surfaces = [pg.Surface] * 2
     rects = [pg.Rect(0, 0, 0, 0)] * 2
@@ -188,10 +157,9 @@ def choose_level():
                     if 0 <= idx < len(array) and idx != hovering[i]:
                         hovering[i] = idx
                         if i == levels:
-                            previews[i] = draw_paths(data.screen_w // 4, load_paths(array[idx]))
+                            previews[i] = draw_paths(data.screen_w // 4, array[idx])
                         else:
-                            previews[i] = draw_spawn_list(rects[i].w - 1, data.screen_w // 4,
-                                                          load_spawn_list(array[idx]))
+                            previews[i] = draw_spawn_list(rects[i].w - 1, data.screen_w // 4, array[idx])
                         pg.display.get_surface().fill((0, 0, 0), preview_rects[i])
                         pg.display.get_surface().blit(previews[i], preview_rects[i])
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
@@ -215,12 +183,13 @@ def choose_level():
                         elif idx == len(level_data[i]):
                             result = new_level() if i == levels else new_enemy_list()
                             if result != "":
-                                level_data[i].append(result)
+                                obj, result = load_paths(result) if i == levels else load_spawn_list(result)
+                                level_data[i].append(obj)
                             resize()
                         break
             elif e.type == KEYUP and e.key == K_RETURN and -1 not in selected:
                 data.lvlDriver.reset()
-                data.lvlDriver.lr.load(*[level_data[i][selected[i]] for i in range(2)])
+                data.lvlDriver.lr.set_level(*[level_data[i][selected[i]] for i in range(2)])
                 return True
         pg.display.flip()
 
@@ -388,61 +357,99 @@ def new_enemy_list():
 
     rects = {"Count": Rect(0, 0, 0, 0), "Time": Rect(0, 0, 0, 0),
              "Model": Rect(0, 0, 0, 0), "Flip": Rect(0, 0, 0, 0),
-             "Add": Rect(0, 0, 0, 0), "Delete": Rect(0, 0, 0, 0), "Save": Rect(0, 0, 0, 0),
-             "Current": Rect(0, 0, 0, 0), "Timeline": Rect(0, 0, 0, 0)}
+             "Add": Rect(0, 0, 0, 0), "Clear": Rect(0, 0, 0, 0),
+             "Save": Rect(0, 0, 0, 0), "Enemies": Rect(0, 0, 0, 0),
+             "Current": Rect(0, 0, 0, 0), "Timeline": Rect(0, 0, 0, 0),
+             "SlideBar": Rect(0, 0, 0, 0), "Slider": Rect(0, 0, 0, 0)}
     selected = "Count"
     model_names = {LINEAR: "Linear", PARABOLIC: "Parabolic",
                    EXPONENTIAL: "Exponential"}
     models = list(model_names.keys())
     model_idx = 0
+    surfaces = {"Enemies": pg.Surface}
+    slider_ends = [0, 0]
+    slider_selected = -1
+    slider_off = 0
+    # Compile a list of enemy images
+    enemy_imgs = {}
+    for key in data.enemies.keys():
+        enemy_imgs[key] = data.enemies[key]().img
 
     show_cursor = True
 
     def resize():
         w = data.screen_w
-        rects["Current"] = Rect(w // 20 + data.off_x, w * 3 // 8 + data.off_y, w * 9 // 10, w // 4)
-        rects["Timeline"] = Rect(w // 20 + data.off_x, w * 17 // 24 + data.off_y, w * 9 // 10, w // 4)
-        # TODO: set rect dims
         fifteenth = w // 15
-        twentieth = w // 20
-        rects["Count"] = Rect(twentieth * 2 + data.off_x, fifteenth + data.off_y, twentieth * 7, fifteenth)
-        rects["Time"] = rects["Count"].move(twentieth * 9, 0)
-        rects["Model"] = rects["Count"].move(0, fifteenth)
-        rects["Flip"] = rects["Model"].move(twentieth * 9, 0)
-        rects["Add"] = Rect(twentieth * 2 + data.off_x, fifteenth * 4 + data.off_y, twentieth * 4, fifteenth)
-        rects["Delete"] = rects["Add"].move(twentieth * 6, 0)
-        rects["Save"] = rects["Delete"].move(twentieth * 6, 0)
+        # Define rectangles
+        rects["Count"] = Rect(data.off_x, data.off_y, w // 4, fifteenth)
+        rects["Time"] = rects["Count"].move(0, fifteenth)
+        rects["Model"] = rects["Time"].move(0, fifteenth)
+        rects["Flip"] = rects["Model"].move(0, fifteenth)
+        rects["Current"] = Rect(rects["Count"].right + w // 16, data.off_y + fifteenth // 2, w * 5 // 8, fifteenth * 3)
+        rects["Enemies"] = Rect(rects["Current"].x, rects["Flip"].bottom + fifteenth // 2, rects["Current"].w,
+                                fifteenth * 5)
+        rects["Add"] = Rect(data.off_x, rects["Enemies"].y + fifteenth // 2, rects["Flip"].w, fifteenth)
+        rects["Clear"] = rects["Add"].move(0, fifteenth * 3 // 2)
+        rects["Save"] = rects["Clear"].move(0, fifteenth * 3 // 2)
+        rects["Timeline"] = Rect(data.off_x + fifteenth, w * 2 // 3 + data.off_y, fifteenth * 13,
+                                 fifteenth * 5)
+        # Draw enemy sliders
+        lineh = rects["Enemies"].h // 5
+        linew = rects["Enemies"].w
+        slider_ends[0] = (linew - lineh) // 20 + lineh
+        slider_w = (linew - lineh) * 9 // 10
+        slider_ends[1] = slider_ends[0] + slider_w
+        rects["SlideBar"] = pg.Rect(slider_ends[0], 0, slider_ends[1] - slider_ends[0], lineh)
+        rects["Slider"] = pg.Rect(0, 0, (linew - lineh) // 20, lineh * 9 // 10)
+        rects["Slider"].centerx = slider_ends[0]
+        s_ = pg.Surface((linew, lineh * len(current.chances.keys())))
+        # Draw surface
+        for i, k in enumerate(current.chances.keys()):
+            rects["Slider"].top = i * lineh
+            r_ = rects["Slider"].move(int(rects["SlideBar"].w * current.chances[k]), 0)
+            # Draw enemy image
+            img = data.scale_to_fit(enemy_imgs[k], lineh, lineh)
+            img_rect = img.get_rect(center=(lineh // 2, r_.centery))
+            s_.blit(img, img_rect)
+            # Draw slider
+            pg.draw.line(s_, (0, 255, 0), (slider_ends[0], r_.centery), r_.center, 2)
+            pg.draw.rect(s_, (128, 128, 128), r_)
+        surfaces["Enemies"] = s_
         draw()
 
     def draw():
         d = pg.display.get_surface()
         d.fill((0, 0, 0))
         # Draw current timeline
-        r = rects["Current"]
-        d.blit(current.get_img(*r.size), r.topleft)
+        r_ = rects["Current"]
+        d.blit(current.get_img(*r_.size), r_.topleft)
         # Draw entire timeline
         d.blit(draw_spawn_list(*rects["Timeline"].size, spawns), rects["Timeline"].topleft)
         # Draw text for number of spawns
-        text = "{}{} Enemies".format(current.num_enemies, "|" if selected == "Count" and show_cursor else "")
+        text = "Enemies: {}{}".format(current.num_enemies, "|" if selected == "Count" and show_cursor else "")
         color_ = (255, 255, 255) if current.num_enemies >= 1 else (255, 0, 0)
-        draw_text(text, rects["Count"], d, color_=color_)
+        draw_text(text, rects["Count"], d, text_color=color_)
         # Draw text for duration
-        text = "Over {}{}ms".format(current.duration, "|" if selected == "Time" and show_cursor else "")
+        text = "Duration: {}{}ms".format(current.duration, "|" if selected == "Time" and show_cursor else "")
         color_ = (255, 255, 255) if current.duration >= 100 else (255, 0, 0)
-        draw_text(text, rects["Time"], d, color_=color_)
+        draw_text(text, rects["Time"], d, text_color=color_)
         # Outline either the enemy count or duration
         pg.draw.rect(d, (200, 200, 0), rects[selected], 2)
         # Draw text for model and flip button
-        draw_text(model_names[current.model], rects["Model"], d)
-        draw_text("Reverse", rects["Flip"], d)
+        draw_text("Model: " + model_names[current.model], rects["Model"], d, text_color=(0, 0, 0),
+                  bkgrnd_color=(150, 150, 150))
+        draw_text("Flip: " + str(current.flip), rects["Flip"], d, text_color=(0, 0, 0), bkgrnd_color=(150, 150, 150))
         # Draw add, delete, and save buttons
-        for string in ["Add", "Delete", "Save"]:
+        for string in ["Add", "Clear", "Save"]:
             draw_text(string, rects[string], d)
+        d.blit(surfaces["Enemies"], rects["Enemies"].topleft, area=((0, slider_off), rects["Enemies"].size))
 
-    def draw_text(text, rect, surface, color_=(255, 255, 255)):
+    def draw_text(text, rect, surface, text_color=(255, 255, 255), bkgrnd_color=()):
         font = data.get_scaled_font(*rect.size, text)
-        text_s = font.render(text, 1, color_)
+        text_s = font.render(text, 1, text_color)
         text_rect = text_s.get_rect(center=rect.center)
+        if len(bkgrnd_color) == 3:
+            surface.fill(bkgrnd_color, rect)
         surface.blit(text_s, text_rect)
 
     resize()
@@ -459,6 +466,7 @@ def new_enemy_list():
                 data.resize(e.w, e.h, False)
                 resize()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
+                slider_selected = -1
                 # Offset is include in the rectangles
                 pos = pg.mouse.get_pos()
                 if rects["Count"].collidepoint(*pos):
@@ -474,8 +482,8 @@ def new_enemy_list():
                     if current.num_enemies >= 1 and current.duration >= 100:
                         spawns.append(current)
                         current = Spawn()
-                elif rects["Delete"].collidepoint(*pos):
-                    print("Delete")
+                elif rects["Clear"].collidepoint(*pos):
+                    current = Spawn()
                 elif rects["Save"].collidepoint(*pos):
                     if len(spawns) > 0:
                         byte_data = len(spawns).to_bytes(1, byteorder)
@@ -487,6 +495,40 @@ def new_enemy_list():
                 else:
                     continue
                 draw()
+            elif e.type == MOUSEBUTTONDOWN and e.button == BUTTON_LEFT:
+                pos = pg.mouse.get_pos()
+                if rects["Enemies"].collidepoint(*pos):
+                    r = rects["Enemies"]
+                    pos = [pos[0] - r.x, pos[1] - r.y + slider_off]
+                    # Make sure we are clicking on the slider
+                    if slider_ends[0] <= pos[0] <= slider_ends[1]:
+                        idx = pos[1] * 5 // r.h
+                        if idx < len(current.chances.keys()):
+                            slider_selected = idx
+            elif e.type == MOUSEMOTION and slider_selected != -1:
+                pos = pg.mouse.get_pos()
+                pos = [pos[0] - rects["Enemies"].x, pos[1] - rects["Enemies"].y + slider_off]
+                # Get slider fractions
+                frac = (pos[0] - slider_ends[0]) / rects["SlideBar"].w
+                max_val = 1
+                for key in current.chances.keys():
+                    if key != slider_selected:
+                        max_val -= current.chances[key]
+                if frac < 0:
+                    frac = 0
+                elif frac > max_val:
+                    frac = max_val
+                idx = slider_selected
+                current.chances[idx] = frac
+                # Update slider
+                line_h = rects["SlideBar"].h
+                surfaces["Enemies"].fill((0, 0, 0), (line_h, idx * line_h, rects["Enemies"].w - line_h, line_h))
+                rects["Slider"].top = idx * line_h
+                r = rects["Slider"].move(int(rects["SlideBar"].w * frac), 0)
+                pg.draw.line(surfaces["Enemies"], (0, 255, 0), (slider_ends[0], r.centery), r.center, 2)
+                pg.draw.rect(surfaces["Enemies"], (128, 128, 128), r)
+                pg.display.get_surface().blit(surfaces["Enemies"], rects["Enemies"].topleft,
+                                              area=((0, slider_off), rects["Enemies"].size))
             elif e.type == KEYUP:
                 if e.key == K_BACKSPACE:
                     if selected == "Count":

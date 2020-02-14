@@ -22,7 +22,7 @@ def init():
     global lvlDriver
     lvlDriver = LevelDriver()
 
-    if str(LevelDriver) == "MyLevelDriver.LevelDriver":
+    if "MyLevelDriver.LevelDriver" in str(LevelDriver):
         import MyObjects
         global enemies, towers
         # Compile a list of enemies and towers
@@ -31,8 +31,11 @@ def init():
         for name, obj in getmembers(MyObjects):
             if isclass(obj):
                 if "MyObjects" in str(obj):
-                    # The constructor automatically adds the item to the list
-                    obj()
+                    # Add Constructor to list
+                    if "Enemy" in str(obj):
+                        enemies[obj().idx] = obj
+                    elif "Tower" in str(obj):
+                        towers[obj().idx] = obj
 
 
 # Resizes screen
@@ -54,6 +57,21 @@ def resize(w, h, resize_driver):
             img_dim = (int(i.dim[0] * screen_w), int(i.dim[1] * screen_w))
             i.img = pg.transform.scale(i.img, img_dim)
             i.blit_img = pg.transform.rotate(i.img, i.angle)
+
+
+# Resizes surface to fit within desired dimensions, keeping surface's w:h ratio
+def scale_to_fit(s, w=-1, h=-1):
+    import pygame as pg
+    if w == -1 and h == -1:
+        return s
+    dim = s.get_size()
+    if w == -1:
+        frac = h / dim[1]
+    elif h == -1:
+        frac = w / dim[0]
+    else:
+        frac = min(w / dim[0], h / dim[1])
+    return pg.transform.scale(s, (int(frac * dim[0]), int(frac * dim[1])))
 
 
 # Returns mouse position in relation to the game screen
