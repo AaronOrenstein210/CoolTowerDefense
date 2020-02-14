@@ -162,31 +162,47 @@ def choose_level():
                             previews[i] = draw_spawn_list(rects[i].w - 1, data.screen_w // 4, array[idx])
                         pg.display.get_surface().fill((0, 0, 0), preview_rects[i])
                         pg.display.get_surface().blit(previews[i], preview_rects[i])
-            elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
-                pos = pg.mouse.get_pos()
-                for i, rect in enumerate(rects):
-                    if rect.collidepoint(*pos):
-                        pos = [pos[0] - rect.x, pos[1] - rect.y]
-                        item_w = rect.w // row_len
-                        row, col = pos[1] // item_w, pos[0] // item_w
-                        idx = row * row_len + col
-                        if idx < len(level_data[i]):
-                            if selected[i] != -1:
-                                row_, col_ = selected[i] // row_len, selected[i] % row_len
-                                pg.draw.rect(pg.display.get_surface(), (0, 0, 0),
-                                             (rect.x + col_ * item_w, rect.y + row_ * item_w, item_w, item_w), 2)
-                            selected[i] = idx if idx != selected[i] else -1
-                            if selected[i] != -1:
-                                pg.draw.rect(pg.display.get_surface(), (255, 255, 0),
-                                             (rect.x + col * item_w, rect.y + row * item_w, item_w, item_w), 2)
-                            update_title()
-                        elif idx == len(level_data[i]):
-                            result = new_level() if i == levels else new_enemy_list()
-                            if result != "":
-                                obj, result = load_paths(result) if i == levels else load_spawn_list(result)
-                                level_data[i].append(obj)
-                            resize()
-                        break
+            elif e.type == MOUSEBUTTONUP:
+                if e.button == BUTTON_LEFT:
+                    pos = pg.mouse.get_pos()
+                    for i, rect in enumerate(rects):
+                        if rect.collidepoint(*pos):
+                            pos = [pos[0] - rect.x, pos[1] - rect.y]
+                            item_w = rect.w // row_len
+                            row, col = pos[1] // item_w, pos[0] // item_w
+                            idx = row * row_len + col
+                            if idx < len(level_data[i]):
+                                if selected[i] != -1:
+                                    row_, col_ = selected[i] // row_len, selected[i] % row_len
+                                    pg.draw.rect(pg.display.get_surface(), (0, 0, 0),
+                                                 (rect.x + col_ * item_w, rect.y + row_ * item_w, item_w, item_w), 2)
+                                selected[i] = idx if idx != selected[i] else -1
+                                if selected[i] != -1:
+                                    pg.draw.rect(pg.display.get_surface(), (255, 255, 0),
+                                                 (rect.x + col * item_w, rect.y + row * item_w, item_w, item_w), 2)
+                                update_title()
+                            elif idx == len(level_data[i]):
+                                result = new_level() if i == levels else new_enemy_list()
+                                if result != "":
+                                    obj, result = load_paths(result) if i == levels else load_spawn_list(result)
+                                    level_data[i].append(obj)
+                                resize()
+                            break
+                elif e.button == BUTTON_WHEELUP or e.button == BUTTON_WHEELDOWN:
+                    pos = pg.mouse.get_pos()
+                    up = e.button == BUTTON_WHEELUP
+                    for i, rect in enumerate(rects):
+                        if rect.collidepoint(*pos):
+                            off[i] += (data.screen_w // (row_len * 6)) * (1 if up else -1)
+                            max_off = rect.h - surfaces[i].get_size()[1]
+                            if off[i] < max_off:
+                                off[i] = max_off
+                            if off[i] > 0:
+                                off[i] = 0
+                            d = pg.display.get_surface()
+                            d.fill((0, 0, 0), rect)
+                            d.blit(surfaces[i], rect.topleft, area=((0, -off[i]), rect.size))
+                            break
             elif e.type == KEYUP and e.key == K_RETURN and -1 not in selected:
                 data.lvlDriver.reset()
                 data.lvlDriver.lr.set_level(*[level_data[i][selected[i]] for i in range(2)])
@@ -394,7 +410,7 @@ def new_enemy_list():
         rects["Timeline"] = Rect(data.off_x + fifteenth, w * 2 // 3 + data.off_y, fifteenth * 13,
                                  fifteenth * 5)
         # Draw enemy sliders
-        lineh = rects["Enemies"].h // 5
+        lineh = rects["Enemies"].h // 3
         linew = rects["Enemies"].w
         slider_ends[0] = (linew - lineh) // 20 + lineh
         slider_w = (linew - lineh) * 9 // 10
@@ -442,7 +458,7 @@ def new_enemy_list():
         # Draw add, delete, and save buttons
         for string in ["Add", "Clear", "Save"]:
             draw_text(string, rects[string], d)
-        d.blit(surfaces["Enemies"], rects["Enemies"].topleft, area=((0, slider_off), rects["Enemies"].size))
+        d.blit(surfaces["Enemies"], rects["Enemies"].topleft, area=((0, -slider_off), rects["Enemies"].size))
 
     def draw_text(text, rect, surface, text_color=(255, 255, 255), bkgrnd_color=()):
         font = data.get_scaled_font(*rect.size, text)
@@ -465,44 +481,57 @@ def new_enemy_list():
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, False)
                 resize()
-            elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
-                slider_selected = -1
-                # Offset is include in the rectangles
-                pos = pg.mouse.get_pos()
-                if rects["Count"].collidepoint(*pos):
-                    selected = "Count"
-                elif rects["Time"].collidepoint(*pos):
-                    selected = "Time"
-                elif rects["Model"].collidepoint(*pos):
-                    model_idx = (model_idx + 1) % len(models)
-                    current.model = models[model_idx]
-                elif rects["Flip"].collidepoint(*pos):
-                    current.flip = not current.flip
-                elif rects["Add"].collidepoint(*pos):
-                    if current.num_enemies >= 1 and current.duration >= 100:
-                        spawns.append(current)
+            elif e.type == MOUSEBUTTONUP:
+                if e.button == BUTTON_LEFT:
+                    slider_selected = -1
+                    # Offset is include in the rectangles
+                    pos = pg.mouse.get_pos()
+                    if rects["Count"].collidepoint(*pos):
+                        selected = "Count"
+                    elif rects["Time"].collidepoint(*pos):
+                        selected = "Time"
+                    elif rects["Model"].collidepoint(*pos):
+                        model_idx = (model_idx + 1) % len(models)
+                        current.model = models[model_idx]
+                    elif rects["Flip"].collidepoint(*pos):
+                        current.flip = not current.flip
+                    elif rects["Add"].collidepoint(*pos):
+                        if current.num_enemies >= 1 and current.duration >= 100:
+                            spawns.append(current)
+                            current = Spawn()
+                    elif rects["Clear"].collidepoint(*pos):
                         current = Spawn()
-                elif rects["Clear"].collidepoint(*pos):
-                    current = Spawn()
-                elif rects["Save"].collidepoint(*pos):
-                    if len(spawns) > 0:
-                        byte_data = len(spawns).to_bytes(1, byteorder)
-                        for s in spawns:
-                            byte_data += s.to_bytes()
-                        with open(data.SPAWNS, "ab+") as file:
-                            file.write(byte_data)
-                        return byte_data
-                else:
-                    continue
-                draw()
+                    elif rects["Save"].collidepoint(*pos):
+                        if len(spawns) > 0:
+                            byte_data = len(spawns).to_bytes(1, byteorder)
+                            for s in spawns:
+                                byte_data += s.to_bytes()
+                            with open(data.SPAWNS, "ab+") as file:
+                                file.write(byte_data)
+                            return byte_data
+                    else:
+                        continue
+                    draw()
+                elif e.button == BUTTON_WHEELDOWN or e.button == BUTTON_WHEELUP:
+                    if rects["Enemies"].collidepoint(*pg.mouse.get_pos()):
+                        slider_off += rects["SlideBar"].h // 3 * (1 if e.button == BUTTON_WHEELUP else -1)
+                        max_off = rects["Enemies"].h - surfaces["Enemies"].get_size()[1]
+                        if slider_off < max_off:
+                            slider_off = max_off
+                        if slider_off > 0:
+                            slider_off = 0
+                        d = pg.display.get_surface()
+                        d.fill((0, 0, 0), rects["Enemies"])
+                        d.blit(surfaces["Enemies"], rects["Enemies"].topleft,
+                               area=((0, -slider_off), rects["Enemies"].size))
             elif e.type == MOUSEBUTTONDOWN and e.button == BUTTON_LEFT:
                 pos = pg.mouse.get_pos()
                 if rects["Enemies"].collidepoint(*pos):
                     r = rects["Enemies"]
-                    pos = [pos[0] - r.x, pos[1] - r.y + slider_off]
+                    pos = [pos[0] - r.x, pos[1] - r.y - slider_off]
                     # Make sure we are clicking on the slider
                     if slider_ends[0] <= pos[0] <= slider_ends[1]:
-                        idx = pos[1] * 5 // r.h
+                        idx = pos[1] // rects["SlideBar"].h
                         if idx < len(current.chances.keys()):
                             slider_selected = idx
             elif e.type == MOUSEMOTION and slider_selected != -1:
@@ -524,7 +553,7 @@ def new_enemy_list():
                 pg.draw.line(surfaces["Enemies"], (0, 255, 0), (slider_ends[0], r.centery), r.center, 2)
                 pg.draw.rect(surfaces["Enemies"], (128, 128, 128), r)
                 pg.display.get_surface().blit(surfaces["Enemies"], rects["Enemies"].topleft,
-                                              area=((0, slider_off), rects["Enemies"].size))
+                                              area=((0, -slider_off), rects["Enemies"].size))
             elif e.type == KEYUP:
                 if e.key == K_BACKSPACE:
                     if selected == "Count":

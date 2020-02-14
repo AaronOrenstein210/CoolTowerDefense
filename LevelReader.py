@@ -35,7 +35,7 @@ class LevelReader:
                 break
             else:
                 for i in range(abs(spawn.get_count(spawn.duration) - spawn.get_count(t_i))):
-                    num = uniform(0, 1)
+                    num = uniform(0, sum(v for v in spawn.chances.values()))
                     for key in spawn.chances.keys():
                         val = spawn.chances[key]
                         if val < num:
