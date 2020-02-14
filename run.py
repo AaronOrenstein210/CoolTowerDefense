@@ -510,14 +510,10 @@ def new_enemy_list():
                 pos = [pos[0] - rects["Enemies"].x, pos[1] - rects["Enemies"].y + slider_off]
                 # Get slider fractions
                 frac = (pos[0] - slider_ends[0]) / rects["SlideBar"].w
-                max_val = 1
-                for key in current.chances.keys():
-                    if key != slider_selected:
-                        max_val -= current.chances[key]
                 if frac < 0:
                     frac = 0
-                elif frac > max_val:
-                    frac = max_val
+                elif frac > 1:
+                    frac = 1
                 idx = slider_selected
                 current.chances[idx] = frac
                 # Update slider

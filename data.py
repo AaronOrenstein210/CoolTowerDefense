@@ -39,11 +39,13 @@ def init():
     else:
         import Enemy, Tower
         for name, obj in getmembers(Enemy):
-            if isclass(obj) and "Enemy." in str(obj):
-                enemies[obj().idx] = obj
+            if isclass(obj):
+                if "Enemy." in str(obj):
+                    enemies[obj().idx] = obj
         for name, obj in getmembers(Tower):
-            if isclass(obj) and "Tower." in str(obj):
-                towers[obj().idx] = obj
+            if isclass(obj):
+                if "Tower." in str(obj):
+                    towers[obj().idx] = obj
 
 
 # Resizes screen

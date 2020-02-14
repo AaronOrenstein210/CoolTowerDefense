@@ -3,8 +3,8 @@
 from LevelReader import LevelReader as Read
 from LevelReader import *
 import pygame as pg
-from Enemy import Enemy
-from Tower import Tower, DuckTower
+from Enemy import Enemy1
+from Tower import DuckTower
 from random import uniform
 import data
 
@@ -22,7 +22,8 @@ class LevelDriver:
         temp = rand_pos()
         # self.start = self.lr.paths[0].get_start()
         self.start = temp
-        self.enemies, self.towers, self.projectiles = [Enemy(self.start[0], self.start[1], 1)], [DuckTower(rand[0] * data.screen_w, rand[1] * data.screen_w)], []
+        self.enemies, self.towers, self.projectiles = [Enemy1(self.start)], [
+            DuckTower(x=rand[0] * data.screen_w, y=rand[1] * data.screen_w)], []
 
     # Called every iteration of the while loop
     def tick(self, dt):
@@ -48,10 +49,8 @@ class LevelDriver:
         for i in self.projectiles:
             d.blit(i.IMG, (i.pos[0], i.pos[1]))
 
-
     def setStart(self, pos):
         self.start = pos
-
 
     def reset(self):
         pass

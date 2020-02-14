@@ -4,15 +4,18 @@ import data
 
 WINDOW = data.screen_w
 
+
 class Tower:
-    def __init__(self, x, y):  # t is a variable determining the type of tower
+    def __init__(self, idx, x=0, y=0):  # t is a variable determining the type of tower
+        self.idx = idx
         self.pos = (x, y)
+        self.IMG = None
 
     def shoot(self, enemy):  # given an enemy, shoots at them
         pass
 
     def getIMG(self):
-        pass
+        return self.IMG
 
     def getAngle(self, x, y):
         ratio = (self.pos[1] - y) / (self.pos[0] - x)
@@ -21,7 +24,7 @@ class Tower:
     def withinRange(self, x, y, r):
         xval = self.pos[0] - x
         yval = self.pos[1] - y
-        dist = (xval**2 + yval**2)**0.5
+        dist = (xval ** 2 + yval ** 2) ** 0.5
         if dist <= r:
             return True
         return False
@@ -31,6 +34,7 @@ class Tower:
 
     def tick(self, dt):
         pass
+
 
 class Projectile:
     def __init__(self, x, y):  # t determines type of projectile
@@ -50,7 +54,8 @@ class Projectile:
 
 
 class Enemy:
-    def __init__(self, x, y, strength):
+    def __init__(self, idx, x, y, strength):
+        self.idx = idx
         self.pos = (x, y)
         self.x = x
         self.y = y
@@ -85,7 +90,6 @@ class Enemy:
         if self.strength < 0:
             self.strength = 0
         return self.strength
-
 
     def set_pos(self, x, y):
         self.pos = (x, y)
