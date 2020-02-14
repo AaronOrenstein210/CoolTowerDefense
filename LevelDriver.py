@@ -22,8 +22,9 @@ class LevelDriver:
         temp = rand_pos()
         # self.start = self.lr.paths[0].get_start()
         self.start = temp
-        self.enemies, self.towers, self.projectiles = [Enemy1(self.start)], [
-            DuckTower(x=rand[0] * data.screen_w, y=rand[1] * data.screen_w)], []
+        self.enemies = [Enemy1(self.start)]
+        self.towers = [DuckTower(x=rand[0] * data.screen_w, y=rand[1] * data.screen_w)]
+        self.projectiles = []
 
     # Called every iteration of the while loop
     def tick(self, dt):
