@@ -22,12 +22,12 @@ def init():
     global lvlDriver
     lvlDriver = LevelDriver()
 
+    global enemies, towers
+    # Compile a list of enemies and towers
+    enemies.clear()
+    towers.clear()
     if "MyLevelDriver.LevelDriver" in str(LevelDriver):
         import MyObjects
-        global enemies, towers
-        # Compile a list of enemies and towers
-        enemies.clear()
-        towers.clear()
         for name, obj in getmembers(MyObjects):
             if isclass(obj):
                 if "MyObjects" in str(obj):
@@ -36,6 +36,14 @@ def init():
                         enemies[obj().idx] = obj
                     elif "Tower" in str(obj):
                         towers[obj().idx] = obj
+    else:
+        import Enemy, Tower
+        for name, obj in getmembers(Enemy):
+            if isclass(obj) and "Enemy." in str(obj):
+                enemies[obj().idx] = obj
+        for name, obj in getmembers(Tower):
+            if isclass(obj) and "Tower." in str(obj):
+                towers[obj().idx] = obj
 
 
 # Resizes screen
