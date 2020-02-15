@@ -66,11 +66,7 @@ def resize(w, h, resize_driver):
         off_y = (h - w) // 2
     pg.display.set_mode((w, h), RESIZABLE)
     if resize_driver:
-        lvlDriver.lr.draw_surface()
-        for i in lvlDriver.enemies + lvlDriver.towers + lvlDriver.projectiles:
-            img_dim = (int(i.dim[0] * screen_w), int(i.dim[1] * screen_w))
-            i.img = pg.transform.scale(i.img, img_dim)
-            i.blit_img = pg.transform.rotate(i.img, i.angle)
+        lvlDriver.resize()
 
 
 # Resizes surface to fit within desired dimensions, keeping surface's w:h ratio

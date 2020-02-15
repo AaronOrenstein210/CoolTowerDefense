@@ -15,15 +15,19 @@ def rand_pos():
 # Runs the level
 class LevelDriver:
     def __init__(self):
+        # Lists of objects
         self.enemies = []
-        self.towers = []  # [Tower1(rand_pos()), Tower2(rand_pos()), Ballista(rand_pos()), AAGun(rand_pos())]
+        self.towers = []
         self.projectiles = []
         self.background = None
         self.paths = []
         self.spawn_list = []
+        # Time since start of game, not including paused sections
         self.time = 0
-
-        # Called every iteration of the while loop
+        # If we are paused or not
+        self.paused = False
+        # Test enemy used to show enemy path
+        self.test_enemy = None
 
     # Returns the starting position for new enemies
     def get_start(self):
@@ -34,26 +38,29 @@ class LevelDriver:
 
     # Updates game
     def tick(self, dt):
-        # Move all enemies, and update towers/projectiles
-        for i in self.enemies:
-            if not self.move(i, dt):
-                if i.idx != TEST_ENEMY:
-                    print("Lost a Life")
-                self.enemies.remove(i)
-        for i in self.towers:
-            self.projectiles += i.tick(dt)
-        for i in self.projectiles:
-            if not i.tick(dt):
-                self.projectiles.remove(i)
-            for j in self.enemies:
-                if i.polygon.collides_polygon(j.polygon):
+        if not self.paused:
+            # Move all enemies, and update towers/projectiles
+            for i in self.enemies:
+                if not self.move(i, dt):
+                    if i.idx != TEST_ENEMY:
+                        print("Lost a Life")
+                    self.enemies.remove(i)
+            for i in self.towers:
+                self.projectiles += i.tick(dt)
+            for i in self.projectiles:
+                if not i.tick(dt):
                     self.projectiles.remove(i)
-                    self.enemies.remove(j)
-                    break
-        # Get all enemy spawns
-        if len(self.enemies) == 0 or self.enemies[0].idx != TEST_ENEMY:
+                else:
+                    for j in self.enemies:
+                        if i.polygon.collides_polygon(j.polygon):
+                            self.projectiles.remove(i)
+                            self.enemies.remove(j)
+                            break
+            # Get all enemy spawns
             self.spawn_enemies(dt)
             self.time += dt
+        if self.test_enemy is not None and not self.move(self.test_enemy, dt):
+            self.test_enemy = None
         # Redraw the screen
         self.draw()
 
@@ -118,26 +125,45 @@ class LevelDriver:
                 self.towers.append(Ballista(pos=pos))
             else:
                 self.towers.append(AAGun(pos=pos))
+            self.paused = not self.paused
+            if self.paused:
+                self.test_enemy = TestEnemy()
 
     # Draws the screen
     def draw(self):
         d = pg.display.get_surface()
         d.fill((0, 0, 0))
         d.blit(self.background, (data.off_x, data.off_y))
-        for i in self.enemies + self.towers + self.projectiles:
-            img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
-                                                   int(i.pos[1] * data.screen_w) + data.off_y))
-            d.blit(i.blit_img, img_rect)
+        # Get a list of objects to draw
+        objects = self.enemies + self.towers + self.projectiles
+        if self.test_enemy is not None:
+            objects.append(self.test_enemy)
+        # Draw the objects
+        for obj in objects:
+            img_rect = obj.blit_img.get_rect(center=(int(obj.pos[0] * data.screen_w) + data.off_x,
+                                                     int(obj.pos[1] * data.screen_w) + data.off_y))
+            d.blit(obj.blit_img, img_rect)
 
     # Draws the background
     def draw_background(self):
         from data import screen_w
         self.background = draw_paths(screen_w, self.paths)
 
+    def resize(self):
+        self.draw_background()
+        # Get a list of objects to resize
+        objects = self.enemies + self.towers + self.projectiles
+        if self.test_enemy is not None:
+            objects.append(self.test_enemy)
+        # Redraw objects
+        for obj in objects:
+            img_dim = (int(obj.dim[0] * data.screen_w), int(obj.dim[1] * data.screen_w))
+            obj.img = pg.transform.scale(obj.img, img_dim)
+            obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
+
     # Resets data
     def reset(self):
         self.enemies.clear()
-        self.enemies.append(TestEnemy())
         self.towers.clear()
         self.projectiles.clear()
         self.time = 0
