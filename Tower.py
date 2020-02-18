@@ -38,7 +38,7 @@ class DuckTower(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos, angle, speed=.3, dim=(.05, .05), img="res/smallProj.png")
+            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=1, img="res/smallProj.png")
 
 
 class DuckTower2(Tower):
@@ -49,12 +49,8 @@ class DuckTower2(Tower):
         self.countdown = 500
 
     def shoot(self, enemy):
-        proj = Projectile.Projectile2(self.pos[0], self.pos[1])
-        epos = enemy.getpos()
-        proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
-        if self.withinRange(epos[0], epos[1]):
-            enemy.hit(proj.getDamage())
+        proj = self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))
+        data.lvlDriver.projectiles.append(proj)
 
     def restartCount(self):
         self.countdown = 500
@@ -66,6 +62,10 @@ class DuckTower2(Tower):
             if self.countdown <= 0:
                 self.restartCount()
                 self.shoot(en)
+
+    class P1(Projectile):
+        def __init__(self, pos, angle):
+            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=2, img="res/smallProj.png")
 
 
 class DuckTowerAA(Tower):
@@ -78,12 +78,8 @@ class DuckTowerAA(Tower):
         self.countdown = 2130
 
     def shoot(self, enemy):
-        proj = Projectile.Projectile3(self.pos[0], self.pos[1])
-        epos = enemy.getpos()
-        proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
-        if self.withinRange(epos[0], epos[1]):
-            enemy.hit(proj.getDamage())
+        proj = self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))
+        data.lvlDriver.projectiles.append(proj)
 
     def restartCount(self):
         self.countdown = 2130
@@ -96,6 +92,10 @@ class DuckTowerAA(Tower):
                 self.restartCount()
                 self.shoot(en)
 
+    class P1(Projectile):
+        def __init__(self, pos, angle):
+            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=3, img="res/smallProj.png")
+
 
 class DuckTowerBallista(Tower):
     def __init__(self, **kwargs):
@@ -107,12 +107,8 @@ class DuckTowerBallista(Tower):
         self.countdown = 1220
 
     def shoot(self, enemy):
-        proj = Projectile.Projectile4(self.pos[0], self.pos[1])
-        epos = enemy.getpos()
-        proj.setAngle(self.getAngle(epos[0], epos[1]))
-        proj.tick()
-        if self.withinRange(epos[0], epos[1]):
-            enemy.hit(proj.getDamage())
+        proj = self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))
+        data.lvlDriver.projectiles.append(proj)
 
     def restartCount(self):
         self.countdown = 1220
@@ -124,3 +120,7 @@ class DuckTowerBallista(Tower):
             if self.countdown <= 0:
                 self.restartCount()
                 self.shoot(en)
+
+    class P1(Projectile):
+        def __init__(self, pos, angle):
+            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=5, img="res/smallProj.png")
