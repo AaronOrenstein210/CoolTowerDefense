@@ -299,7 +299,7 @@ class Spawn:
         self.chances = {}
         for key in data.enemies.keys():
             self.chances[key] = 0
-        from MyObjects import ENEMY_1
+        from Enemy import ENEMY_1
         self.chances[ENEMY_1] = 1
 
     @property
