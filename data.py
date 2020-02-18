@@ -14,42 +14,27 @@ SPAWNS = "saves/spawn_lists.bin"
 off_x, off_y = 0, 0
 lvlDriver = None
 enemies, towers = {}, {}
-my = True
 
 
 def init():
     from inspect import getmembers, isclass
-    from MyLevelDriver import LevelDriver
+    from LevelDriver import LevelDriver
     global lvlDriver
     lvlDriver = LevelDriver()
-
-    global my
-    my = "MyLevelDriver" in str(LevelDriver)
 
     global enemies, towers
     # Compile a list of enemies and towers
     enemies.clear()
     towers.clear()
-    if my:
-        import MyObjects
-        for name, obj in getmembers(MyObjects):
-            if isclass(obj):
-                if "MyObjects" in str(obj):
-                    # Add Constructor to list
-                    if "Enemy" in str(obj):
-                        enemies[obj().idx] = obj
-                    elif "Tower" in str(obj):
-                        towers[obj().idx] = obj
-    else:
-        import Enemy, Tower
-        for name, obj in getmembers(Enemy):
-            if isclass(obj):
-                if "Enemy." in str(obj):
-                    enemies[obj().idx] = obj
-        for name, obj in getmembers(Tower):
-            if isclass(obj):
-                if "Tower." in str(obj):
-                    towers[obj().idx] = obj
+    import Enemy, Tower
+    for name, obj in getmembers(Enemy):
+        if isclass(obj):
+            if "Enemy." in str(obj):
+                enemies[obj().idx] = obj
+    for name, obj in getmembers(Tower):
+        if isclass(obj):
+            if "Tower." in str(obj):
+                towers[obj().idx] = obj
 
 
 # Resizes screen

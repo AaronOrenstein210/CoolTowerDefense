@@ -103,8 +103,7 @@ def load_paths(file_data):
 
 # Draws a list of paths
 def draw_paths(w, paths):
-    s = pg.Surface((w, w))
-    s.fill((0, 175, 0))
+    s = pg.Surface((w, w), pg.SRCALPHA)
     line_w = w // 40
     for p in paths:
         if p.idx == LINE:
