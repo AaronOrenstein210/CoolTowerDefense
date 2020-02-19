@@ -13,15 +13,13 @@ WINDOW = data.screen_w
 # Defines a tower
 
 class DuckTower(Tower):
-    def __init__(self, **kwargs):
-        super().__init__(TOWER_1, **kwargs)
-        self.IMG = pygame.transform.scale(pygame.image.load('res/duckTower1.png'),
-                                          (int(WINDOW * 0.05), int(WINDOW * 0.05)))
+    def __init__(self, pos=(0, 0)):
+        super().__init__(TOWER_1, pos=pos, dim=(.05, .05), img='res/duckTower1.png')
         # radius
         self.range = 0.29 * WINDOW
         self.countdown = 1000
 
-    def shoot(self, enemy, dt):
+    def shoot(self, enemy):
         proj = self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))
         data.lvlDriver.projectiles.append(proj)
 
@@ -34,7 +32,7 @@ class DuckTower(Tower):
             en = data.lvlDriver.enemies[0]  # change this
             if self.countdown <= 0:
                 self.restartCount()
-                self.shoot(en, dt)
+                self.shoot(en)
 
     class P1(Projectile):
         def __init__(self, pos, angle):
@@ -42,8 +40,8 @@ class DuckTower(Tower):
 
 
 class DuckTower2(Tower):
-    def __init__(self, **kwargs):
-        super().__init__(TOWER_2, **kwargs)
+    def __init__(self, pos=(0, 0)):
+        super().__init__(TOWER_2, pos=pos, dim=(.03, .30), img="res/duckTower2.png")
         # radius
         self.range = 0.29 * WINDOW
         self.countdown = 500
@@ -69,10 +67,8 @@ class DuckTower2(Tower):
 
 
 class DuckTowerAA(Tower):
-    def __init__(self, **kwargs):
-        super().__init__(AAGUN, **kwargs)
-        self.IMG = pygame.transform.scale(pygame.image.load('res/duckAAGun.png'),
-                                          (int(WINDOW * 0.05), int(WINDOW ** 0.05)))
+    def __init__(self, pos=(0, 0)):
+        super().__init__(AAGUN, pos=pos, dim=(.05, .1), img="res/duckAAGun.png")
         # radius
         self.range = 0.7 * WINDOW
         self.countdown = 2130
@@ -98,10 +94,8 @@ class DuckTowerAA(Tower):
 
 
 class DuckTowerBallista(Tower):
-    def __init__(self, **kwargs):
-        super().__init__(BALLISTA, **kwargs)
-        self.IMG = pygame.transform.scale(pygame.image.load('res/duckTowerBallista.png'),
-                                          (int(WINDOW * 0.05), int(WINDOW * 0.05)))
+    def __init__(self, pos=(0, 0)):
+        super().__init__(BALLISTA, pos=pos, dim=(.1, .1), img="res/duckTowerBallista.png")
         # radius
         self.range = 0.43 * WINDOW
         self.countdown = 1220

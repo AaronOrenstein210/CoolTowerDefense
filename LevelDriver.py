@@ -23,7 +23,7 @@ class LevelDriver:
         # self.start = self.lr.paths[0].get_start()
         self.start = temp
         self.enemies = [Enemy1(self.start)]
-        self.towers = [DuckTower(x=rand[0] * data.screen_w, y=rand[1] * data.screen_w)]
+        self.towers = [DuckTower(pos=(rand[0] * data.screen_w, rand[1] * data.screen_w))]
         self.projectiles = []
 
     # Called every iteration of the while loop
@@ -42,13 +42,12 @@ class LevelDriver:
     # Draw the screen
     def draw(self):
         d = pg.display.get_surface()
-        d.blit(self.lr.surface, (0, 0))
-        for i in self.enemies:
-            d.blit(i.image, (i.x, i.y))
-        for i in self.towers:
-            d.blit(i.IMG, (i.pos[0], i.pos[1]))
-        for i in self.projectiles:
-            d.blit(i.IMG, (i.pos[0], i.pos[1]))
+        d.fill((0, 0, 0))
+        d.blit(self.lr.surface, (data.off_x, data.off_y))
+        for i in self.enemies + self.towers + self.projectiles:
+            img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
+                                                   int(i.pos[1] * data.screen_w) + data.off_y))
+            d.blit(i.blit_img, img_rect)
 
     def setStart(self, pos):
         self.start = pos

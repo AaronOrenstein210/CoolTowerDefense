@@ -46,7 +46,7 @@ class Tower(Sprite):
         super().__init__(**kwargs)
         self.idx = idx
 
-    def shoot(self, enemy, dt):  # given an enemy, shoots at them
+    def shoot(self, enemy):  # given an enemy, shoots at them
         pass
 
     def withinRange(self, x, y, r):
@@ -81,12 +81,13 @@ class Projectile(Sprite):
 
 
 class Enemy(Sprite):
-    def __init__(self, idx, strength=1, **kwargs):
+    def __init__(self, idx, strength=1, velocity=.1, **kwargs):
         super().__init__(**kwargs)
         self.idx = idx
         self.strength = strength
         self.path = 0
         self.progress = 0
+        self.v = velocity
 
     #  This method reduces the strength by the damage amount
     def hit(self, damage):

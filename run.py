@@ -31,8 +31,8 @@ def run_level():
                 return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
-            else: # TODO: Level Driver needs to handle events
-                print("Level Driver event")        
+            else:  # TODO: Level Driver needs to handle events
+                print("Level Driver event")
         data.lvlDriver.tick(dt)
         pg.display.flip()
 
@@ -111,10 +111,9 @@ def choose_level():
             hovering[j] = -1
             if selected[j] != -1:
                 if j == levels:
-                    previews[j] = draw_paths(data.screen_w // 4, load_paths(arr[selected[j]]))
+                    previews[j] = draw_paths(data.screen_w // 4, arr[selected[j]])
                 else:
-                    previews[j] = draw_spawn_list(rects[j].w - 1, data.screen_w // 4,
-                                                  load_spawn_list(arr[selected[j]]))
+                    previews[j] = draw_spawn_list(rects[j].w - 1, data.screen_w // 4, arr[selected[j]])
                 d.blit(previews[j], preview_rects[j])
         # Set up title text
         font = data.get_scaled_font(half_w - margin, title_rects[levels].h, data.get_widest_string(text))
