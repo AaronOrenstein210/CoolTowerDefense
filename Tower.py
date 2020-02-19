@@ -38,7 +38,7 @@ class DuckTower(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=1, img="res/smallProj.png")
+            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=1, img="res/baseProj.png")
 
 
 class DuckTower2(Tower):
@@ -65,7 +65,7 @@ class DuckTower2(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=2, img="res/smallProj.png")
+            super().__init__(pos, angle, speed=.3, dim=(.05, .05), damage=2, img="res/baseProj.png")
 
 
 class DuckTowerAA(Tower):
