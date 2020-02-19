@@ -32,7 +32,7 @@ def run_level():
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
             else:  # TODO: Level Driver needs to handle events
-                print("Level Driver event")
+                data.lvlDriver.input(e)
         data.lvlDriver.tick(dt)
         pg.display.flip()
 

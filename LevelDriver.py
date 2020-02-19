@@ -3,6 +3,7 @@
 from LevelReader import LevelReader as Read
 from LevelReader import *
 import pygame as pg
+from pygame.locals import *
 from Enemy import Enemy1
 from Tower import DuckTower
 from random import uniform
@@ -51,6 +52,17 @@ class LevelDriver:
 
     def setStart(self, pos):
         self.start = pos
+
+    def input(self, event):
+        if event.type == MOUSEBUTTONDOWN:
+            pos=pg.mouse.get_pos()
+            if pos[0] >= self.rectX and pos[1] >= self.rectY and pos[1]:  # other edges of the box will be the side and bottom of the screen
+                self.click(pos[0], pos[1])
+
+    def click(self, x, y):  # probably include this in the input method
+        if x > self.rectX and y > self.rectY :  # replace with a bunch of different conditionals describing which box the mouse is over
+            pass  # set a tower
+
 
     def reset(self):
         pass
