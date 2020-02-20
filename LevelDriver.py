@@ -31,6 +31,7 @@ class LevelDriver:
         # Nicole Rectangle Start
         self.menuRectLeft = data.screen_w * 0.7
         self.menuRectTop = data.screen_w * 0.1
+        self.boxTop = data.screen_w * 0.65  # top of box with all of the towers
         self.menuRectWidth = data.screen_w * 0.25
         self.menuRectHeight = data.screen_w * 0.8
         self.menuRect = (self.menuRectLeft, self.menuRectTop, self.menuRectWidth, self.menuRectHeight)
@@ -70,13 +71,9 @@ class LevelDriver:
         menu_box = menu_text.get_rect()
         d.blit(menu_text, (self.menuRect[0] + (self.menuRect[2] - menu_box[2]) / 2, self.menuRect[1] + menu_box[3] / 2))
         font1 = pg.font.Font('freesansbold.ttf', 15)
-        money_text = font.render("Money:", 1, (255, 255, 255))
+        money_text = font1.render("Money:", 1, (255, 255, 255))
         menu_box = money_text.get_rect()
         d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
-
-
-
-
 
     def setStart(self, pos):
         self.start = pos
@@ -85,15 +82,15 @@ class LevelDriver:
         if event.type == MOUSEBUTTONDOWN:
             pos = pg.mouse.get_pos()
             if self.menuRectLeft <= pos[0] <= (self.menuRectLeft + self.menuRectWidth) \
-                    and self.menuRectTop <= pos[1] <= (self.menuRectTop + self.menuRectHeight):
+                    and self.boxTop <= pos[1] <= (self.boxTop + self.menuRectHeight):
                 self.click(pos[0], pos[1])
 
     def click(self, x, y):  # probably include this in the input method
         half_x = self.menuRectLeft + (self.menuRectWidth/2)
-        half_y = self.menuRectHeight + (self.menuRectHeight/2)
-        if self.menuRectLeft <= x <= half_x and self.menuRectTop <= y <= half_y:  # top left
+        half_y = self.boxTop + (self.menuRectHeight - self.boxTop)/2
+        if self.menuRectLeft <= x <= half_x and self.boxTop <= y <= half_y:  # top left
             pass  # set a tower
-        elif half_x <= x <= self.menuRectLeft + self.menuRectWidth and self.menuRectTop <= y <= half_y:  # top right
+        elif half_x <= x <= self.menuRectLeft + self.menuRectWidth and self.boxTop <= y <= half_y:  # top right
             pass
         elif self.menuRectLeft <= x <= half_x and half_y <= y <= self.menuRectTop + self.menuRectHeight:  # bottom left
             pass
