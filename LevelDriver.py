@@ -27,6 +27,15 @@ class LevelDriver:
         self.towers = [DuckTower(pos=(rand[0] * data.screen_w, rand[1] * data.screen_w))]
         self.projectiles = []
 
+
+        # Nicole Rectangle Start
+        self.menuRectLeft = data.screen_w * 0.7
+        self.menuRectTop = data.screen_w * 0.1
+        self.menuRectWidth = data.screen_w * 0.25
+        self.menuRectHeight = data.screen_w * 0.25
+        self.menuRect = (self.menuRectLeft, self.menuRectTop, self.menuRectWidth, self.menuRectHeight)
+
+
     # Called every iteration of the while loop
     def tick(self, dt):
         # Move all enemies, and update towers/projectiles
@@ -49,6 +58,11 @@ class LevelDriver:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
+            self.draw_menu(d, self.menuRect)
+
+    def draw_menu (self, d, menu_rect):
+        blue = (0, 0, 255)
+        pg.draw.rect(d, blue, menu_rect, 2)
 
     def setStart(self, pos):
         self.start = pos
