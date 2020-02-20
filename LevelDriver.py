@@ -69,10 +69,13 @@ class LevelDriver:
         menu_text = font.render("MENU", 1, (255, 255, 255))
         menu_box = menu_text.get_rect()
         d.blit(menu_text, (self.menuRect[0] + (self.menuRect[2] - menu_box[2]) / 2, self.menuRect[1] + menu_box[3] / 2))
-        font1 = pg.font.Font('freesansbold.ttf', 15)
         money_text = font.render("Money:", 1, (255, 255, 255))
-        menu_box = money_text.get_rect()
-        d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
+        menu_box2 = money_text.get_rect()
+        d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box2[3] * 2))
+        live_text = font.render("Lives:", 1, (255, 255, 255))
+        menu_box3 = live_text.get_rect()
+        d.blit(live_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box3[3] * 4))
+
 
 
 
