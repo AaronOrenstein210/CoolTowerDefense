@@ -32,7 +32,7 @@ class LevelDriver:
         self.menuRectLeft = data.screen_w * 0.7
         self.menuRectTop = data.screen_w * 0.1
         self.menuRectWidth = data.screen_w * 0.25
-        self.menuRectHeight = data.screen_w * 0.25
+        self.menuRectHeight = data.screen_w * 0.8
         self.menuRect = (self.menuRectLeft, self.menuRectTop, self.menuRectWidth, self.menuRectHeight)
 
 
@@ -57,12 +57,26 @@ class LevelDriver:
         for i in self.enemies + self.towers + self.projectiles:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
+
+           #  Nicole start
             d.blit(i.blit_img, img_rect)
             self.draw_menu(d, self.menuRect)
-
+        # draws menu
     def draw_menu (self, d, menu_rect):
         blue = (0, 0, 255)
         pg.draw.rect(d, blue, menu_rect, 2)
+        font = pg.font.Font('freesansbold.ttf', 15)
+        menu_text = font.render("MENU", 1, (255, 255, 255))
+        menu_box = menu_text.get_rect()
+        d.blit(menu_text, (self.menuRect[0] + (self.menuRect[2] - menu_box[2]) / 2, self.menuRect[1] + menu_box[3] / 2))
+        font1 = pg.font.Font('freesansbold.ttf', 15)
+        money_text = font.render("Money:", 1, (255, 255, 255))
+        menu_box = money_text.get_rect()
+        d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
+
+
+
+
 
     def setStart(self, pos):
         self.start = pos
