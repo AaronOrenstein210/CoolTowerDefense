@@ -83,14 +83,23 @@ class LevelDriver:
 
     def input(self, event):
         if event.type == MOUSEBUTTONDOWN:
-            pos=pg.mouse.get_pos()
-            if pos[0] >= self.rectX and pos[1] >= self.rectY and pos[1]:  # other edges of the box will be the side and bottom of the screen
+            pos = pg.mouse.get_pos()
+            if self.menuRectLeft <= pos[0] <= (self.menuRectLeft + self.menuRectWidth) \
+                    and self.menuRectTop <= pos[1] <= (self.menuRectTop + self.menuRectHeight):
                 self.click(pos[0], pos[1])
 
     def click(self, x, y):  # probably include this in the input method
-        if x > self.rectX and y > self.rectY :  # replace with a bunch of different conditionals describing which box the mouse is over
+        half_x = self.menuRectLeft + (self.menuRectWidth/2)
+        half_y = self.menuRectHeight + (self.menuRectHeight/2)
+        if self.menuRectLeft <= x <= half_x and self.menuRectTop <= y <= half_y:  # top left
             pass  # set a tower
-
+        elif half_x <= x <= self.menuRectLeft + self.menuRectWidth and self.menuRectTop <= y <= half_y:  # top right
+            pass
+        elif self.menuRectLeft <= x <= half_x and half_y <= y <= self.menuRectTop + self.menuRectHeight:  # bottom left
+            pass
+        elif half_x <= x <= self.menuRectLeft + self.menuRectWidth \
+                and half_y <= y <= self.menuRectTop + self.menuRectHeight:  # bottom right
+            pass
 
     def reset(self):
         pass
