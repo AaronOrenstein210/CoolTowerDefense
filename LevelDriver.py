@@ -78,18 +78,22 @@ class LevelDriver:
         d.blit(lives_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 3))
 
         # display towers
-        x = self.menuRectLeft
-        y = self.boxTop
-        inc = self.menuRectWidth/3
-        for i in data.towers:
-            rect = i.img.get_rect()  # ask Aaron how to access image
+        x = self.menuRectLeft + data.screen_w * 0.06
+        y = self.boxTop + data.screen_w * 0.05
+        inc = self.menuRectWidth/3 + data.screen_w * 0.05
+        for i in data.tower_images.values():
+            i = pygame.transform.scale(i, (int(data.screen_w * 0.1), int(data.screen_w * 0.1)))
+            rect = i.get_rect()
+            # IMG = pygame.image.load("res/duckTower1.png")
+            # rect = IMG.get_rect()
             rect.center = (x, y)
-            d.blit(i.img, rect)
+            d.blit(i, rect)
+            # d.blit(IMG, rect)
             x += inc
-            if x == self.menuRectLeft + self.menuRectWidth:
-                x = self.menuRectLeft
+            if x >= self.menuRectLeft + self.menuRectWidth:
+                x = self.menuRectLeft + data.screen_w * 0.06
+                y += inc
 
-            y += inc
             if y == self.menuRectTop + self.menuRectHeight:
                 y = self.boxTop
 

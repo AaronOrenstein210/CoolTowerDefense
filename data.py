@@ -14,6 +14,7 @@ SPAWNS = "saves/spawn_lists.bin"
 off_x, off_y = 0, 0
 lvlDriver = None
 enemies, towers = {}, {}
+tower_images = {}
 
 
 def init():
@@ -34,7 +35,10 @@ def init():
     for name, obj in getmembers(Tower):
         if isclass(obj):
             if "Tower." in str(obj):
-                towers[obj().idx] = obj
+                inst = obj()
+                towers[inst.idx] = obj
+                tower_images[inst.idx] = inst.img
+                del inst
 
 
 # Resizes screen
