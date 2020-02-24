@@ -112,13 +112,20 @@ class LevelDriver:
         half_y = self.boxTop + (self.menuRectHeight - self.boxTop)/2
         if self.menuRectLeft <= x <= half_x and self.boxTop <= y <= half_y:  # top left
             print("Duck Tower 1")
+            self.set_tower(1)
         elif half_x <= x <= self.menuRectLeft + self.menuRectWidth and self.boxTop <= y <= half_y:  # top right
             print("Duck Tower 2")
+            self.set_tower(2)
         elif self.menuRectLeft <= x <= half_x and half_y <= y <= self.menuRectTop + self.menuRectHeight:  # bottom left
             print("Duck Tower AA Gun")
+            self.set_tower(3)
         elif half_x <= x <= self.menuRectLeft + self.menuRectWidth \
                 and half_y <= y <= self.menuRectTop + self.menuRectHeight:  # bottom right
             print("Duck Tower Ballista")
+            self.set_tower(4)
+
+    def set_tower(self, type):  # probably change the input
+        pass
 
     def reset(self):
         pass
