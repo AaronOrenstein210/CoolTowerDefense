@@ -5,7 +5,7 @@ from LevelReader import *
 import pygame as pg
 from pygame.locals import *
 from Enemy import Enemy1
-from Tower import DuckTower
+from Tower import *
 from random import uniform
 import data
 
@@ -70,10 +70,30 @@ class LevelDriver:
         menu_text = font.render("MENU", 1, (255, 255, 255))
         menu_box = menu_text.get_rect()
         d.blit(menu_text, (self.menuRect[0] + (self.menuRect[2] - menu_box[2]) / 2, self.menuRect[1] + menu_box[3] / 2))
-        font1 = pg.font.Font('freesansbold.ttf', 15)
+        # font1 = pg.font.Font('freesansbold.ttf', 15)
         money_text = font.render("Money:", 1, (255, 255, 255))
+        lives_text = font.render("Lives:", 1, (255, 255, 255))
         menu_box = money_text.get_rect()
         d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
+        d.blit(lives_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 3))
+
+        # display towers
+        x = self.menuRectLeft
+        y = self.boxTop
+        inc = self.menuRectWidth/3
+        for i in data.towers:
+            rect = i.img.get_rect()  # ask Aaron how to access image
+            rect.center = (x, y)
+            d.blit(i.img, rect)
+            x += inc
+            if x == self.menuRectLeft + self.menuRectWidth:
+                x = self.menuRectLeft
+
+            y += inc
+            if y == self.menuRectTop + self.menuRectHeight:
+                y = self.boxTop
+
+
 
 
 
