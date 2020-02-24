@@ -4,6 +4,7 @@ from LevelReader import LevelReader as Read
 from LevelReader import *
 import pygame as pg
 from pygame.locals import *
+from Abstract import Tower
 from Enemy import Enemy1
 from Tower import *
 from random import uniform
@@ -124,8 +125,12 @@ class LevelDriver:
             print("Duck Tower Ballista")
             self.set_tower(4)
 
-    def set_tower(self, type):  # probably change the input
-        pass
+    def set_tower(self, type): # probably change the input
+        for event in pygame.event.get():
+            if event.type == MOUSEBUTTONDOWN :
+                pos = pg.mouse.get_pos()
+                tower = Tower((pos[0], pos[1]), )
+
 
     def reset(self):
         pass
