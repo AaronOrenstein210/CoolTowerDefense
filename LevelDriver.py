@@ -65,17 +65,20 @@ class LevelDriver:
         # draws menu
     def draw_menu (self, d, menu_rect):
         blue = (0, 0, 255)
-        pg.draw.rect(d, blue, menu_rect, 2)
+        pg.draw.rect(d, blue, menu_rect)
         font = pg.font.Font('freesansbold.ttf', 15)
         menu_text = font.render("MENU", 1, (255, 255, 255))
         menu_box = menu_text.get_rect()
         d.blit(menu_text, (self.menuRect[0] + (self.menuRect[2] - menu_box[2]) / 2, self.menuRect[1] + menu_box[3] / 2))
-        # font1 = pg.font.Font('freesansbold.ttf', 15)
         money_text = font.render("Money:", 1, (255, 255, 255))
         lives_text = font.render("Lives:", 1, (255, 255, 255))
+        buy_text = font.render("Buy Stuff:", 1, (255, 255, 255))
+        close_text = font.render("Close Menu:", 1, (255, 255, 255))
         menu_box = money_text.get_rect()
         d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
         d.blit(lives_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 3))
+        d.blit(buy_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 4))
+        d.blit(close_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 5))
 
         # display towers
         x = self.menuRectLeft + data.screen_w * 0.06
