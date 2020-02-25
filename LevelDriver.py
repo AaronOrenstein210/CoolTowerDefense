@@ -216,7 +216,7 @@ class LevelDriver:
         from Tower import TOWER_1
         self.enemies.clear()
         self.towers.clear()
-        self.towers.append(data.towers[TOWER_1](pos=rand_pos()))
+        self.towers.append(data.towers[TOWER_2](pos=rand_pos()))
         self.projectiles.clear()
         self.time = 0
 
