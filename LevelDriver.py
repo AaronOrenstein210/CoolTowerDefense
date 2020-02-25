@@ -74,7 +74,7 @@ class LevelDriver:
         money_text = font.render("Money:", 1, (255, 255, 255))
         lives_text = font.render("Lives:", 1, (255, 255, 255))
         buy_text = font.render("Buy Stuff:", 1, (255, 255, 255))
-        close_text = font.render("Close Menu:", 1, (255, 255, 255))
+        close_text = font.render("Close", 1, (255, 255, 255))
         menu_box = money_text.get_rect()
         d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
         d.blit(lives_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 3))
@@ -83,7 +83,7 @@ class LevelDriver:
 
         # display towers
         x = self.menuRectLeft + data.screen_w * 0.06
-        y = self.boxTop + data.screen_w * 0.05
+        y = self.boxTop
         inc = self.menuRectWidth/3 + data.screen_w * 0.05
         for i in data.tower_images.values():
             i = pygame.transform.scale(i, (int(data.screen_w * 0.1), int(data.screen_w * 0.1)))
@@ -129,7 +129,15 @@ class LevelDriver:
         for event in pygame.event.get():
             if event.type == MOUSEBUTTONDOWN :
                 pos = pg.mouse.get_pos()
-                tower = Tower((pos[0], pos[1]), )
+                if type == 1:
+                    tower = DuckTower(pos[0], pos[1])
+                elif type == 2:
+                    tower = DuckTower2(pos[0], pos[1])
+                elif type == 3:
+                    tower = DuckTowerAA(pos[0], pos[1])
+                elif type == 4:
+                    tower = DuckTowerBallista(pos[0], pos[1])
+
 
 
     def reset(self):
