@@ -73,7 +73,7 @@ class LevelDriver:
         money_text = font.render("Money:", 1, (255, 255, 255))
         lives_text = font.render("Lives:", 1, (255, 255, 255))
         buy_text = font.render("Buy Stuff:", 1, (255, 255, 255))
-        close_text = font.render("Close Menu:", 1, (255, 255, 255))
+        close_text = font.render("Close", 1, (255, 255, 255))
         menu_box = money_text.get_rect()
         d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
         d.blit(lives_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 3))
