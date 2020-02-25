@@ -4,6 +4,7 @@ from LevelReader import LevelReader as Read
 from LevelReader import *
 import pygame as pg
 from pygame.locals import *
+from Abstract import Tower
 from Enemy import Enemy1
 from Tower import *
 from random import uniform
@@ -87,11 +88,8 @@ class LevelDriver:
         for i in data.tower_images.values():
             i = pygame.transform.scale(i, (int(data.screen_w * 0.1), int(data.screen_w * 0.1)))
             rect = i.get_rect()
-            # IMG = pygame.image.load("res/duckTower1.png")
-            # rect = IMG.get_rect()
             rect.center = (x, y)
             d.blit(i, rect)
-            # d.blit(IMG, rect)
             x += inc
             if x >= self.menuRectLeft + self.menuRectWidth:
                 x = self.menuRectLeft + data.screen_w * 0.06
@@ -99,12 +97,6 @@ class LevelDriver:
 
             if y == self.menuRectTop + self.menuRectHeight:
                 y = self.boxTop
-
-
-
-
-
-
 
     def setStart(self, pos):
         self.start = pos
@@ -120,14 +112,25 @@ class LevelDriver:
         half_x = self.menuRectLeft + (self.menuRectWidth/2)
         half_y = self.boxTop + (self.menuRectHeight - self.boxTop)/2
         if self.menuRectLeft <= x <= half_x and self.boxTop <= y <= half_y:  # top left
-            pass  # set a tower
+            print("Duck Tower 1")
+            self.set_tower(1)
         elif half_x <= x <= self.menuRectLeft + self.menuRectWidth and self.boxTop <= y <= half_y:  # top right
-            pass
+            print("Duck Tower 2")
+            self.set_tower(2)
         elif self.menuRectLeft <= x <= half_x and half_y <= y <= self.menuRectTop + self.menuRectHeight:  # bottom left
-            pass
+            print("Duck Tower AA Gun")
+            self.set_tower(3)
         elif half_x <= x <= self.menuRectLeft + self.menuRectWidth \
                 and half_y <= y <= self.menuRectTop + self.menuRectHeight:  # bottom right
-            pass
+            print("Duck Tower Ballista")
+            self.set_tower(4)
+
+    def set_tower(self, type): # probably change the input
+        for event in pygame.event.get():
+            if event.type == MOUSEBUTTONDOWN :
+                pos = pg.mouse.get_pos()
+                tower = Tower((pos[0], pos[1]), )
+
 
     def reset(self):
         pass
