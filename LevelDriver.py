@@ -4,6 +4,7 @@ from LevelReader import LevelReader as Read
 from LevelReader import *
 import pygame as pg
 from pygame.locals import *
+from Abstract import Tower
 from Enemy import Enemy1
 from Tower import *
 from random import uniform
@@ -82,7 +83,7 @@ class LevelDriver:
 
         # display towers
         x = self.menuRectLeft + data.screen_w * 0.06
-        y = self.boxTop + data.screen_w * 0.05
+        y = self.boxTop
         inc = self.menuRectWidth/3 + data.screen_w * 0.05
         for i in data.tower_images.values():
             i = pygame.transform.scale(i, (int(data.screen_w * 0.1), int(data.screen_w * 0.1)))
@@ -124,8 +125,20 @@ class LevelDriver:
             print("Duck Tower Ballista")
             self.set_tower(4)
 
-    def set_tower(self, type):  # probably change the input
-        pass
+    def set_tower(self, type): # probably change the input
+        for event in pygame.event.get():
+            if event.type == MOUSEBUTTONDOWN :
+                pos = pg.mouse.get_pos()
+                if type == 1:
+                    tower = DuckTower(pos[0], pos[1])
+                elif type == 2:
+                    tower = DuckTower2(pos[0], pos[1])
+                elif type == 3:
+                    tower = DuckTowerAA(pos[0], pos[1])
+                elif type == 4:
+                    tower = DuckTowerBallista(pos[0], pos[1])
+
+
 
     def reset(self):
         pass

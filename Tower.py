@@ -41,7 +41,7 @@ class DuckTower(Tower):
 
 class DuckTower2(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(TOWER_2, pos=pos, dim=(.03, .30), img="res/duckTower2.png")
+        super().__init__(TOWER_2, pos=pos, dim=(.30, .30), img="res/duckTower2.png")
         # radius
         self.range = 0.29 * WINDOW
         self.countdown = 500
