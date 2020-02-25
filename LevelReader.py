@@ -3,76 +3,9 @@
 
 from struct import pack, unpack
 from sys import byteorder
-from random import uniform
 import math
 import pygame as pg
 import data
-
-
-# Reads a level file and compiles the enemy path
-class LevelReader:
-    def __init__(self):
-        self.surface = None
-        self.paths = []
-        self.spawn_list = []
-
-    def get_enemy_spawns(self, t_i, t_f):
-        spawns = []
-        for spawn in self.spawn_list:
-            if spawn.duration < t_i:
-                t_i -= spawn.duration
-                t_f -= spawn.duration
-            elif spawn.duration >= t_f:
-                for i in range(abs(spawn.get_count(t_f) - spawn.get_count(t_i))):
-                    num = uniform(0, sum(v for v in spawn.chances.values()))
-                    for key in spawn.chances.keys():
-                        val = spawn.chances[key]
-                        if val < num:
-                            num -= val
-                        else:
-                            spawns.append(data.enemies[key]())
-                            break
-                break
-            else:
-                for i in range(abs(spawn.get_count(spawn.duration) - spawn.get_count(t_i))):
-                    num = uniform(0, sum(v for v in spawn.chances.values()))
-                    for key in spawn.chances.keys():
-                        val = spawn.chances[key]
-                        if val < num:
-                            num -= val
-                        else:
-                            spawns.append(data.enemies[key]())
-                            break
-                t_i = 0
-                t_f -= spawn.duration
-        return spawns
-
-    # Return a new position for the enemy
-    # Moves an enemy given its position and distance to be travelled
-    # Mostly just coordinates the path's various segments
-    def move(self, enemy, dt):
-        d = enemy.v * dt / 1000
-        while d > 0:
-            to_end = self.paths[enemy.path].length * (1 - enemy.progress)
-            if d >= to_end:
-                enemy.path += 1
-                enemy.progress = 0
-                if enemy.path >= len(self.paths):
-                    return False
-            else:
-                enemy.progress += d / self.paths[enemy.path].length
-            d -= to_end
-        enemy.set_pos(self.paths[enemy.path].get_pos(enemy.progress))
-        return True
-
-    def draw_surface(self):
-        from data import screen_w
-        self.surface = draw_paths(screen_w, self.paths)
-
-    def set_level(self, paths, spawn_list):
-        self.paths = paths
-        self.spawn_list = spawn_list
-        self.draw_surface()
 
 
 # Loads a level from bytes
