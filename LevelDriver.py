@@ -123,7 +123,7 @@ class LevelDriver:
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
 
-        self.draw_menu(d, self.menuRect)
+       # self.draw_menu(d, self.menuRect)
 
     # draws menu
     def draw_menu (self, d, menu_rect):
@@ -176,7 +176,7 @@ class LevelDriver:
             obj.img = pg.transform.scale(obj.img, img_dim)
             obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
 
-        self.draw_menu()
+        self.draw_menu(pg.display.get_surface(), self.menuRect)
 
     def input(self, event):
         if event.type == MOUSEBUTTONDOWN:
