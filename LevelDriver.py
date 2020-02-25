@@ -21,7 +21,11 @@ class LevelDriver:
         self.enemies = []
         self.towers = []
         self.projectiles = []
-
+        self.menuRects = {"menu": pg.Rect(0, 0, 0, 0),
+                          "health": pg.Rect(0, 0, 0, 0),
+                          "money": pg.Rect(0, 0, 0, 0),
+                          "towers": pg.Rect(0, 0, 0, 0)
+                          }
         # Nicole Rectangle Start
         self.menuRectLeft = data.screen_w * 0.7
         self.menuRectTop = data.screen_w * 0.1
@@ -61,7 +65,6 @@ class LevelDriver:
         # Redraw the screen
         self.draw()
 
-    # TODO: t_i
     # Spawns enemies based on the passage of time
     def spawn_enemies(self, dt):
         t_i = self.time
@@ -118,11 +121,11 @@ class LevelDriver:
         for i in self.enemies + self.towers + self.projectiles:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
-
-           #  Nicole start
             d.blit(i.blit_img, img_rect)
-            self.draw_menu(d, self.menuRect)
-        # draws menu
+
+        self.draw_menu(d, self.menuRect)
+
+    # draws menu
     def draw_menu (self, d, menu_rect):
         blue = (0, 0, 255)
         pg.draw.rect(d, blue, menu_rect)
@@ -173,6 +176,8 @@ class LevelDriver:
             obj.img = pg.transform.scale(obj.img, img_dim)
             obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
 
+        self.draw_menu()
+
     def input(self, event):
         if event.type == MOUSEBUTTONDOWN:
             pos = pg.mouse.get_pos()
@@ -209,6 +214,7 @@ class LevelDriver:
                     tower = DuckTowerAA(pos[0], pos[1])
                 elif type == 4:
                     tower = DuckTowerBallista(pos[0], pos[1])
+                self.towers.append(tower)
 
 
 
