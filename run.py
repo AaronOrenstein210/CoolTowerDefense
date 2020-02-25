@@ -204,9 +204,8 @@ def choose_level():
                             d.blit(surfaces[i], rect.topleft, area=((0, -off[i]), rect.size))
                             break
             elif e.type == KEYUP and e.key == K_RETURN and -1 not in selected:
-                # TODO: Level driver needs to reset before each level
                 data.lvlDriver.reset()
-                data.lvlDriver.lr.set_level(*[level_data[i][selected[i]] for i in range(2)])
+                data.lvlDriver.set_level(*[level_data[i][selected[i]] for i in range(2)])
                 return True
         pg.display.flip()
 
@@ -362,6 +361,7 @@ def new_level():
                         factor = (diff + quarter_pi) // half_pi
                         if abs(diff - half_pi * factor) < half_pi / 10:
                             current.theta_f = factor * half_pi + current.theta_i
+                pg.display.get_surface().fill((0, 0, 0), rect)
                 pg.display.get_surface().blit(draw_paths(rect.w, paths + [current]),
                                               (rect.x + data.off_x, rect.y + data.off_y))
         pg.display.flip()

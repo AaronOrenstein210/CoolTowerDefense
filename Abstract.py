@@ -8,19 +8,21 @@ WINDOW = data.screen_w
 
 
 class Sprite:
-    def __init__(self, pos=(0, 0), dim=(.1, .1), img=""):
+    def __init__(self, pos=(0, 0), dim=(.1, .1), angle=0, img=""):
         self.pos = pos
         self.dim = dim
         self.polygon = None
-        self.angle = 0
+        self.angle = angle
 
         img_dim = (int(dim[0] * data.screen_w), int(dim[1] * data.screen_w))
         if isfile(img) and (img.endswith(".png") or img.endswith(".jpg")):
-            self.img = data.scale_to_fit(pygame.image.load(img), *img_dim)
+            self.img = data.scale_to_fit(pygame.image.load(img), w=img_dim[0], h=img_dim[1])
         else:
             self.img = pygame.Surface(img_dim)
         # Just blit this surface, not self.img
         self.blit_img = self.img
+
+        self.set_pos(pos)
 
     def set_pos(self, pos):
         self.pos = pos
@@ -63,9 +65,8 @@ class Tower(Sprite):
 
 
 class Projectile(Sprite):
-    def __init__(self, pos, angle, damage=1, speed=.5, dim=(.05, .05), img=""):
-        super().__init__(pos=pos, dim=dim, img=img)
-        self.set_angle(angle)
+    def __init__(self, damage=1, speed=.5, **kwargs):
+        super().__init__(**kwargs)
         self.damage = damage
         self.speed = speed
 
@@ -76,7 +77,7 @@ class Projectile(Sprite):
         d = (self.speed * dt) / 1000
         dx = d * math.cos(self.angle)
         dy = d * math.sin(self.angle)
-        self.pos = (self.pos[0] + dx, self.pos[1] + dy)
+        self.set_pos((self.pos[0] + dx, self.pos[1] + dy))
         return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1
 
 
