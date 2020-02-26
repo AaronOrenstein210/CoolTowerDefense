@@ -17,6 +17,7 @@ def rand_pos():
 # Runs the level
 class LevelDriver:
     TOWER_COLUMNS = 2
+    tower_imgs = {idx: None for idx in TOWER_ORDER}
 
     def __init__(self):
         self.data = data
@@ -27,15 +28,14 @@ class LevelDriver:
         self.hp = self.money = 0
 
         # Menu and menu tower scroll surfaces
-        self.menu = self.menu_towers = self.menu_toggle = None
+        self.menu_towers = self.menu_toggle = None
+        # Menu and dragging tower
+        self.menu, self.drag_tower = DragObject(), DragObject()
         # Menu rectangles
-        self.menu_rects = {"menu": pg.Rect(0, 0, 0, 0),
-                           "hp": pg.Rect(0, 0, 0, 0),
+        self.menu_rects = {"hp": pg.Rect(0, 0, 0, 0),
                            "money": pg.Rect(0, 0, 0, 0),
                            "towers": pg.Rect(0, 0, 0, 0),
                            "toggle": pg.Rect(0, 0, 0, 0)}
-        # Menu x offset (0 to 1 * screen width)
-        self.menu_x = 0
         # Scroll amount of menu tower list, <= 0
         self.towers_scroll = 0
         # Width of a tower sprite in the menu
@@ -43,7 +43,8 @@ class LevelDriver:
         # Menu text font
         self.menu_font = None
         # Are we moving the menu (dragging it), Is the menu open
-        self.moving_menu = self.show_menu = False
+        self.show_menu = False
+        self.drag_tower_idx = -1
 
         self.time = 0
         self.paths = []
@@ -77,13 +78,10 @@ class LevelDriver:
         # Get change in mouse position every time so that it can update the last mouse position
         mouse_delta = pg.mouse.get_rel()
         # Check if we have moved the menu
-        if self.moving_menu:
-            self.menu_x += mouse_delta[0] / data.screen_w
-            if self.menu_x < 0:
-                self.menu_x = 0
-            elif self.menu_x > 1 - self.menu_rects["menu"].w / data.screen_w:
-                self.menu_x = 1 - self.menu_rects["menu"].w / data.screen_w
-            self.menu_rects["menu"].x = self.menu_x * data.screen_w + data.off_x
+        if self.menu.dragging:
+            self.menu.drag(mouse_delta)
+        elif self.drag_tower.dragging:
+            self.drag_tower.drag(mouse_delta)
         # Redraw the screen
         self.draw()
 
@@ -110,7 +108,7 @@ class LevelDriver:
                         if val < num:
                             num -= val
                         else:
-                            self.enemies.append(data.enemies[key]())
+                            self.enemies.append(type(data.enemies[key])())
                             break
                 break
             else:
@@ -121,7 +119,7 @@ class LevelDriver:
                         if val < num:
                             num -= val
                         else:
-                            self.enemies.append(data.enemies[key]())
+                            self.enemies.append(type(data.enemies[key])())
                             break
                 t_i = 0
                 t_f -= spawn.duration
@@ -153,16 +151,17 @@ class LevelDriver:
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
         if self.show_menu:
-            d.blit(self.menu, self.menu_rects["menu"])
+            self.menu.draw()
+        if self.drag_tower.dragging:
+            self.drag_tower.draw()
         d.blit(self.menu_toggle, self.menu_rects["toggle"])
 
     # Draws menu surface
     def draw_menu(self):
         # Establish rectangles
-        self.menu_rects["menu"] = pg.Rect(self.menu_x * data.screen_w + data.off_x, data.off_y,
-                                          data.screen_w // 5, data.screen_w)
-        r = self.menu_rects["menu"]
+        r = pg.Rect(0, 0, data.screen_w // 5, data.screen_w)
         img_w = r.h // 20
+
         self.menu_rects["hp"] = pg.Rect(img_w, 0, r.w - img_w, img_w)
         self.menu_rects["money"] = self.menu_rects["hp"].move(0, self.menu_rects["hp"].h)
         self.menu_rects["towers"] = pg.Rect(0, self.menu_rects["money"].bottom, r.w,
@@ -175,7 +174,7 @@ class LevelDriver:
         self.menu_rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
 
         # Create surface
-        self.menu = pg.Surface(r.size)
+        self.menu.set_surface(pg.Surface(r.size))
 
         # Draw money and hp text
         self.menu_font = data.get_scaled_font(*self.menu_rects["hp"].size, "999")
@@ -186,22 +185,27 @@ class LevelDriver:
         rect = self.menu_rects["money"]
         img = data.scale_to_fit(pg.image.load("res/money.png"), w=img_w, h=img_w)
         img_rect = img.get_rect(center=(rect.x - img_w // 2, rect.centery))
-        self.menu.blit(img, img_rect)
+        self.menu.surface.blit(img, img_rect)
         rect = self.menu_rects["hp"]
         img = data.scale_to_fit(pg.image.load("res/heart.png"), w=img_w, h=img_w)
         img_rect = img.get_rect(center=(rect.x - img_w // 2, rect.centery))
-        self.menu.blit(img, img_rect)
+        self.menu.surface.blit(img, img_rect)
 
         # display towers
+        cost_font = data.get_scaled_font(self.menu_tower_w, self.menu_tower_w // 3, "9999")
         self.menu_towers = pg.Surface((r.w, self.menu_tower_w * (math.ceil(len(TOWER_ORDER) / 2) + 1)))
         for idx in TOWER_ORDER:
+            tower = data.towers[idx]
             col, row = idx % self.TOWER_COLUMNS, idx // self.TOWER_COLUMNS
-            img = data.scale_to_fit(data.tower_images[idx], w=self.menu_tower_w, h=self.menu_tower_w)
-            img_rect = img.get_rect(center=(int((col + .5) * self.menu_tower_w), int((row + .5) * self.menu_tower_w)))
-            self.menu_towers.blit(img, img_rect)
+            rect = pg.Rect(col * self.menu_tower_w, row * self.menu_tower_w, self.menu_tower_w, self.menu_tower_w)
+            img = data.scale_to_fit(tower.img, w=self.menu_tower_w, h=self.menu_tower_w)
+            self.menu_towers.blit(img, img.get_rect(center=rect.center))
+            text = cost_font.render(str(tower.cost), 1, (128, 128, 128))
+            self.menu_towers.blit(text, text.get_rect(bottomright=rect.bottomright))
+            self.tower_imgs[idx] = img
         self.towers_scroll = 0
-        self.menu.blit(self.menu_towers, self.menu_rects["towers"],
-                       area=((0, self.towers_scroll), self.menu_rects["towers"].size))
+        self.menu.surface.blit(self.menu_towers, self.menu_rects["towers"],
+                               area=((0, self.towers_scroll), self.menu_rects["towers"].size))
 
     # Draws the enemy path
     def draw_background(self):
@@ -227,7 +231,7 @@ class LevelDriver:
         if event.type == MOUSEBUTTONDOWN:
             if event.button == BUTTON_LEFT:
                 pos = pg.mouse.get_pos()
-                m_rect = self.menu_rects["menu"]
+                m_rect = self.menu.rect
                 if m_rect.collidepoint(*pos):
                     pos = [pos[0] - m_rect.x, pos[1] - m_rect.y]
                     t_rect = self.menu_rects["towers"]
@@ -236,11 +240,15 @@ class LevelDriver:
                         col, row = pos[0] // self.menu_tower_w, pos[1] // self.menu_tower_w
                         idx = row * self.TOWER_COLUMNS + col
                         if idx < len(TOWER_ORDER):
-                            self.towers.append(data.towers[idx](pos=rand_pos()))
+                            if self.money >= data.towers[idx].cost:
+                                self.drag_tower_idx = idx
+                                self.drag_tower.set_surface(self.tower_imgs[idx],
+                                                            pos=[p / data.screen_w for p in data.get_mouse_pos()])
+                                self.drag_tower.dragging = True
                         else:
-                            self.moving_menu = True
+                            self.menu.dragging = True
                     else:
-                        self.moving_menu = True
+                        self.menu.dragging = True
             elif event.button == BUTTON_WHEELUP or event.button == BUTTON_WHEELDOWN:
                 rect = self.menu_rects["towers"]
                 if event.button == BUTTON_WHEELUP:
@@ -252,10 +260,15 @@ class LevelDriver:
                     max_scroll = max(0, self.menu_towers.get_size()[1] - rect.h)
                     if self.towers_scroll > max_scroll:
                         self.towers_scroll = max_scroll
-                self.menu.fill((0, 0, 0), rect)
-                self.menu.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
+                self.menu.surface.fill((0, 0, 0), rect)
+                self.menu.surface.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
         if event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT:
-            self.moving_menu = False
+            self.menu.dragging = False
+            if self.drag_tower.dragging:
+                pos = [p / data.screen_w for p in data.get_mouse_pos()]
+                self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
+                self.add_money(-self.towers[-1].cost)
+                self.drag_tower.dragging = False
             if self.menu_rects["toggle"].collidepoint(*pg.mouse.get_pos()):
                 self.show_menu = not self.show_menu
 
@@ -263,19 +276,19 @@ class LevelDriver:
     def add_money(self, amnt):
         self.money += amnt
         rect = self.menu_rects["money"]
-        self.menu.fill((0, 0, 0), rect)
+        self.menu.surface.fill((0, 0, 0), rect)
         text = self.menu_font.render(str(self.money), 1, (255, 255, 255))
         text_rect = text.get_rect(centery=rect.centery, left=rect.left)
-        self.menu.blit(text, text_rect)
+        self.menu.surface.blit(text, text_rect)
 
     # Subtracts input from hp
     def damage(self, amnt):
         self.hp -= amnt
         rect = self.menu_rects["hp"]
-        self.menu.fill((0, 0, 0), rect)
+        self.menu.surface.fill((0, 0, 0), rect)
         text = self.menu_font.render(str(self.hp), 1, (255, 255, 255))
         text_rect = text.get_rect(centery=rect.centery, left=rect.left)
-        self.menu.blit(text, text_rect)
+        self.menu.surface.blit(text, text_rect)
 
     def reset(self):
         self.enemies.clear()
@@ -291,3 +304,33 @@ class LevelDriver:
         self.paths = paths
         self.spawn_list = spawn_list
         self.draw_background()
+
+
+class DragObject:
+    def __init__(self):
+        self.rect = pg.Rect(0, 0, 0, 0)
+        self.surface = pg.Surface((0, 0))
+        self.pos = [0, 0]
+        self.dragging = False
+
+    def set_surface(self, surface, pos=None):
+        self.surface = surface
+        self.rect = self.surface.get_rect()
+        if pos:
+            self.pos = pos
+        self.drag([0, 0])
+
+    def drag(self, dmouse):
+        dmouse = [d / data.screen_w for d in dmouse]
+        for i in range(2):
+            self.pos[i] += dmouse[i]
+            half_dim = self.rect.size[i] / 2 / data.screen_w
+            if self.pos[i] < half_dim:
+                self.pos[i] = half_dim
+            elif self.pos[i] > 1 - half_dim:
+                self.pos[i] = 1 - half_dim
+        self.rect.center = [self.pos[0] * data.screen_w + data.off_x,
+                            self.pos[1] * data.screen_w + data.off_y]
+
+    def draw(self):
+        pg.display.get_surface().blit(self.surface, self.rect)

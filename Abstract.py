@@ -44,11 +44,12 @@ class Sprite:
 
 
 class Tower(Sprite):
-    def __init__(self, idx, cooldown=1000, **kwargs):
+    def __init__(self, idx, cooldown=1000, cost=10, **kwargs):
         super().__init__(**kwargs)
         self.idx = idx
-        self.timer = 0
         self.cooldown = cooldown
+        self.cost = cost
+        self.timer = 0
 
     def shoot(self, enemy):  # given an enemy, shoots at them
         return []

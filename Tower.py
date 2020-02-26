@@ -13,7 +13,7 @@ WINDOW = data.screen_w
 
 class DuckTower(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(TOWER_1, pos=pos, dim=(.05, .05), img='res/duckTower1.png', cooldown=1000)
+        super().__init__(TOWER_1, pos=pos, dim=(.05, .05), img='res/duckTower1.png', cooldown=1000, cost=10)
         # radius
         self.range = 0.29 * WINDOW
 
@@ -27,7 +27,7 @@ class DuckTower(Tower):
 
 class DuckTower2(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(TOWER_2, pos=pos, dim=(.05, .05), img="res/duckTower2.png", cooldown=500)
+        super().__init__(TOWER_2, pos=pos, dim=(.05, .05), img="res/duckTower2.png", cooldown=500, cost=50)
         # radius
         self.range = 0.29 * WINDOW
 
@@ -41,7 +41,7 @@ class DuckTower2(Tower):
 
 class DuckTowerAA(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(AAGUN, pos=pos, dim=(.05, .1), img="res/duckAAGun.png", cooldown=2000)
+        super().__init__(AAGUN, pos=pos, dim=(.05, .1), img="res/duckAAGun.png", cooldown=2000, cost=100)
         # radius
         self.range = 0.7 * WINDOW
 
@@ -55,7 +55,7 @@ class DuckTowerAA(Tower):
 
 class DuckTowerBallista(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(BALLISTA, pos=pos, dim=(.1, .1), img="res/duckTowerBallista.png", cooldown=1500)
+        super().__init__(BALLISTA, pos=pos, dim=(.1, .1), img="res/duckTowerBallista.png", cooldown=1500, cost=175)
         # radius
         self.range = 0.43 * WINDOW
 

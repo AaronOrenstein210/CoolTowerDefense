@@ -384,10 +384,6 @@ def new_enemy_list():
     slider_ends = [0, 0]
     slider_selected = -1
     slider_off = 0
-    # Compile a list of enemy images
-    enemy_imgs = {}
-    for key in data.enemies.keys():
-        enemy_imgs[key] = data.enemies[key]().img
 
     show_cursor = True
 
@@ -422,7 +418,7 @@ def new_enemy_list():
             rects["Slider"].top = i * lineh
             r_ = rects["Slider"].move(int(rects["SlideBar"].w * current.chances[k]), 0)
             # Draw enemy image
-            img = data.scale_to_fit(enemy_imgs[k], lineh, lineh)
+            img = data.scale_to_fit(data.enemies[k].img, lineh, lineh)
             img_rect = img.get_rect(center=(lineh // 2, r_.centery))
             s_.blit(img, img_rect)
             # Draw slider
