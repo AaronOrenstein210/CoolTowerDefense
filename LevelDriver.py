@@ -3,8 +3,6 @@
 from LevelReader import *
 import pygame as pg
 from pygame.locals import *
-from Abstract import Tower
-from Enemy import Enemy1
 from Tower import *
 from random import uniform
 import data

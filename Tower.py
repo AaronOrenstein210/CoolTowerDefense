@@ -2,7 +2,6 @@
 # Created by Isabelle Early
 
 from Abstract import Projectile
-import pygame
 import data
 from Abstract import Tower
 
@@ -23,7 +22,7 @@ class DuckTower(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed= 2.5, dim=(.05, .05), damage=1, img="res/baseProj.png")
+            super().__init__(pos=pos, angle=angle, speed=2.5, dim=(.05, .05), damage=1, img="res/baseProj.png")
 
 
 class DuckTower2(Tower):
@@ -37,7 +36,7 @@ class DuckTower2(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed= 1, dim=(.025, .025), damage=.25, img="res/smallProj.png")
+            super().__init__(pos=pos, angle=angle, speed=1, dim=(.025, .025), damage=.25, img="res/smallProj.png")
 
 
 class DuckTowerAA(Tower):

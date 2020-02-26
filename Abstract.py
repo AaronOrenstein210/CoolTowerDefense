@@ -53,7 +53,7 @@ class Tower(Sprite):
     def shoot(self, enemy):  # given an enemy, shoots at them
         return []
 
-    def withinRange(self, x, y, r):
+    def within_range(self, x, y, r):
         xval = self.pos[0] - x
         yval = self.pos[1] - y
         dist = (xval ** 2 + yval ** 2) ** 0.5
@@ -73,9 +73,6 @@ class Projectile(Sprite):
         super().__init__(**kwargs)
         self.damage = damage
         self.speed = speed
-
-    def getDamage(self):
-        return self.damage
 
     def tick(self, dt):
         d = (self.speed * dt) / 1000
