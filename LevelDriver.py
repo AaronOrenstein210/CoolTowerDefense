@@ -27,12 +27,13 @@ class LevelDriver:
         self.hp = self.money = 0
 
         # Menu and menu tower scroll surfaces
-        self.menu = self.menu_towers = None
+        self.menu = self.menu_towers = self.menu_toggle = None
         # Menu rectangles
         self.menu_rects = {"menu": pg.Rect(0, 0, 0, 0),
                            "hp": pg.Rect(0, 0, 0, 0),
                            "money": pg.Rect(0, 0, 0, 0),
-                           "towers": pg.Rect(0, 0, 0, 0)}
+                           "towers": pg.Rect(0, 0, 0, 0),
+                           "toggle": pg.Rect(0, 0, 0, 0)}
         # Menu x offset (0 to 1 * screen width)
         self.menu_x = 0
         # Scroll amount of menu tower list, <= 0
@@ -41,8 +42,8 @@ class LevelDriver:
         self.menu_tower_w = 0
         # Menu text font
         self.menu_font = None
-        # Boolean telling if we are moving the menu
-        self.moving_menu = False
+        # Are we moving the menu (dragging it), Is the menu open
+        self.moving_menu = self.show_menu = False
 
         self.time = 0
         self.paths = []
@@ -151,7 +152,9 @@ class LevelDriver:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
-        d.blit(self.menu, self.menu_rects["menu"])
+        if self.show_menu:
+            d.blit(self.menu, self.menu_rects["menu"])
+        d.blit(self.menu_toggle, self.menu_rects["toggle"])
 
     # Draws menu surface
     def draw_menu(self):
@@ -165,6 +168,11 @@ class LevelDriver:
         self.menu_rects["towers"] = pg.Rect(0, self.menu_rects["money"].bottom, r.w,
                                             r.h - self.menu_rects["money"].bottom)
         self.menu_tower_w = r.w // self.TOWER_COLUMNS
+
+        # Create menu toggle button
+        toggle_r = pg.Rect(data.screen_w + data.off_x - img_w, data.screen_w + data.off_y - img_w, img_w, img_w)
+        self.menu_toggle = data.scale_to_fit(pg.image.load("res/add.png"), w=toggle_r.w, h=toggle_r.h)
+        self.menu_rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
 
         # Create surface
         self.menu = pg.Surface(r.size)
@@ -248,6 +256,8 @@ class LevelDriver:
                 self.menu.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
         if event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT:
             self.moving_menu = False
+            if self.menu_rects["toggle"].collidepoint(*pg.mouse.get_pos()):
+                self.show_menu = not self.show_menu
 
     # Adds input to money
     def add_money(self, amnt):
