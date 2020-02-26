@@ -44,12 +44,14 @@ class Sprite:
 
 
 class Tower(Sprite):
-    def __init__(self, idx, **kwargs):
+    def __init__(self, idx, cooldown=1000, **kwargs):
         super().__init__(**kwargs)
         self.idx = idx
+        self.timer = 0
+        self.cooldown = cooldown
 
     def shoot(self, enemy):  # given an enemy, shoots at them
-        pass
+        return []
 
     def withinRange(self, x, y, r):
         xval = self.pos[0] - x
@@ -57,11 +59,13 @@ class Tower(Sprite):
         dist = (xval ** 2 + yval ** 2) ** 0.5
         return dist <= r
 
-    def restartCount(self):
-        pass
-
     def tick(self, dt):
-        pass
+        self.timer += dt
+        while self.timer >= self.cooldown:
+            self.timer -= self.cooldown
+            if len(data.lvlDriver.enemies) > 0:
+                for projectile in self.shoot(data.lvlDriver.enemies[0]):
+                    data.lvlDriver.projectiles.append(projectile)
 
 
 class Projectile(Sprite):
@@ -84,6 +88,8 @@ class Projectile(Sprite):
 class Enemy(Sprite):
     def __init__(self, idx, strength=1, velocity=.1, **kwargs):
         super().__init__(**kwargs)
+        if data.lvlDriver is not None:
+            self.set_pos(data.lvlDriver.get_start())
         self.idx = idx
         self.strength = strength
         self.path = 0

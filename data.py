@@ -1,5 +1,5 @@
 # Created on 27 January 2020
-# Created by
+# Created by Nerd
 
 import math
 import pygame as pg

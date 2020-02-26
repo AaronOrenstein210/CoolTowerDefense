@@ -1,6 +1,6 @@
 # Created on 27 January 2020
 # Created on 27 January 2020
-# Created by
+# Created by Stinky
 
 from os.path import isfile
 import math
@@ -31,7 +31,7 @@ def run_level():
                 return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
-            else:  # TODO: Level Driver needs to handle events
+            else:
                 data.lvlDriver.input(e)
         data.lvlDriver.tick(dt)
         pg.display.flip()
