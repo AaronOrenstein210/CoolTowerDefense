@@ -1,12 +1,9 @@
 # Created on 27 January 2020
 # Created on 27 January 2020
-# Created by
+# Created by Stinky
 
 from os.path import isfile
-import math
-import pygame as pg
 from pygame.locals import *
-import data
 from LevelReader import *
 
 pg.init()
@@ -31,7 +28,7 @@ def run_level():
                 return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
-            else:  # TODO: Level Driver needs to handle events
+            else:
                 data.lvlDriver.input(e)
         data.lvlDriver.tick(dt)
         pg.display.flip()
@@ -290,7 +287,7 @@ def new_level():
             elif e.type == MOUSEMOTION:
                 pos = data.get_mouse_pos()
                 pos = [(pos[0] - rect.x) / rect.w, (pos[1] - rect.y) / rect.h]
-                pos_ = [min(max(i, 0), 1) for i in pos]
+                pos_ = [min(max(i, 0.), 1.) for i in pos]
                 if current.idx == START:
                     current.pos = pos_
                     for i in range(2):
