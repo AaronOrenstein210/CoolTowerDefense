@@ -30,9 +30,11 @@ class LevelDriver:
         self.menuRectLeft = data.screen_w * 0.7
         self.menuRectTop = data.screen_w * 0.1
         self.boxTop = data.screen_w * 0.65  # top of box with all of the towers
+        self.boxTop = 50
         self.menuRectWidth = data.screen_w * 0.25
         self.menuRectHeight = data.screen_w * 0.8
         self.menuRect = (self.menuRectLeft, self.menuRectTop, self.menuRectWidth, self.menuRectHeight)
+        self.blit_menu = self.get_menu_surface()
 
         self.time = 0
         self.paths = []
@@ -122,26 +124,29 @@ class LevelDriver:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
+        # Nicole menu draw
+        size_menu = self.blit_menu.get_size()
+        size_window = d.get_size()
+        d.blit(self.blit_menu, (size_window[0]-size_menu[0], 0))
 
-       # self.draw_menu(d, self.menuRect)
-
-    # draws menu
-    def draw_menu (self, d, menu_rect):
+    # GET MENU SURFACE
+    def get_menu_surface(self):
+        d = pygame.Surface((self.menuRectWidth, self.menuRectHeight))
         blue = (0, 0, 255)
-        pg.draw.rect(d, blue, menu_rect)
+        d.fill(blue)
+        font1 = pg.font.Font('freesansbold.ttf', 12)
         font = pg.font.Font('freesansbold.ttf', 15)
         menu_text = font.render("MENU", 1, (255, 255, 255))
         menu_box = menu_text.get_rect()
-        d.blit(menu_text, (self.menuRect[0] + (self.menuRect[2] - menu_box[2]) / 2, self.menuRect[1] + menu_box[3] / 2))
-        money_text = font.render("Money:", 1, (255, 255, 255))
-        lives_text = font.render("Lives:", 1, (255, 255, 255))
+        d.blit(menu_text, ((self.menuRectWidth - menu_box[2]) / 2, menu_box[3] / 2))
+        money_text = font.render("Money:   "+str(5), 1, (255, 255, 255))
+        lives_text = font.render("Health:", 1, (255, 255, 255))
         buy_text = font.render("Buy Stuff:", 1, (255, 255, 255))
-        close_text = font.render("Close", 1, (255, 255, 255))
-        menu_box = money_text.get_rect()
-        d.blit(money_text, (self.menuRect[0] + self.menuRect[2]/10, self.menuRect[1] + menu_box[3] * 2))
-        d.blit(lives_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 3))
-        d.blit(buy_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 4))
-        d.blit(close_text, (self.menuRect[0] + self.menuRect[2] / 10, self.menuRect[1] + menu_box[3] * 5))
+        close_text = font1.render("Close", 1, (255, 255, 255))
+        d.blit(money_text, (self.menuRectWidth/10, menu_box[3] * 2))
+        d.blit(lives_text, (self.menuRectWidth/10, menu_box[3] * 3))
+        d.blit(buy_text, (self.menuRectWidth/10, menu_box[3] * 4))
+        d.blit(close_text, (self.menuRectWidth-close_text.get_rect()[2], 0))
 
         # display towers
         x = self.menuRectLeft + data.screen_w * 0.06
@@ -160,6 +165,8 @@ class LevelDriver:
             if y == self.menuRectTop + self.menuRectHeight:
                 y = self.boxTop
 
+        return d
+
     # Draws the enemy path
     def draw_background(self):
         self.background = pg.Surface((data.screen_w, data.screen_w))
@@ -175,8 +182,11 @@ class LevelDriver:
             img_dim = (int(obj.dim[0] * data.screen_w), int(obj.dim[1] * data.screen_w))
             obj.img = pg.transform.scale(obj.img, img_dim)
             obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
+        # MENU RESIZE
+        menu_dim = (int(0.25 * data.screen_w), int(0.8 * data.screen_w))
+        s_menu = self.get_menu_surface()
+        self.blit_menu = pg.transform.scale(s_menu, menu_dim)
 
-        self.draw_menu(pg.display.get_surface(), self.menuRect)
 
     def input(self, event):
         if event.type == MOUSEBUTTONDOWN:
