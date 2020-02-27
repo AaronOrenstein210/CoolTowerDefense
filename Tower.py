@@ -41,7 +41,7 @@ class DuckTower2(Tower):
 
 class DuckTowerAA(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(AAGUN, pos=pos, dim=(.05, .1), img="res/duckAAGun.png", cooldown=2000, cost=100)
+        super().__init__(AAGUN, pos=pos, dim=(.1, .1), img="res/duckAAGun.png", cooldown=200, cost=100)
         # radius
         self.range = 0.7 * WINDOW
 
@@ -50,7 +50,7 @@ class DuckTowerAA(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed=4, dim=(.05, .05), damage=4, img="res/baseProj.png")
+            super().__init__(pos=pos, angle=angle, speed=.88, dim=(.4, .4), damage=4, img="res/AAProj.png")
 
 
 class DuckTowerBallista(Tower):
@@ -64,4 +64,4 @@ class DuckTowerBallista(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed=.77, dim=(.05, .05), damage=3, img="res/baseProj.png")
+            super().__init__(pos=pos, angle=angle, speed=.77, dim=(.05, .05), damage=3, img="res/ballistaProj.png")

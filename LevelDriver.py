@@ -184,7 +184,8 @@ class LevelDriver:
 
         # Create menu toggle button
         toggle_r = pg.Rect(data.screen_w + data.off_x - img_w, data.screen_w + data.off_y - img_w, img_w, img_w)
-        self.menu_toggle = data.scale_to_fit(pg.image.load("res/add.png"), w=toggle_r.w, h=toggle_r.h)
+        self.menu_toggle = data.scale_to_fit(pg.image.load("res/menuButton.png"), w=toggle_r.w, h=toggle_r.h)
+
         self.menu_rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
 
         # Create surface
