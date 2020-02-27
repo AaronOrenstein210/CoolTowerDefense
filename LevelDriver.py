@@ -57,8 +57,8 @@ class LevelDriver:
     def tick(self, dt):
         # Move all enemies, and update towers/projectiles
         for i in self.enemies:
-            if not self.move_enemy(i, dt):
-                self.damage(1)
+            if not self.move(i, dt):
+                print("Lost a Life")
                 self.enemies.remove(i)
         for i in self.towers:
             i.tick(dt)
@@ -68,7 +68,6 @@ class LevelDriver:
             else:
                 for j in self.enemies:
                     if i.polygon.collides_polygon(j.polygon):
-                        self.add_money(1)
                         self.projectiles.remove(i)
                         self.enemies.remove(j)
                         break
@@ -85,12 +84,12 @@ class LevelDriver:
         # Redraw the screen
         self.draw()
 
-    # Returns the starting position of the enemy path
+    # Gets the start of the enemy path
     def get_start(self):
-        if len(self.paths) > 0:
-            return self.paths[0].get_start()
-        else:
+        if len(self.paths) == 0:
             return [0, 0]
+        else:
+            return self.paths[0].get_start()
 
     # Spawns enemies based on the passage of time
     def spawn_enemies(self, dt):
@@ -125,7 +124,7 @@ class LevelDriver:
                 t_f -= spawn.duration
 
     # Updates an enemy's position along the path
-    def move_enemy(self, enemy, dt):
+    def move(self, enemy, dt):
         d = enemy.v * dt / 1000
         while d > 0:
             to_end = self.paths[enemy.path].length * (1 - enemy.progress)
@@ -146,7 +145,6 @@ class LevelDriver:
         d.fill((0, 0, 0))
         d.blit(self.background, (data.off_x, data.off_y))
         for i in self.enemies + self.towers + self.projectiles:
-            # TODO: Optimize this
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
@@ -213,7 +211,6 @@ class LevelDriver:
         self.background.fill((0, 175, 0))
         self.background.blit(draw_paths(data.screen_w, self.paths), (0, 0))
 
-    # Resizes display
     def resize(self):
         self.draw_background()
         # Get a list of objects to resize
@@ -226,7 +223,6 @@ class LevelDriver:
 
         self.draw_menu()
 
-    # Checks input events
     def input(self, event):
         if event.type == MOUSEBUTTONDOWN:
             if event.button == BUTTON_LEFT:
@@ -291,6 +287,7 @@ class LevelDriver:
         self.menu.surface.blit(text, text_rect)
 
     def reset(self):
+        from Tower import TOWER_1
         self.enemies.clear()
         self.towers.clear()
         self.projectiles.clear()
