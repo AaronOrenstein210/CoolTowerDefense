@@ -24,10 +24,14 @@ def draw():
     global rect, side_w
     pg.display.get_surface().fill((0, 0, 0))
     side_w = data.screen_w // 5
-    rect = pg.Rect((side_w, side_w // 2), [data.screen_w - side_w] * 2)
-    pg.display.get_surface().blit(draw_paths(rect.w, paths + [current]),
-                                  (rect.x + data.off_x, rect.y + data.off_y))
+    rect = pg.Rect(side_w + data.off_x, side_w // 2 + data.off_y, data.screen_w - side_w, data.screen_w - side_w)
+    draw_level()
     draw_options()
+
+
+def draw_level():
+    pg.display.get_surface().fill((0, 200, 0), rect)
+    pg.display.get_surface().blit(draw_paths(rect.w, paths + [current]), rect)
 
 
 def draw_options():
@@ -58,7 +62,7 @@ def new_level():
                 data.resize(e.w, e.h, False)
                 draw()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
-                pos = data.get_mouse_pos()
+                pos = pg.mouse.get_pos()
                 if rect.collidepoint(*pos):
                     global current, paths
                     pos = [(pos[0] - rect.x) / rect.w, (pos[1] - rect.y) / rect.h]
@@ -76,8 +80,8 @@ def new_level():
                             paths.append(current)
                             current = Circle()
                             mode = 0
-                else:
-                    idx = pos[1] * len(types) // data.screen_w
+                elif pos[0] - data.off_x < side_w:
+                    idx = (pos[1] - data.off_y) * len(types) // data.screen_w
                     global selected
                     if idx >= len(types) - 1:
                         byte_data = len(paths).to_bytes(1, byteorder)
@@ -97,7 +101,7 @@ def new_level():
                             current = Circle()
                         mode = 0
             elif e.type == MOUSEMOTION:
-                pos = data.get_mouse_pos()
+                pos = pg.mouse.get_pos()
                 pos = [(pos[0] - rect.x) / rect.w, (pos[1] - rect.y) / rect.h]
                 pos_ = [min(max(i, 0.), 1.) for i in pos]
                 if current.idx == START:
@@ -170,7 +174,5 @@ def new_level():
                         factor = (diff + quarter_pi) // half_pi
                         if abs(diff - half_pi * factor) < half_pi / 10:
                             current.theta_f = factor * half_pi + current.theta_i
-                pg.display.get_surface().fill((0, 0, 0), rect)
-                pg.display.get_surface().blit(draw_paths(rect.w, paths + [current]),
-                                              (rect.x + data.off_x, rect.y + data.off_y))
+                draw_level()
         pg.display.flip()

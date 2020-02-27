@@ -102,6 +102,10 @@ class Enemy(Sprite):
             self.strength = 0
         return self.strength
 
+    def set_progress(self, path, progress):
+        self.path = path
+        self.progress = progress
+
 
 def rotate_point(p, center, dtheta):
     dx, dy = p[0] - center[0], p[1] - center[1]

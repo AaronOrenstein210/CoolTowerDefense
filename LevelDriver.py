@@ -3,11 +3,10 @@
 from LevelReader import *
 import pygame as pg
 from pygame.locals import *
-from Tower import *
+from Tower import TOWER_ORDER
+from Enemy import ENEMY_ORDER
 from random import uniform
 import data
-
-TOWER_ORDER = [TOWER_1, TOWER_2, BALLISTA, AAGUN]
 
 
 def rand_pos():
@@ -70,8 +69,24 @@ class LevelDriver:
             else:
                 for j in self.enemies:
                     if i.polygon.collides_polygon(j.polygon):
-                        self.projectiles.remove(i)
                         self.enemies.remove(j)
+                        idx = ENEMY_ORDER.index(j.idx)
+                        # If projectile damage equals enemy strength, delete the projectile
+                        if idx == i.damage:
+                            self.projectiles.remove(i)
+                            self.add_money(idx)
+                        # If the projectile damage is less than enemy strength, delete the projectile
+                        # and create a new enemy of appropriate strength
+                        elif idx > i.damage:
+                            self.projectiles.remove(i)
+                            new_enemy = type(data.enemies[ENEMY_ORDER[idx - i.damage]])()
+                            new_enemy.set_progress(j.path, j.progress)
+                            self.enemies.append(new_enemy)
+                            self.add_money(i.damage)
+                        # If the projectile damage is greate than enemy strength, lower its damage appropriately
+                        else:
+                            i.damage -= idx
+                            self.add_money(idx)
                         break
         if not self.finished_lvl:
             # Get all enemy spawns
@@ -86,7 +101,6 @@ class LevelDriver:
                 sleep(2)
                 pg.quit()
                 exit(0)
-        self.time += dt
         # Get change in mouse position every time so that it can update the last mouse position
         mouse_delta = pg.mouse.get_rel()
         # Check if we have moved the menu
@@ -123,9 +137,7 @@ class LevelDriver:
                         else:
                             self.enemies.append(type(data.enemies[key])())
                             break
-                if idx == len(spawn_list) - 1:
-                    self.finished_lvl = True
-                return
+                break
             else:
                 for i in range(abs(spawn.get_count(spawn.duration) - spawn.get_count(t_i))):
                     num = uniform(0, sum(v for v in spawn.chances.values()))
@@ -138,6 +150,9 @@ class LevelDriver:
                             break
                 t_i = 0
                 t_f -= spawn.duration
+                if idx == len(spawn_list) - 1:
+                    self.finished_lvl = True
+        self.time += dt
 
     # Updates an enemy's position along the path
     def move_enemy(self, enemy, dt):

@@ -7,6 +7,7 @@ from Abstract import Enemy
 WINDOW = data.screen_w
 
 ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5 = range(5)
+ENEMY_ORDER = [ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5]
 
 
 class Enemy1(Enemy):
