@@ -65,8 +65,35 @@ class Tower(Sprite):
         while self.timer >= self.cooldown:
             self.timer -= self.cooldown
             if len(data.lvlDriver.enemies) > 0:
-                for projectile in self.shoot(data.lvlDriver.enemies[0]):
+                for projectile in self.shoot(self.first_enemy()):
                     data.lvlDriver.projectiles.append(projectile)
+
+    def first_enemy(self):
+        enemy1 = data.lvlDriver.enemies[0]
+        for e in data.lvlDriver.enemies:
+            if e.path > enemy1.path:
+                enemy1 = e
+            elif e.path == enemy1.path and e.progress > enemy1.progress:
+                enemy1 = e
+        return enemy1
+
+    def closest_enemy(self, tower):
+        enemy1 = data.lvlDriver.enemies[0]
+        tpos = (tower.pos[0] * 100, tower.pos[1] * 100)
+        e1pos = (enemy1.pos[0] * 100, enemy1.pos[1] * 100)
+        dx = abs(tpos[0] - e1pos[0])
+        dy = abs(tpos[1] - e1pos[1])
+        dist1 = math.sqrt(dx * dx + dy * dy)
+        for e in data.lvlDriver.enemies:
+            epos = (e.pos[0] * 100, e.pos[1] * 100)
+            dx = abs(tpos[0] - epos[0])
+            dy = abs(tpos[1] - epos[1])
+            dist = math.sqrt(dx * dx + dy * dy)
+            if dist > dist1:
+                enemy1 = e
+                dist1 = dist
+        return enemy1
+
 
 
 class Projectile(Sprite):
