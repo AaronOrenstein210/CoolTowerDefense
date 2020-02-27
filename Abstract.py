@@ -78,7 +78,8 @@ class Projectile(Sprite):
     def tick(self, dt):
         d = (self.speed * dt) / 1000
         dx = d * math.cos(self.angle)
-        dy = d * math.sin(self.angle)
+        # Flip y for pixel coords
+        dy = -d * math.sin(self.angle)
         self.set_pos((self.pos[0] + dx, self.pos[1] + dy))
         return 0 <= self.pos[0] <= 1 and 0 <= self.pos[1] <= 1
 

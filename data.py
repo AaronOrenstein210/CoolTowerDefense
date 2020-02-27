@@ -82,7 +82,7 @@ def get_mouse_pos():
 def get_angle_pixels(p1, p2):
     dx = p2[0] - p1[0]
     # Negative to account for flipped pixel coords
-    dy = p2[1] - p1[1]
+    dy = -(p2[1] - p1[1])
     r = math.sqrt(dx * dx + dy * dy)
     if r == 0:
         return 0

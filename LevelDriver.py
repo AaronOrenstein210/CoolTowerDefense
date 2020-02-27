@@ -48,7 +48,9 @@ class LevelDriver:
 
         self.time = 0
         self.paths = []
-        self.spawn_list = []
+        self.spawn_lists = []
+        self.current_spawn = 0
+        self.finished_lvl = False
 
         # Background surface
         self.background = None
@@ -57,8 +59,8 @@ class LevelDriver:
     def tick(self, dt):
         # Move all enemies, and update towers/projectiles
         for i in self.enemies:
-            if not self.move(i, dt):
-                print("Lost a Life")
+            if not self.move_enemy(i, dt):
+                self.damage(i.strength)
                 self.enemies.remove(i)
         for i in self.towers:
             i.tick(dt)
@@ -71,8 +73,19 @@ class LevelDriver:
                         self.projectiles.remove(i)
                         self.enemies.remove(j)
                         break
-        # Get all enemy spawns
-        self.spawn_enemies(dt)
+        if not self.finished_lvl:
+            # Get all enemy spawns
+            self.spawn_enemies(dt)
+        elif len(self.enemies) == 0:
+            self.time = 0
+            self.finished_lvl = False
+            self.current_spawn += 1
+            if self.current_spawn >= len(self.spawn_lists):
+                print("You Win!")
+                from time import sleep
+                sleep(2)
+                pg.quit()
+                exit(0)
         self.time += dt
         # Get change in mouse position every time so that it can update the last mouse position
         mouse_delta = pg.mouse.get_rel()
@@ -95,12 +108,13 @@ class LevelDriver:
     def spawn_enemies(self, dt):
         t_i = self.time
         t_f = self.time + dt
-        for spawn in self.spawn_list:
-            if spawn.duration < self.time:
+        spawn_list = self.spawn_lists[self.current_spawn]
+        for idx, spawn in enumerate(spawn_list):
+            if spawn.duration < t_i:
                 t_i -= spawn.duration
                 t_f -= spawn.duration
             elif spawn.duration >= t_f:
-                for i in range(abs(spawn.get_count(t_f) - spawn.get_count(self.time))):
+                for i in range(abs(spawn.get_count(t_f) - spawn.get_count(t_i))):
                     num = uniform(0, sum(v for v in spawn.chances.values()))
                     for key in spawn.chances.keys():
                         val = spawn.chances[key]
@@ -109,9 +123,11 @@ class LevelDriver:
                         else:
                             self.enemies.append(type(data.enemies[key])())
                             break
-                break
+                if idx == len(spawn_list) - 1:
+                    self.finished_lvl = True
+                return
             else:
-                for i in range(abs(spawn.get_count(spawn.duration) - spawn.get_count(self.time))):
+                for i in range(abs(spawn.get_count(spawn.duration) - spawn.get_count(t_i))):
                     num = uniform(0, sum(v for v in spawn.chances.values()))
                     for key in spawn.chances.keys():
                         val = spawn.chances[key]
@@ -124,7 +140,7 @@ class LevelDriver:
                 t_f -= spawn.duration
 
     # Updates an enemy's position along the path
-    def move(self, enemy, dt):
+    def move_enemy(self, enemy, dt):
         d = enemy.v * dt / 1000
         while d > 0:
             to_end = self.paths[enemy.path].length * (1 - enemy.progress)
@@ -293,13 +309,15 @@ class LevelDriver:
         self.projectiles.clear()
         self.time = 0
         self.hp = self.money = 100
+        self.current_spawn = 0
+        self.finished_lvl = False
         self.resize()
 
     # Sets level data
-    def set_level(self, paths, spawn_list):
+    def set_level(self, paths, spawn_lists):
         self.reset()
         self.paths = paths
-        self.spawn_list = spawn_list
+        self.spawn_lists = spawn_lists
         self.draw_background()
 
 
