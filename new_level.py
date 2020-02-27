@@ -7,7 +7,8 @@ import data
 paths = []
 selected = "Start"
 current = Start()
-types = ["Start", "Line", "Circle", "Save & Exit"]
+last_paths = []
+types = ["Start", "Line", "Circle", "Undo", "Save & Exit"]
 rect = pg.Rect(0, 0, 0, 0)
 
 # Width of side bar and height of each option text box
@@ -16,6 +17,7 @@ side_w = item_h = 0
 
 def reset():
     paths.clear()
+    last_paths.clear()
     global selected, current
     selected, current = "Start", Start()
 
@@ -62,9 +64,10 @@ def new_level():
                 data.resize(e.w, e.h, False)
                 draw()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
+                global selected, paths, last_paths, current
                 pos = pg.mouse.get_pos()
                 if rect.collidepoint(*pos):
-                    global current, paths
+                    temp = paths.copy()
                     pos = [(pos[0] - rect.x) / rect.w, (pos[1] - rect.y) / rect.h]
                     if current.idx == START:
                         current.pos = pos
@@ -80,16 +83,35 @@ def new_level():
                             paths.append(current)
                             current = Circle()
                             mode = 0
+                    # If we added a path, update saves
+                    if temp != paths:
+                        last_paths = temp
                 elif pos[0] - data.off_x < side_w:
                     idx = (pos[1] - data.off_y) * len(types) // data.screen_w
-                    global selected
-                    if idx >= len(types) - 1:
+                    # Clicked save, make sure we have at least one non-start path
+                    if idx == len(types) - 1 and len(paths) >= 2:
                         byte_data = len(paths).to_bytes(1, byteorder)
                         for p in paths:
                             byte_data += p.to_bytes()
                         with open(data.LEVELS, "ab+") as file:
                             file.write(byte_data)
                         return byte_data
+                    # Clicked undo
+                    elif idx == len(types) - 2 and len(paths) >= 1:
+                        paths = last_paths
+                        last_paths = last_paths[:-1]
+                        # Change the index so that it recreates the current path object
+                        if len(paths) == 0:
+                            current = Start()
+                        else:
+                            if selected == "Start":
+                                current = Start()
+                            elif selected == "Line":
+                                current = Line(start=paths[-1].get_end())
+                            elif selected == "Circle":
+                                current = Circle()
+                            mode = 0
+                        draw_level()
                     elif selected != types[idx] and len(paths) > 0:
                         selected = types[idx]
                         draw_options()
@@ -122,7 +144,6 @@ def new_level():
                         current.end[0] = current.start[0] + math.copysign(delta, dx)
                         current.end[1] = current.start[1] + math.copysign(delta, dy)
                 elif current.idx == CIRCLE:
-                    data.TWO_PI = 2 * math.pi
                     if mode == 0:
                         # Get end of last segment
                         end = paths[-1].get_end()
