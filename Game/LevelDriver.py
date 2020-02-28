@@ -1,10 +1,10 @@
 # Created on 27 January 2020
 # Created by Kyle Doster
-from LevelReader import *
+from Game.LevelReader import *
 import pygame as pg
 from pygame.locals import *
-from Tower import TOWER_ORDER
-from Enemy import ENEMY_ORDER
+from Game.Tower import TOWER_ORDER
+from Game.Enemy import ENEMY_ORDER
 from random import uniform
 import data
 
@@ -70,23 +70,23 @@ class LevelDriver:
                 for j in self.enemies:
                     if i.polygon.collides_polygon(j.polygon):
                         self.enemies.remove(j)
-                        idx = ENEMY_ORDER.index(j.idx)
+                        strength = ENEMY_ORDER.index(j.idx) + 1
                         # If projectile damage equals enemy strength, delete the projectile
-                        if idx == i.damage:
+                        if strength == i.damage:
                             self.projectiles.remove(i)
-                            self.add_money(idx)
+                            self.add_money(strength)
                         # If the projectile damage is less than enemy strength, delete the projectile
                         # and create a new enemy of appropriate strength
-                        elif idx > i.damage:
+                        elif strength > i.damage:
                             self.projectiles.remove(i)
-                            new_enemy = type(data.enemies[ENEMY_ORDER[idx - i.damage]])()
+                            new_enemy = type(data.enemies[ENEMY_ORDER[strength - i.damage - 1]])()
                             new_enemy.set_progress(j.path, j.progress)
                             self.enemies.append(new_enemy)
                             self.add_money(i.damage)
-                        # If the projectile damage is greate than enemy strength, lower its damage appropriately
+                        # If the projectile damage is greater than enemy strength, lower its damage appropriately
                         else:
-                            i.damage -= idx
-                            self.add_money(idx)
+                            i.damage -= strength
+                            self.add_money(strength)
                         break
         if not self.finished_lvl:
             # Get all enemy spawns
@@ -98,7 +98,7 @@ class LevelDriver:
             if self.current_spawn >= len(self.spawn_lists):
                 print("You Win!")
                 from time import sleep
-                sleep(2)
+                sleep(1)
                 pg.quit()
                 exit(0)
         # Get change in mouse position every time so that it can update the last mouse position
@@ -319,7 +319,6 @@ class LevelDriver:
         self.menu.surface.blit(text, text_rect)
 
     def reset(self):
-        from Tower import TOWER_1
         self.enemies.clear()
         self.towers.clear()
         self.projectiles.clear()

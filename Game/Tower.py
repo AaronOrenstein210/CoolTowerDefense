@@ -1,9 +1,9 @@
 # Created on 27 January 2020
 # Created by Isabelle Early
 
-from Abstract import Projectile
+from Game.Abstract import Projectile
 import data
-from Abstract import Tower
+from Game.Abstract import Tower
 
 TOWER_1, TOWER_2, BALLISTA, AAGUN = range(4)
 TOWER_ORDER = [TOWER_1, TOWER_2, BALLISTA, AAGUN]
@@ -11,7 +11,7 @@ TOWER_ORDER = [TOWER_1, TOWER_2, BALLISTA, AAGUN]
 
 class DuckTower(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(TOWER_1, pos=pos, dim=(.05, .05), img='res/duckTower1.png', cooldown=1000, cost=10)
+        super().__init__(TOWER_1, pos=pos, dim=(.05, .05), img='res/duckTower1.png', cooldown=1000, cost=25)
         # radius
         self.range = 0.29
 
@@ -48,7 +48,7 @@ class DuckTowerAA(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed=1, dim=(.04, .04), damage=2, img="res/AAProj.png")
+            super().__init__(pos=pos, angle=angle, speed=1, dim=(.04, .04), damage=1, img="res/AAProj.png")
 
 
 class DuckTowerBallista(Tower):
@@ -62,4 +62,4 @@ class DuckTowerBallista(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed=.77, dim=(.05, .05), damage=3, img="res/ballistaProj.png")
+            super().__init__(pos=pos, angle=angle, speed=.77, dim=(.05, .05), damage=2, img="res/ballistaProj.png")

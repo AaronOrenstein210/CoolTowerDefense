@@ -1,10 +1,9 @@
 from os.path import isfile
-import math
 import pygame as pg
 from pygame.locals import *
-from LevelReader import draw_paths, draw_spawn_list, load_paths, load_spawn_list
-from new_level import new_level
-from new_enemy_list import new_enemy_list
+from Game.LevelReader import draw_paths, draw_spawn_list, load_paths, load_spawn_list
+from MainScreen.new_level import new_level
+from MainScreen.new_enemy_list import new_enemy_list
 import data
 
 levels, spawns = 0, 1

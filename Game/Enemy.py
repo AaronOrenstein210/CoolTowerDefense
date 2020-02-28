@@ -2,7 +2,7 @@
 # Created by Nicole Brown
 
 import data
-from Abstract import Enemy
+from Game.Abstract import Enemy
 
 WINDOW = data.screen_w
 

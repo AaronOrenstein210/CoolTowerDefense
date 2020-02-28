@@ -1,7 +1,5 @@
-import math
-import pygame as pg
 from pygame.locals import *
-from LevelReader import *
+from Game.LevelReader import *
 import data
 
 paths = []

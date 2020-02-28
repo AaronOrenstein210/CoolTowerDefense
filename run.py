@@ -5,7 +5,7 @@
 from pygame.locals import *
 import pygame as pg
 import data
-from choose_level import choose_level
+from MainScreen.choose_level import choose_level
 
 pg.init()
 data.init()

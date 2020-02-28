@@ -2,7 +2,7 @@ from os.path import isfile
 import pygame
 import math
 import data
-from collision import Polygon
+from Game.collision import Polygon
 
 WINDOW = data.screen_w
 
