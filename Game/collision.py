@@ -11,8 +11,35 @@ class Polygon:
         # Store all points
         self.points = points
         # Calculate all edges
-        self.edges = [[val2 - val1 for val1, val2 in zip(points[i], points[(i + 1) % len(points)])]
-                      for i in range(len(points))]
+        self.edges = [[p2[0] - p1[0], p2[1] - p1[1]] for p1, p2 in zip(points, points[1:] + points[:1])]
+
+    def collides_point(self, pos):
+        # Store perpendicular unit vectors for each edge
+        vectors = []
+        for edge in self.edges:
+            # Get perpendicular vector
+            v = [-edge[1], edge[0]]
+            # Get magnitude and unit vector
+            mag = sqrt(sum([pow(val, 2) for val in v]))
+            v = [val / mag for val in v]
+            # Make sure our vector is not parallel to any other vectors
+            if all([not are_parallel(v, v_) for v_ in vectors]):
+                vectors.append(v)
+        # Go through each vector
+        for vector in vectors:
+            min_ = max_ = dot_product(vector, self.points[0])
+            # Go through each point on each polygon
+            for p in self.points[1:]:
+                # Calculate the dot product and see if it is a new min or max
+                dot = dot_product(vector, p)
+                if dot < min_:
+                    min_ = dot
+                elif dot > max_:
+                    max_ = dot
+            # Check if the projections don't overlap
+            if not (min_ <= dot_product(vector, pos) <= max_):
+                return False
+        return True
 
     def collides_polygon(self, polygon):
         # Convert Rect object to surface object

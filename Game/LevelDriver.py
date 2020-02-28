@@ -58,7 +58,10 @@ class LevelDriver:
         self.menu_font = None
         # Are we moving the menu (dragging it), Is the menu open
         self.show_menu = False
+        # Type of tower being dragged
         self.drag_tower_idx = -1
+        # Tower currently being clicked on
+        self.selected_tower = None
 
         self.time = 0
         self.paths = []
@@ -199,24 +202,33 @@ class LevelDriver:
         d = pg.display.get_surface()
         d.fill((0, 0, 0))
         d.blit(self.background, (data.off_x, data.off_y))
+        # Draw enemies, towers, and projectiles
         for i in self.enemies + self.towers + self.projectiles:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
+        # Draw selected tower range
+        if self.selected_tower:
+            self.selected_tower.draw_range()
+        # If paused, draw the test enemy
         if self.paused:
             i = self.test_enemy
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
+        # Draw the menu
         if self.show_menu:
             self.menu.draw()
+        # Draw the tower being placed
         if self.drag_tower.dragging:
             self.drag_tower.draw()
+        # Draw the menu toggle button
         d.blit(self.menu_toggle, self.menu_rects["toggle"])
+        # Draw won and lose messages
         if self.game_state != PLAYING:
             dim = d.get_size()
             # Draw black overlay
-            s = pg.Surface(dim, SRCALPHA)
+            s = pg.Surface(dim)
             s.fill((0, 0, 0))
             s.set_alpha(128)
             d.blit(s, (0, 0))
@@ -245,7 +257,9 @@ class LevelDriver:
         self.menu_tower_w = r.w // self.TOWER_COLUMNS
 
         # Create menu toggle button
-        toggle_r = pg.Rect(data.screen_w + data.off_x - img_w, data.screen_w + data.off_y - img_w, img_w, img_w)
+        toggle_w = img_w * 2
+        toggle_r = pg.Rect(data.screen_w + data.off_x - toggle_w, data.screen_w + data.off_y - toggle_w, toggle_w,
+                           toggle_w)
         self.menu_toggle = data.scale_to_fit(pg.image.load("res/menuButton.png"), w=toggle_r.w, h=toggle_r.h)
         self.menu_rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
 
@@ -267,7 +281,7 @@ class LevelDriver:
         img_rect = img.get_rect(center=(rect.x - img_w // 2, rect.centery))
         self.menu.surface.blit(img, img_rect)
 
-        # Draw pause button TODO: new play button
+        # Draw pause button
         path = "res/{}.png".format("play" if self.paused else "pause")
         img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
         self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
@@ -306,9 +320,10 @@ class LevelDriver:
 
         self.draw_menu()
 
+    # Handles and event
     def input(self, event):
         if self.game_state == PLAYING:
-            if event.type == MOUSEBUTTONDOWN:
+            if event.type == MOUSEBUTTONDOWN and self.show_menu:
                 if event.button == BUTTON_LEFT:
                     pos = pg.mouse.get_pos()
                     m_rect = self.menu.rect
@@ -327,13 +342,8 @@ class LevelDriver:
                                     self.drag_tower.dragging = True
                             else:
                                 self.menu.dragging = True
-                        else:
-                            good = True
-                            for key in self.menu_rects.keys():
-                                if self.menu_rects[key].collidepoint(*pos):
-                                    good = False
-                                    break
-                            self.menu.dragging = good
+                        elif not self.menu_rects["pause"].collidepoint(*pos):
+                            self.menu.dragging = True
                 elif event.button == BUTTON_WHEELUP or event.button == BUTTON_WHEELDOWN:
                     rect = self.menu_rects["towers"]
                     if event.button == BUTTON_WHEELUP:
@@ -350,26 +360,37 @@ class LevelDriver:
             if event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT:
                 pos = pg.mouse.get_pos()
                 self.menu.dragging = False
+                # Check if we finished dragging a tower
                 if self.drag_tower.dragging:
-                    pos = [p / data.screen_w for p in data.get_mouse_pos()]
-                    self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
-                    self.add_money(-self.towers[-1].cost)
+                    if not self.menu.rect.collidepoint(*pos):
+                        pos = [p / data.screen_w for p in pos]
+                        self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
+                        self.add_money(-self.towers[-1].cost)
                     self.drag_tower.dragging = False
-                if self.menu_rects["toggle"].collidepoint(*pos):
-                    self.show_menu = not self.show_menu
-                elif self.menu.rect.collidepoint(*pos):
-                    pos = [pos[0] - self.menu.rect.x, pos[1] - self.menu.rect.y]
-                    if self.menu_rects["pause"].collidepoint(*pos):
-                        self.paused = not self.paused
-                        # Reset test enemy
-                        if self.paused:
-                            self.test_enemy.reset(self.get_start())
-                        # Update paused button
-                        img_w = self.menu_rects["pause"].w
-                        path = "res/{}.png".format("play" if self.paused else "pause")
-                        img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
-                        self.menu.surface.fill((0, 0, 0, 0), self.menu_rects["pause"])
-                        self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
+                else:
+                    # Clicked the toggle menu button
+                    if self.menu_rects["toggle"].collidepoint(*pos):
+                        self.show_menu = not self.show_menu
+                    # Clicked the menu
+                    elif self.show_menu and self.menu.rect.collidepoint(*pos):
+                        pos = [pos[0] - self.menu.rect.x, pos[1] - self.menu.rect.y]
+                        if self.menu_rects["pause"].collidepoint(*pos):
+                            self.paused = not self.paused
+                            # Reset test enemy
+                            if self.paused:
+                                self.test_enemy.reset(self.get_start())
+                            # Update paused button
+                            img_w = self.menu_rects["pause"].w
+                            path = "res/{}.png".format("play" if self.paused else "pause")
+                            img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
+                            self.menu.surface.fill((0, 0, 0, 0), self.menu_rects["pause"])
+                            self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
+                    else:
+                        pos = [(pos[0] - data.off_x) / data.screen_w, (pos[1] - data.off_y) / data.screen_w]
+                        # Check if we clicked a tower
+                        for i in self.towers:
+                            if i.polygon.collides_point(pos):
+                                self.selected_tower = None if self.selected_tower is i else i
             return True
         else:
             return not (event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT)

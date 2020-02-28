@@ -22,8 +22,7 @@ off = [0, 0]
 selected_lvl = -1
 hovering = [-1, -1]
 
-lvl_font = None
-back_img = None
+lvl_font = back_img = overlay = None
 
 row_len = 5
 margin = 10
@@ -32,7 +31,7 @@ item_w = 0
 
 
 def resize():
-    global item_w, lvl_font, back_img
+    global item_w, lvl_font, back_img, overlay
     half_w = data.screen_w // 2
     # Draw middle line
     d = pg.display.get_surface()
@@ -51,6 +50,10 @@ def resize():
     item_w = rects[levels].w // row_len
     back_img = pg.transform.scale(pg.image.load("res/back.png"), (item_w, item_w))
     lvl_font = data.get_scaled_font(item_w * 3 // 5, item_w * 3 // 5, "999")
+    # Black overlay
+    overlay = pg.Surface((item_w, item_w))
+    overlay.fill((0, 0, 0))
+    overlay.set_alpha(128)
     # Set up surfaces and rectangles
     for j, arr in enumerate(level_data):
         num_rows = (len(arr) + 1) // row_len + 1
@@ -64,6 +67,7 @@ def resize():
             if j == levels and k == selected_lvl:
                 pg.draw.rect(surfaces[j], (255, 255, 0), (col * item_w, row * item_w, item_w, item_w), 2)
             elif j == spawns and k in spawn_blacklist:
+                surfaces[j].blit(overlay, (col * item_w, row * item_w))
                 surfaces[j].fill((0, 0, 0), (col * item_w, row * item_w, item_w, item_w))
         # Add plus sign at the end
         row, col = len(arr) // row_len, len(arr) % row_len
@@ -172,7 +176,7 @@ def choose_level():
                                         surfaces[i].blit(text_s, text_s.get_rect(center=item_r.center))
                                     else:
                                         spawn_blacklist.append(idx)
-                                        surfaces[i].fill((0, 0, 0), item_r)
+                                        surfaces[i].blit(overlay, item_r)
                                 update_title()
                                 d = pg.display.get_surface()
                                 d.fill((0, 0, 0), r)

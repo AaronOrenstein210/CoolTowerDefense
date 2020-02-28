@@ -1,5 +1,5 @@
 from os.path import isfile
-import pygame
+import pygame as pg
 import math
 import data
 from Game.collision import Polygon
@@ -16,9 +16,9 @@ class Sprite:
 
         img_dim = (int(dim[0] * data.screen_w), int(dim[1] * data.screen_w))
         if isfile(img) and (img.endswith(".png") or img.endswith(".jpg")):
-            self.img = data.scale_to_fit(pygame.image.load(img), w=img_dim[0], h=img_dim[1])
+            self.img = data.scale_to_fit(pg.image.load(img), w=img_dim[0], h=img_dim[1])
         else:
-            self.img = pygame.Surface(img_dim)
+            self.img = pg.Surface(img_dim)
         # Just blit this surface, not self.img
         self.blit_img = self.img
 
@@ -40,60 +40,58 @@ class Sprite:
             points.append(rotate_point([self.pos[0] + signs[0] * half_w,
                                         self.pos[1] + signs[1] * half_h], self.pos, angle))
         self.polygon = Polygon(points)
-        self.blit_img = pygame.transform.rotate(self.img, self.angle + 90)
+        self.blit_img = pg.transform.rotate(self.img, self.angle + 90)
 
 
 class Tower(Sprite):
-    def __init__(self, idx, cooldown=1000, cost=10, **kwargs):
+    def __init__(self, idx, cooldown=1000, cost=10, range=.1, **kwargs):
         super().__init__(**kwargs)
         self.idx = idx
         self.cooldown = cooldown
         self.cost = cost
         self.timer = 0
+        self.range = range
 
     def shoot(self, enemy):  # given an enemy, shoots at them
         return []
 
-    def within_range(self, x, y, r):
+    def draw_range(self):
+        r = int(self.range * data.screen_w)
+        s = pg.Surface((r * 2, r * 2))
+        pg.draw.circle(s, (0, 0, 255), (r, r), r)
+        s.set_alpha(64)
+        s.set_colorkey((0, 0, 0))
+        pg.display.get_surface().blit(s, (int(self.pos[0] * data.screen_w - r + data.off_x),
+                                          int(self.pos[1] * data.screen_w - r + data.off_y)))
+
+    def within_range(self, x, y):
         xval = self.pos[0] - x
         yval = self.pos[1] - y
         dist = (xval ** 2 + yval ** 2) ** 0.5
-        return dist <= r
+        return dist <= self.range
 
     def tick(self, dt):
         self.timer += dt
         while self.timer >= self.cooldown:
             self.timer -= self.cooldown
-            if len(data.lvlDriver.enemies) > 0:
-                for projectile in self.shoot(self.first_enemy()):
+            # Get all enemies in range
+            in_range = [e for e in data.lvlDriver.enemies if data.get_distance(self.pos, e.pos) < self.range]
+            # Shoot the enemies based on shooting ai
+            if len(in_range) > 0:
+                for projectile in self.shoot(closest_enemy(in_range, self)):
                     data.lvlDriver.projectiles.append(projectile)
 
-    def first_enemy(self):
-        enemy1 = data.lvlDriver.enemies[0]
-        for e in data.lvlDriver.enemies:
-            if e.path > enemy1.path:
-                enemy1 = e
-            elif e.path == enemy1.path and e.progress > enemy1.progress:
-                enemy1 = e
-        return enemy1
 
-    def closest_enemy(self, tower):
-        enemy1 = data.lvlDriver.enemies[0]
-        tpos = (tower.pos[0] * 100, tower.pos[1] * 100)
-        e1pos = (enemy1.pos[0] * 100, enemy1.pos[1] * 100)
-        dx = abs(tpos[0] - e1pos[0])
-        dy = abs(tpos[1] - e1pos[1])
-        dist1 = math.sqrt(dx * dx + dy * dy)
-        for e in data.lvlDriver.enemies:
-            epos = (e.pos[0] * 100, e.pos[1] * 100)
-            dx = abs(tpos[0] - epos[0])
-            dy = abs(tpos[1] - epos[1])
-            dist = math.sqrt(dx * dx + dy * dy)
-            if dist > dist1:
-                enemy1 = e
-                dist1 = dist
-        return enemy1
+def first_enemy(arr):
+    return max(arr, key=lambda e: e.path + e.progress)
 
+
+def closest_enemy(arr, tower):
+    return min(arr, key=lambda e: data.get_distance(tower.pos, e.pos))
+
+
+def strongest_enemy(arr):
+    return max(arr, key=lambda e: e.strength)
 
 
 class Projectile(Sprite):
