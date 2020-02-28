@@ -194,7 +194,7 @@ class LevelDriver:
         self.menu_rects["hp"] = pg.Rect(img_w, 0, r.w - img_w, img_w)
         self.menu_rects["money"] = self.menu_rects["hp"].move(0, self.menu_rects["hp"].h)
         self.menu_rects["towers"] = pg.Rect(0, self.menu_rects["money"].bottom, r.w,
-                                            r.h - self.menu_rects["money"].bottom)
+                                            r.h - self.menu_rects["money"].bottom - img_w)
         self.menu_tower_w = r.w // self.TOWER_COLUMNS
 
         # Create menu toggle button
