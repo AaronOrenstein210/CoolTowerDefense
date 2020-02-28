@@ -216,7 +216,7 @@ def new_enemy_list():
                     if selected == "Count":
                         current.num_enemies = min(current.num_enemies * 10 + val, 99)
                     else:
-                        current.duration = min(current.duration * 10 + val, 10000)
+                        current.duration = min(current.duration * 10 + val, 100000)
                 else:
                     continue
                 draw()
