@@ -8,6 +8,8 @@ from Game.Enemy import ENEMY_ORDER, Enemy
 from random import uniform
 import data
 
+LOST, PLAYING, WON = -1, 0, 1
+
 
 # Used to show the level path when paused
 class TestEnemy(Enemy):
@@ -65,68 +67,71 @@ class LevelDriver:
         self.finished_lvl = False
 
         self.paused = False
+        self.game_state = PLAYING
 
         # Background surface
         self.background = None
 
     # Called every iteration of the while loop
     def tick(self, dt):
-        if self.paused:
-            if not self.move_enemy(self.test_enemy, dt):
-                self.test_enemy.reset(self.get_start())
-        else:
-            # Move all enemies, and update towers/projectiles
-            for i in self.enemies:
-                if not self.move_enemy(i, dt):
-                    self.damage(i.strength)
-                    self.enemies.remove(i)
-            for i in self.towers:
-                i.tick(dt)
-            for i in self.projectiles:
-                if not i.tick(dt):
-                    self.projectiles.remove(i)
-                else:
-                    for j in self.enemies:
-                        if i.polygon.collides_polygon(j.polygon):
-                            self.enemies.remove(j)
-                            strength = ENEMY_ORDER.index(j.idx) + 1
-                            # If projectile damage equals enemy strength, delete the projectile
-                            if strength == i.damage:
-                                self.projectiles.remove(i)
-                                self.add_money(strength)
-                            # If the projectile damage is less than enemy strength, delete the projectile
-                            # and create a new enemy of appropriate strength
-                            elif strength > i.damage:
-                                self.projectiles.remove(i)
-                                new_enemy = type(data.enemies[ENEMY_ORDER[strength - i.damage - 1]])()
-                                new_enemy.set_progress(j.path, j.progress)
-                                self.enemies.append(new_enemy)
-                                self.add_money(i.damage)
-                            # If the projectile damage is greater than enemy strength, lower its damage appropriately
-                            else:
-                                i.damage -= strength
-                                self.add_money(strength)
-                            break
-            if not self.finished_lvl:
-                # Get all enemy spawns
-                self.spawn_enemies(dt)
-            elif len(self.enemies) == 0:
-                self.time = 0
-                self.finished_lvl = False
-                self.current_spawn += 1
-                if self.current_spawn >= len(self.spawn_lists):
-                    print("You Win!")
-                    from time import sleep
-                    sleep(1)
-                    pg.quit()
-                    exit(0)
-        # Get change in mouse position every time so that it can update the last mouse position
-        mouse_delta = pg.mouse.get_rel()
-        # Check if we have moved the menu
-        if self.menu.dragging:
-            self.menu.drag(mouse_delta)
-        elif self.drag_tower.dragging:
-            self.drag_tower.drag(mouse_delta)
+        if self.game_state == PLAYING:
+            if self.paused:
+                if not self.move_enemy(self.test_enemy, dt):
+                    self.test_enemy.reset(self.get_start())
+            else:
+                # Move all enemies, and update towers/projectiles
+                for i in self.enemies:
+                    if not self.move_enemy(i, dt):
+                        self.damage(i.strength)
+                        self.enemies.remove(i)
+                        # Check lost
+                        if self.hp <= 0:
+                            self.end(False)
+                            return
+                for i in self.towers:
+                    i.tick(dt)
+                for i in self.projectiles:
+                    if not i.tick(dt):
+                        self.projectiles.remove(i)
+                    else:
+                        for j in self.enemies:
+                            if i.polygon.collides_polygon(j.polygon):
+                                self.enemies.remove(j)
+                                strength = ENEMY_ORDER.index(j.idx) + 1
+                                # If projectile damage equals enemy strength, delete the projectile
+                                if strength == i.damage:
+                                    self.projectiles.remove(i)
+                                    self.add_money(strength)
+                                # If the projectile damage is less than enemy strength, delete the projectile
+                                # and create a new enemy of appropriate strength
+                                elif strength > i.damage:
+                                    self.projectiles.remove(i)
+                                    new_enemy = type(data.enemies[ENEMY_ORDER[strength - i.damage - 1]])()
+                                    new_enemy.set_progress(j.path, j.progress)
+                                    self.enemies.append(new_enemy)
+                                    self.add_money(i.damage)
+                                # If the projectile damage is greater than enemy strength, lower its damage appropriately
+                                else:
+                                    i.damage -= strength
+                                    self.add_money(strength)
+                                break
+                if not self.finished_lvl:
+                    # Get all enemy spawns
+                    self.spawn_enemies(dt)
+                elif len(self.enemies) == 0:
+                    self.time = 0
+                    self.finished_lvl = False
+                    self.current_spawn += 1
+                    if self.current_spawn >= len(self.spawn_lists):
+                        self.end(True)
+                        return
+                        # Get change in mouse position every time so that it can update the last mouse position
+            mouse_delta = pg.mouse.get_rel()
+            # Check if we have moved the menu
+            if self.menu.dragging:
+                self.menu.drag(mouse_delta)
+            elif self.drag_tower.dragging:
+                self.drag_tower.drag(mouse_delta)
         # Redraw the screen
         self.draw()
 
@@ -198,16 +203,33 @@ class LevelDriver:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
-        if self.show_menu:
-            self.menu.draw()
-        if self.drag_tower.dragging:
-            self.drag_tower.draw()
         if self.paused:
             i = self.test_enemy
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
+        if self.show_menu:
+            self.menu.draw()
+        if self.drag_tower.dragging:
+            self.drag_tower.draw()
         d.blit(self.menu_toggle, self.menu_rects["toggle"])
+        if self.game_state != PLAYING:
+            dim = d.get_size()
+            # Draw black overlay
+            s = pg.Surface(dim, SRCALPHA)
+            s.fill((0, 0, 0))
+            s.set_alpha(128)
+            d.blit(s, (0, 0))
+            # Draw lost or won text
+            text = "You Lost" if self.game_state == LOST else "You Won!"
+            font = data.get_scaled_font(data.screen_w // 2, data.screen_w // 5, text)
+            text_s = font.render(text, 1, (255, 255, 255))
+            d.blit(text_s, text_s.get_rect(centerx=dim[0] // 2, bottom=dim[1] // 2))
+            # Draw return to main screen text
+            text = "Click to return to main screen"
+            font = data.get_scaled_font(data.screen_w // 2, data.screen_w // 5, text)
+            text_s = font.render(text, 1, (255, 255, 255))
+            d.blit(text_s, text_s.get_rect(centerx=dim[0] // 2, top=dim[1] // 2))
 
     # Draws menu surface
     def draw_menu(self):
@@ -285,68 +307,77 @@ class LevelDriver:
         self.draw_menu()
 
     def input(self, event):
-        if event.type == MOUSEBUTTONDOWN:
-            if event.button == BUTTON_LEFT:
-                pos = pg.mouse.get_pos()
-                m_rect = self.menu.rect
-                if m_rect.collidepoint(*pos):
-                    pos = [pos[0] - m_rect.x, pos[1] - m_rect.y]
-                    t_rect = self.menu_rects["towers"]
-                    if t_rect.collidepoint(*pos):
-                        pos = [pos[0] - t_rect.x, pos[1] - t_rect.y + self.towers_scroll]
-                        col, row = pos[0] // self.menu_tower_w, pos[1] // self.menu_tower_w
-                        idx = row * self.TOWER_COLUMNS + col
-                        if idx < len(TOWER_ORDER):
-                            if self.money >= data.towers[idx].cost:
-                                self.drag_tower_idx = idx
-                                self.drag_tower.set_surface(self.tower_imgs[idx],
-                                                            pos=[p / data.screen_w for p in data.get_mouse_pos()])
-                                self.drag_tower.dragging = True
+        if self.game_state == PLAYING:
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == BUTTON_LEFT:
+                    pos = pg.mouse.get_pos()
+                    m_rect = self.menu.rect
+                    if m_rect.collidepoint(*pos):
+                        pos = [pos[0] - m_rect.x, pos[1] - m_rect.y]
+                        t_rect = self.menu_rects["towers"]
+                        if t_rect.collidepoint(*pos):
+                            pos = [pos[0] - t_rect.x, pos[1] - t_rect.y + self.towers_scroll]
+                            col, row = pos[0] // self.menu_tower_w, pos[1] // self.menu_tower_w
+                            idx = row * self.TOWER_COLUMNS + col
+                            if idx < len(TOWER_ORDER):
+                                if self.money >= data.towers[idx].cost:
+                                    self.drag_tower_idx = idx
+                                    self.drag_tower.set_surface(self.tower_imgs[idx],
+                                                                pos=[p / data.screen_w for p in data.get_mouse_pos()])
+                                    self.drag_tower.dragging = True
+                            else:
+                                self.menu.dragging = True
                         else:
-                            self.menu.dragging = True
+                            good = True
+                            for key in self.menu_rects.keys():
+                                if self.menu_rects[key].collidepoint(*pos):
+                                    good = False
+                                    break
+                            self.menu.dragging = good
+                elif event.button == BUTTON_WHEELUP or event.button == BUTTON_WHEELDOWN:
+                    rect = self.menu_rects["towers"]
+                    if event.button == BUTTON_WHEELUP:
+                        self.towers_scroll -= 2
+                        if self.towers_scroll < 0:
+                            self.towers_scroll = 0
                     else:
-                        good = True
-                        for key in self.menu_rects.keys():
-                            if self.menu_rects[key].collidepoint(*pos):
-                                good = False
-                                break
-                        self.menu.dragging = good
-            elif event.button == BUTTON_WHEELUP or event.button == BUTTON_WHEELDOWN:
-                rect = self.menu_rects["towers"]
-                if event.button == BUTTON_WHEELUP:
-                    self.towers_scroll -= 2
-                    if self.towers_scroll < 0:
-                        self.towers_scroll = 0
-                else:
-                    self.towers_scroll += 2
-                    max_scroll = max(0, self.menu_towers.get_size()[1] - rect.h)
-                    if self.towers_scroll > max_scroll:
-                        self.towers_scroll = max_scroll
-                self.menu.surface.fill((0, 0, 0), rect)
-                self.menu.surface.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
-        if event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT:
-            pos = pg.mouse.get_pos()
-            self.menu.dragging = False
-            if self.drag_tower.dragging:
-                pos = [p / data.screen_w for p in data.get_mouse_pos()]
-                self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
-                self.add_money(-self.towers[-1].cost)
-                self.drag_tower.dragging = False
-            if self.menu_rects["toggle"].collidepoint(*pos):
-                self.show_menu = not self.show_menu
-            elif self.menu.rect.collidepoint(*pos):
-                pos = [pos[0] - self.menu.rect.x, pos[1] - self.menu.rect.y]
-                if self.menu_rects["pause"].collidepoint(*pos):
-                    self.paused = not self.paused
-                    # Reset test enemy
-                    if self.paused:
-                        self.test_enemy.reset(self.get_start())
-                    # Update paused button
-                    img_w = self.menu_rects["pause"].w
-                    path = "res/{}.png".format("play" if self.paused else "pause")
-                    img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
-                    self.menu.surface.fill((0, 0, 0, 0), self.menu_rects["pause"])
-                    self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
+                        self.towers_scroll += 2
+                        max_scroll = max(0, self.menu_towers.get_size()[1] - rect.h)
+                        if self.towers_scroll > max_scroll:
+                            self.towers_scroll = max_scroll
+                    self.menu.surface.fill((0, 0, 0), rect)
+                    self.menu.surface.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
+            if event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT:
+                pos = pg.mouse.get_pos()
+                self.menu.dragging = False
+                if self.drag_tower.dragging:
+                    pos = [p / data.screen_w for p in data.get_mouse_pos()]
+                    self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
+                    self.add_money(-self.towers[-1].cost)
+                    self.drag_tower.dragging = False
+                if self.menu_rects["toggle"].collidepoint(*pos):
+                    self.show_menu = not self.show_menu
+                elif self.menu.rect.collidepoint(*pos):
+                    pos = [pos[0] - self.menu.rect.x, pos[1] - self.menu.rect.y]
+                    if self.menu_rects["pause"].collidepoint(*pos):
+                        self.paused = not self.paused
+                        # Reset test enemy
+                        if self.paused:
+                            self.test_enemy.reset(self.get_start())
+                        # Update paused button
+                        img_w = self.menu_rects["pause"].w
+                        path = "res/{}.png".format("play" if self.paused else "pause")
+                        img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
+                        self.menu.surface.fill((0, 0, 0, 0), self.menu_rects["pause"])
+                        self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
+            return True
+        else:
+            return not (event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT)
+
+    def end(self, won):
+        self.game_state = WON if won else LOST
+        self.menu.dragging = self.drag_tower.dragging = False
+        self.draw()
 
     # Adds input to money
     def add_money(self, amnt):
@@ -370,11 +401,11 @@ class LevelDriver:
         self.enemies.clear()
         self.towers.clear()
         self.projectiles.clear()
-        self.time = 0
+        self.time = self.current_spawn = 0
         self.hp = self.money = 100
-        self.current_spawn = 0
+        self.game_state = PLAYING
         self.finished_lvl = False
-        self.paused = True
+        self.paused = self.show_menu = True
         self.test_enemy.reset(self.get_start())
         self.resize()
 

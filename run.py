@@ -30,7 +30,8 @@ def run_level():
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
             else:
-                data.lvlDriver.input(e)
+                if not data.lvlDriver.input(e):
+                    return
         data.lvlDriver.tick(dt)
         pg.display.flip()
 
