@@ -18,7 +18,7 @@ enemies, towers = {}, {}
 
 def init():
     from inspect import getmembers, isclass
-    from LevelDriver import LevelDriver
+    from Game.LevelDriver import LevelDriver
     global lvlDriver
     lvlDriver = LevelDriver()
 
@@ -26,7 +26,8 @@ def init():
     # Compile a list of enemies and towers
     enemies.clear()
     towers.clear()
-    import Enemy, Tower
+    from Game import Enemy
+    from Game import Tower
     for name, obj in getmembers(Enemy):
         if isclass(obj):
             if "Enemy." in str(obj):

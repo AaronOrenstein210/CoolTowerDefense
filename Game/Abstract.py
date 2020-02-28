@@ -2,7 +2,7 @@ from os.path import isfile
 import pygame
 import math
 import data
-from collision import Polygon
+from Game.collision import Polygon
 
 WINDOW = data.screen_w
 
@@ -128,6 +128,10 @@ class Enemy(Sprite):
         if self.strength < 0:
             self.strength = 0
         return self.strength
+
+    def set_progress(self, path, progress):
+        self.path = path
+        self.progress = progress
 
 
 def rotate_point(p, center, dtheta):

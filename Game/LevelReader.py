@@ -159,8 +159,8 @@ class Line(Path):
 
 
 class Circle(Path):
-    #COLORS = ((255, 255, 255), (175, 175, 0), (200, 0, 0), (0, 200, 0), (0, 0, 200))
-    COLORS = ((140,255,117), (169,221,123), (198,186,130), (226,152,136), (255,117,142))
+    COLORS = ((140, 255, 117), (169, 221, 123), (198, 186, 130), (226, 152, 136), (255, 117, 142))
+
     def __init__(self):
         super().__init__()
         self.idx = CIRCLE
@@ -232,7 +232,7 @@ class Spawn:
         self.chances = {}
         for key in data.enemies.keys():
             self.chances[key] = 0
-        from Enemy import ENEMY_1
+        from Game.Enemy import ENEMY_1
         self.chances[ENEMY_1] = 1
 
     @property
