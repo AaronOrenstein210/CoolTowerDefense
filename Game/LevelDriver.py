@@ -3,7 +3,7 @@
 from random import randint
 import pygame as pg
 from pygame.locals import *
-from Game.LevelReader import *
+from Game.level_objects import *
 from Game.Tower import TOWER_ORDER
 from Game.Enemy import ENEMY_ORDER, Enemy
 from random import uniform
@@ -336,6 +336,19 @@ class LevelDriver:
             self.selected_tower.draw_upgrades()
         self.draw_menu()
 
+    def select_tower(self, tower):
+        if self.selected_tower:
+            self.selected_tower.clear_upgrades()
+        if self.selected_tower is tower:
+            self.selected_tower = None
+        else:
+            tower.draw_upgrades()
+            if tower.pos[0] < .5 and self.menu.rect.right == data.off_x + data.screen_w:
+                self.menu.set_pos([0, 0])
+            elif tower.pos[0] >= .5 and self.menu.rect.left == data.off_x:
+                self.menu.set_pos([1, 0])
+            self.selected_tower = tower
+
     # Handles and event
     def input(self, event):
         if self.game_status == PLAYING:
@@ -390,6 +403,7 @@ class LevelDriver:
                         pos = [p / data.screen_w for p in data.get_mouse_pos()]
                         self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
                         self.add_money(-self.towers[-1].cost)
+                        self.select_tower(self.towers[-1])
                     self.drag_tower.dragging = False
                 else:
                     # Clicked the toggle menu button
@@ -417,9 +431,7 @@ class LevelDriver:
                         # Check if we clicked a tower
                         for i in self.towers:
                             if i.polygon.collides_point(pos):
-                                self.selected_tower = None if self.selected_tower is i else i
-                                if self.selected_tower:
-                                    i.draw_upgrades()
+                                self.select_tower(i)
                                 break
             return True
         else:
@@ -483,6 +495,10 @@ class DragObject:
         self.surface = pg.Surface((0, 0))
         self.pos = [0, 0]
         self.dragging = False
+
+    def set_pos(self, pos):
+        self.pos = pos
+        self.drag([0, 0])
 
     def set_surface(self, surface, pos=None):
         self.surface = surface

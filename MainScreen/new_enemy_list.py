@@ -1,5 +1,5 @@
 from pygame.locals import *
-from Game.LevelReader import *
+from Game.level_objects import *
 import data
 
 spawns = []

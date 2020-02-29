@@ -39,38 +39,7 @@ def draw_paths(w, paths):
     s = pg.Surface((w, w), pg.SRCALPHA)
     line_w = w // 40
     for p in paths:
-        if p.idx == LINE:
-            pos_i = [int(p.start[0] * w), int(p.start[1] * w)]
-            pos_f = [int(p.end[0] * w), int(p.end[1] * w)]
-            pg.draw.line(s, (255, 255, 255), pos_i, pos_f, line_w)
-            for pos in [pos_i, pos_f]:
-                pg.draw.circle(s, (255, 255, 255), pos, line_w * 3 // 4)
-        elif p.idx == CIRCLE:
-            from data import TWO_PI
-            c = [int(p.center[0] * w), int(p.center[1] * w)]
-            rad = int(p.radius * w)
-            # Get theta range
-            d_theta = p.theta_f - p.theta_i
-            sign = math.copysign(1, d_theta)
-            d_theta = abs(d_theta)
-            # Break theta range into full circles
-            loop = -1
-            while d_theta >= TWO_PI and loop < len(p.COLORS) - 1:
-                loop += 1
-                d_theta -= TWO_PI
-            # Draw the highest full circle
-            if loop >= 0:
-                pg.draw.circle(s, p.COLORS[loop], c, rad, min(line_w, rad))
-            # Draw the other sections
-            if d_theta > 0 and loop < len(p.COLORS) - 1:
-                top_left = [c[0] - rad, c[1] - rad]
-                thetas = [p.theta_i, p.theta_i + d_theta * sign]
-                theta_min, theta_max = min(thetas), max(thetas)
-                pg.draw.arc(s, p.COLORS[loop + 1], (*top_left, rad * 2, rad * 2), theta_min,
-                            theta_max, min(line_w, rad))
-        elif p.idx == START:
-            pos = [int(p.pos[0] * w), int(p.pos[1] * w)]
-            pg.draw.circle(s, (0, 200, 200), pos, line_w)
+        p.draw(s, line_w)
     return s
 
 
@@ -115,6 +84,9 @@ class Path:
         self.idx = 0
         self.length = 0
 
+    def draw(self, surface, line_w):
+        pass
+
     def get_pos(self, progress):
         return [0, 0]
 
@@ -137,6 +109,14 @@ class Line(Path):
         self.idx = LINE
         self.start = start
         self.end = end
+
+    def draw(self, surface, line_w):
+        w = surface.get_size()[0]
+        pos_i = [int(self.start[0] * w), int(self.start[1] * w)]
+        pos_f = [int(self.end[0] * w), int(self.end[1] * w)]
+        pg.draw.line(surface, (255, 255, 255), pos_i, pos_f, line_w)
+        for pos in [pos_i, pos_f]:
+            pg.draw.circle(surface, (255, 255, 255), pos, line_w * 3 // 4)
 
     def get_pos(self, progress):
         dx, dy = self.end[0] - self.start[0], self.end[1] - self.start[1]
@@ -167,6 +147,31 @@ class Circle(Path):
         self.center, self.radius = [0, 0], 0
         self.theta_i, self.theta_f = 0, 2 * math.pi
 
+    def draw(self, surface, line_w):
+        from data import TWO_PI
+        w = surface.get_size()[0]
+        c = [int(self.center[0] * w), int(self.center[1] * w)]
+        rad = int(self.radius * w)
+        # Get theta range
+        d_theta = self.theta_f - self.theta_i
+        sign = math.copysign(1, d_theta)
+        d_theta = abs(d_theta)
+        # Break theta range into full circles
+        loop = -1
+        while d_theta >= TWO_PI and loop < len(self.COLORS) - 1:
+            loop += 1
+            d_theta -= TWO_PI
+        # Draw the highest full circle
+        if loop >= 0:
+            pg.draw.circle(surface, self.COLORS[loop], c, rad, min(line_w, rad))
+        # Draw the other sections
+        if d_theta > 0 and loop < len(self.COLORS) - 1:
+            top_left = [c[0] - rad, c[1] - rad]
+            thetas = [self.theta_i, self.theta_i + d_theta * sign]
+            theta_min, theta_max = min(thetas), max(thetas)
+            pg.draw.arc(surface, self.COLORS[loop + 1], (*top_left, rad * 2, rad * 2), theta_min,
+                        theta_max, min(line_w, rad))
+
     def get_pos(self, progress):
         theta = self.theta_i + (self.theta_f - self.theta_i) * progress
         return [self.center[0] + self.radius * math.cos(theta), self.center[1] - self.radius * math.sin(theta)]
@@ -195,6 +200,11 @@ class Start(Path):
         self.idx = START
         self.pos = pos
 
+    def draw(self, surface, line_w):
+        w = surface.get_size()[0]
+        pos = [int(self.pos[0] * w), int(self.pos[1] * w)]
+        pg.draw.circle(surface, (0, 200, 200), pos, line_w)
+
     def get_start(self):
         return self.pos
 
@@ -208,6 +218,8 @@ class Start(Path):
         self.pos = unpack('f' * 2, path_data[:8])
         return path_data[8:]
 
+
+constructors = {START: Start, LINE: Line, CIRCLE: Circle}
 
 # Stores enemy data for spawning enemies
 LINEAR, PARABOLIC, EXPONENTIAL = range(3)
@@ -293,6 +305,3 @@ class Spawn:
                 self.chances[key] = val[0]
                 enemy_data = enemy_data[5:]
         return enemy_data
-
-
-constructors = {START: Start, LINE: Line, CIRCLE: Circle}
