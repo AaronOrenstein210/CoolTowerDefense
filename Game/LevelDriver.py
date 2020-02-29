@@ -317,7 +317,6 @@ class LevelDriver:
             img_dim = (int(obj.dim[0] * data.screen_w), int(obj.dim[1] * data.screen_w))
             obj.img = pg.transform.scale(obj.img, img_dim)
             obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
-
         self.draw_menu()
 
     # Handles and event
@@ -337,8 +336,10 @@ class LevelDriver:
                             if idx < len(TOWER_ORDER):
                                 if self.money >= data.towers[idx].cost:
                                     self.drag_tower_idx = idx
-                                    self.drag_tower.set_surface(self.tower_imgs[idx],
+                                    temp = type(data.towers[idx])()
+                                    self.drag_tower.set_surface(temp.img,
                                                                 pos=[p / data.screen_w for p in data.get_mouse_pos()])
+                                    del temp
                                     self.drag_tower.dragging = True
                             else:
                                 self.menu.dragging = True
