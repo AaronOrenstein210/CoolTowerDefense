@@ -41,6 +41,9 @@ class Sprite:
         self.blit_img = pg.transform.rotate(self.img, self.angle + 90)
 
 
+targeting_names = ["First", "Closest", "Strongest"]
+
+
 class Tower(Sprite):
     upgrades = []
 
@@ -53,29 +56,81 @@ class Tower(Sprite):
         self.range = shoot_range
         # Index of current upgrade
         self.upgrade_lvl = -1
-        # Surface of all upgrades and rectangle
+        # Surface and rectangle of upgrade menu
         self.upgrade_s = None
         self.upgrade_r = pg.Rect(0, 0, 0, 0)
+        # Surface and rectangle for top of upgrade menu (tower info)
+        self.tower_s = self.tower_font = None
+        self.tower_r = pg.Rect(0, 0, 0, 0)
+        # Menu scroll
         self.scroll = 0
+        # Determines how to pick enemy targets
+        self.targeting = targeting_names[0]
 
     @property
     def upgrade_w(self):
         return data.screen_w // 5
 
-    def draw_upgrades(self):
+    @property
+    def text_h(self):
+        return self.tower_r.h // 3
+
+    # Draws range, upgrade menu, and any upgrade descriptions to screen
+    def draw(self):
+        pos = pg.mouse.get_pos()
+        d = pg.display.get_surface()
+        # Draw tower range
+        r = int(self.range * data.screen_w)
+        s = pg.Surface((r * 2, r * 2))
+        pg.draw.circle(s, (0, 0, 255), (r, r), r)
+        s.set_alpha(64)
+        s.set_colorkey((0, 0, 0))
+        d.blit(s, (int(self.pos[0] * data.screen_w - r + data.off_x),
+                   int(self.pos[1] * data.screen_w - r + data.off_y)))
+        # Draw upgrade menu
+        d.fill((0, 0, 0), self.tower_r)
+        d.blit(self.tower_s, self.tower_r)
+        d.fill((0, 0, 0), self.upgrade_r)
+        d.blit(self.upgrade_s, self.upgrade_r, area=((0, self.scroll), self.upgrade_r.size))
+        # Draw upgrade description if hovering over it
+        if self.upgrade_r.collidepoint(*pos):
+            idx = (pos[1] - self.upgrade_r.y + self.scroll) // self.upgrade_w
+            if idx < len(self.upgrades):
+                topleft = [self.upgrade_r.x, self.upgrade_r.y + idx * self.upgrade_w + self.scroll]
+                topleft[0] += self.upgrade_w if self.pos[0] >= .5 else -2 * self.upgrade_w
+                d.blit(self.upgrades[idx].description_s, topleft)
+
+    # Draws the surface containing this tower's upgrades
+    def set_up_upgrades(self):
         w = self.upgrade_w
+        # Draw tower info surface menu surface
+        self.tower_r = pg.Rect(data.off_x, data.off_y, w, w * 2 // 3)
+        self.tower_s = pg.Surface((w, w * self.tower_r.h))
+        # Draw tower image
+        text_h = self.text_h
+        img = data.scale_to_fit(self.img, w=w, h=self.tower_r.h - text_h)
+        self.tower_s.blit(img, img.get_rect(center=(w // 2, (self.tower_r.h - text_h) // 2)))
+        # Draw tower targeting type
+        self.tower_font = data.get_scaled_font(w, text_h, "Targeting: " + data.get_widest_string(targeting_names))
+        text = self.tower_font.render("Targeting: " + self.targeting, 1, (255, 255, 255))
+        self.tower_s.blit(text, text.get_rect(center=(w // 2, self.tower_r.h - text_h // 2)))
+        # Draw upgrade menu surface
         self.upgrade_s = pg.Surface((w, w * len(self.upgrades)))
         for i, upgrade in enumerate(self.upgrades):
             upgrade.draw_img(self.upgrade_s, pg.Rect(0, i * w, w, w), i <= self.upgrade_lvl)
-        self.upgrade_r = pg.Rect(data.off_x, data.off_y, w, data.screen_w)
+        self.upgrade_r = pg.Rect(data.off_x, self.tower_r.bottom, w, data.screen_w)
+        # Check if the rectangles should be on the other side of the screen
         if self.pos[0] < .5:
             self.upgrade_r.move_ip(data.screen_w - w, 0)
+            self.tower_r.move_ip(data.screen_w - w, 0)
 
-    def clear_upgrades(self):
-        del self.upgrade_s
+    # Deletes the upgrade surface
+    def tear_down_upgrades(self):
+        del self.upgrade_s, self.tower_s
         for upgrade in self.upgrades:
             upgrade.clear_surface()
 
+    # Changes upgrade surfcae scroll
     def scroll_upgrades(self, up):
         amnt = self.upgrade_r.h // 20
         if up:
@@ -88,51 +143,43 @@ class Tower(Sprite):
             if self.scroll > max_scroll:
                 self.scroll = max_scroll
 
-    def click_upgrades(self, money):
+    # Checks for clicks on the upgrade ui, returns whether we clicked the menu or not
+    def click(self):
         pos = pg.mouse.get_pos()
-        if self.upgrade_r.collidepoint(*pos):
+        if self.tower_r.collidepoint(*pos):
+            text_h = self.text_h
+            if pos[1] - self.tower_r.y >= self.tower_r.h - text_h:
+                idx = (targeting_names.index(self.targeting) + 1) % len(targeting_names)
+                self.targeting = targeting_names[idx]
+                rect = pg.Rect(0, self.tower_r.h - text_h, self.tower_r.w, text_h)
+                self.tower_s.fill((0, 0, 0), rect)
+                text = self.tower_font.render("Targeting: " + self.targeting, 1, (255, 255, 255))
+                self.tower_s.blit(text, text.get_rect(center=rect.center))
+        elif self.upgrade_r.collidepoint(*pos):
             idx = (pos[1] - self.upgrade_r.y + self.scroll) // self.upgrade_w
             if idx < len(self.upgrades) and idx == self.upgrade_lvl + 1 and \
-                    self.upgrades[idx].cost <= money:
+                    self.upgrades[idx].cost <= data.lvlDriver.money:
                 self.upgrades[idx].draw_img(self.upgrade_s,
                                             pg.Rect(0, idx * self.upgrade_w, self.upgrade_w, self.upgrade_w), True)
                 self.upgrade()
-                return self.upgrades[idx].cost
-        return 0
+                data.lvlDriver.add_money(-self.upgrades[idx].cost)
+        else:
+            return False
+        return True
 
-    def check_hovering(self):
-        pos = pg.mouse.get_pos()
-        if self.upgrade_r.collidepoint(*pos):
-            idx = (pos[1] - self.upgrade_r.y + self.scroll) // self.upgrade_w
-            if idx < len(self.upgrades):
-                topleft = [self.upgrade_r.x, self.upgrade_r.y + idx * self.upgrade_w + self.scroll]
-                topleft[0] += self.upgrade_w if self.pos[0] >= .5 else -2 * self.upgrade_w
-                pg.display.get_surface().blit(self.upgrades[idx].description_s, topleft)
-
+    # Performs an upgrade TODO: Change image on upgrade
     def upgrade(self):
         pass
 
-    def shoot(self, enemy):  # given an enemy, shoots at them
+    # Return a list of projectiles to shoot at the given enemy
+    def shoot(self, enemy):
         return []
 
+    # Place any modifications to projectiles here (e.g. from upgrades)
     def modify_projectile(self, projectile):
         pass
 
-    def draw_range(self):
-        r = int(self.range * data.screen_w)
-        s = pg.Surface((r * 2, r * 2))
-        pg.draw.circle(s, (0, 0, 255), (r, r), r)
-        s.set_alpha(64)
-        s.set_colorkey((0, 0, 0))
-        pg.display.get_surface().blit(s, (int(self.pos[0] * data.screen_w - r + data.off_x),
-                                          int(self.pos[1] * data.screen_w - r + data.off_y)))
-
-    def within_range(self, x, y):
-        xval = self.pos[0] - x
-        yval = self.pos[1] - y
-        dist = (xval ** 2 + yval ** 2) ** 0.5
-        return dist <= self.range
-
+    # Called every unpaused game tick TODO: Base in range on whole enemy, not just center
     def tick(self, dt):
         self.timer += dt
         while self.timer >= self.cooldown:
@@ -141,7 +188,16 @@ class Tower(Sprite):
             in_range = [e for e in data.lvlDriver.enemies if data.get_distance(self.pos, e.pos) < self.range]
             # Shoot the enemies based on shooting ai
             if len(in_range) > 0:
-                for projectile in self.shoot(closest_enemy(in_range, self)):
+                # Get target enemy based on targeting method
+                if self.targeting == "First":
+                    enemy = first_enemy(in_range)
+                elif self.targeting == "Closest":
+                    enemy = closest_enemy(in_range, self.pos)
+                elif self.targeting == "Strongest":
+                    enemy = strongest_enemy(in_range)
+                else:
+                    continue
+                for projectile in self.shoot(enemy):
                     self.modify_projectile(projectile)
                     data.lvlDriver.projectiles.append(projectile)
 
@@ -196,8 +252,8 @@ def first_enemy(arr):
     return max(arr, key=lambda e: e.path + e.progress)
 
 
-def closest_enemy(arr, tower):
-    return min(arr, key=lambda e: data.get_distance(tower.pos, e.pos))
+def closest_enemy(arr, pos):
+    return min(arr, key=lambda e: data.get_distance(pos, e.pos))
 
 
 def strongest_enemy(arr):

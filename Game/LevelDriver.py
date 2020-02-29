@@ -216,11 +216,7 @@ class LevelDriver:
             d.blit(i.blit_img, img_rect)
         # Draw selected tower range
         if self.selected_tower:
-            i = self.selected_tower
-            i.draw_range()
-            d.fill((0, 0, 0), i.upgrade_r)
-            d.blit(i.upgrade_s, i.upgrade_r, area=pg.Rect((0, i.scroll), i.upgrade_r.size))
-            self.selected_tower.check_hovering()
+            self.selected_tower.draw()
         # Draw the menu
         if self.show_menu:
             self.menu.draw()
@@ -333,16 +329,16 @@ class LevelDriver:
             obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
         # Redraw selected tower if applicable
         if self.selected_tower:
-            self.selected_tower.draw_upgrades()
+            self.selected_tower.set_up_upgrades()
         self.draw_menu()
 
     def select_tower(self, tower):
         if self.selected_tower:
-            self.selected_tower.clear_upgrades()
+            self.selected_tower.tear_down_upgrades()
         if self.selected_tower is tower:
             self.selected_tower = None
         else:
-            tower.draw_upgrades()
+            tower.set_up_upgrades()
             if tower.pos[0] < .5 and self.menu.rect.right == data.off_x + data.screen_w:
                 self.menu.set_pos([0, 0])
             elif tower.pos[0] >= .5 and self.menu.rect.left == data.off_x:
@@ -423,10 +419,8 @@ class LevelDriver:
                             img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
                             self.menu.surface.fill((0, 0, 0, 0), self.menu_rects["pause"])
                             self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
-                    # Clicked tower upgrades
-                    elif self.selected_tower and self.selected_tower.upgrade_r.collidepoint(*pos):
-                        self.add_money(-self.selected_tower.click_upgrades(self.money))
-                    else:
+                    # Check clicking tower upgrades
+                    elif not self.selected_tower or not self.selected_tower.click():
                         pos = [(pos[0] - data.off_x) / data.screen_w, (pos[1] - data.off_y) / data.screen_w]
                         # Check if we clicked a tower
                         for i in self.towers:
