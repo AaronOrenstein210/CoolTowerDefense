@@ -4,8 +4,6 @@ import math
 import data
 from Game.collision import Polygon
 
-WINDOW = data.screen_w
-
 
 class Sprite:
     def __init__(self, pos=(0, 0), dim=(.1, .1), angle=0, img=""):
@@ -44,16 +42,81 @@ class Sprite:
 
 
 class Tower(Sprite):
-    def __init__(self, idx, cooldown=1000, cost=10, range=.1, **kwargs):
+    upgrades = []
+
+    def __init__(self, idx, cooldown=1000, cost=10, shoot_range=.1, **kwargs):
         super().__init__(**kwargs)
         self.idx = idx
         self.cooldown = cooldown
         self.cost = cost
         self.timer = 0
-        self.range = range
+        self.range = shoot_range
+        # Index of current upgrade
+        self.upgrade_lvl = -1
+        # Surface of all upgrades and rectangle
+        self.upgrade_s = None
+        self.upgrade_r = pg.Rect(0, 0, 0, 0)
+        self.scroll = 0
+
+    @property
+    def upgrade_w(self):
+        return data.screen_w // 5
+
+    def draw_upgrades(self):
+        w = self.upgrade_w
+        self.upgrade_s = pg.Surface((w, w * len(self.upgrades)))
+        for i, upgrade in enumerate(self.upgrades):
+            upgrade.draw_img(self.upgrade_s, pg.Rect(0, i * w, w, w), i <= self.upgrade_lvl)
+        self.upgrade_r = pg.Rect(data.off_x, data.off_y, w, data.screen_w)
+        if self.pos[0] < .5:
+            self.upgrade_r.move_ip(data.screen_w - w, 0)
+
+    def clear_upgrades(self):
+        del self.upgrade_s
+        for upgrade in self.upgrades:
+            upgrade.clear_surface()
+
+    def scroll_upgrades(self, up):
+        amnt = self.upgrade_r.h // 20
+        if up:
+            self.scroll -= amnt
+            if self.scroll < 0:
+                self.scroll = 0
+        else:
+            self.scroll += amnt
+            max_scroll = max(0, self.upgrade_s.get_size()[1] - self.upgrade_r.h)
+            if self.scroll > max_scroll:
+                self.scroll = max_scroll
+
+    def click_upgrades(self, money):
+        pos = pg.mouse.get_pos()
+        if self.upgrade_r.collidepoint(*pos):
+            idx = (pos[1] - self.upgrade_r.y + self.scroll) // self.upgrade_w
+            if idx < len(self.upgrades) and idx == self.upgrade_lvl + 1 and \
+                    self.upgrades[idx].cost <= money:
+                self.upgrades[idx].draw_img(self.upgrade_s,
+                                            pg.Rect(0, idx * self.upgrade_w, self.upgrade_w, self.upgrade_w), True)
+                self.upgrade()
+                return self.upgrades[idx].cost
+        return 0
+
+    def check_hovering(self):
+        pos = pg.mouse.get_pos()
+        if self.upgrade_r.collidepoint(*pos):
+            idx = (pos[1] - self.upgrade_r.y + self.scroll) // self.upgrade_w
+            if idx < len(self.upgrades):
+                topleft = [self.upgrade_r.x, self.upgrade_r.y + idx * self.upgrade_w + self.scroll]
+                topleft[0] += self.upgrade_w if self.pos[0] >= .5 else -2 * self.upgrade_w
+                pg.display.get_surface().blit(self.upgrades[idx].description_s, topleft)
+
+    def upgrade(self):
+        pass
 
     def shoot(self, enemy):  # given an enemy, shoots at them
         return []
+
+    def modify_projectile(self, projectile):
+        pass
 
     def draw_range(self):
         r = int(self.range * data.screen_w)
@@ -79,7 +142,54 @@ class Tower(Sprite):
             # Shoot the enemies based on shooting ai
             if len(in_range) > 0:
                 for projectile in self.shoot(closest_enemy(in_range, self)):
+                    self.modify_projectile(projectile)
                     data.lvlDriver.projectiles.append(projectile)
+
+
+class Upgrade:
+    def __init__(self, description="No Description", cost=0, img=""):
+        # Save cost
+        self.cost = cost
+        # Break up description by "\n"'s
+        self.description = description.split("\n")
+
+        if isfile(img) and (img.endswith(".png") or img.endswith(".jpg")):
+            self.img = pg.image.load(img)
+        else:
+            self.img = pg.Surface((10, 10))
+        self.description_s = None
+
+    def draw_img(self, s, rect, bought):
+        # Draw background
+        back = data.scale_to_fit(pg.image.load("res/upgrade_back.png"), w=rect.w, h=rect.h)
+        s.blit(back, back.get_rect(center=rect.center))
+        # Draw cost text
+        text_h = rect.h // 5
+        font = data.get_scaled_font(rect.w, text_h, "Bought")
+        string = "Bought" if bought else "${}".format(self.cost)
+        text = font.render(string, 1, (255, 255, 255))
+        s.blit(text, text.get_rect(center=(rect.centerx, rect.bottom - text_h // 2)))
+        # Scale and draw the image
+        img = data.scale_to_fit(self.img, w=rect.w, h=rect.h - text_h)
+        s.blit(img, img.get_rect(center=(rect.centerx, rect.centery - text_h // 2)))
+        if not bought:
+            img = data.scale_to_fit(pg.image.load("res/lock.png"), w=rect.w, h=rect.h - text_h)
+            s.blit(img, img.get_rect(center=(rect.centerx, rect.centery - text_h // 2)))
+        # Draw description
+        self.description_s = pg.Surface((rect.w * 2, rect.h))
+        dim = self.description_s.get_size()
+        text_h = dim[1] // 6
+        font = data.get_scaled_font(dim[0], text_h, "")
+        i = 0
+        for line in self.description:
+            for string in data.wrap_text(line, font, dim[0]):
+                text = font.render(string, 1, (255, 255, 255))
+                text_rect = text.get_rect(center=(dim[0] // 2, int(text_h * (i + .5))))
+                self.description_s.blit(text, text_rect)
+                i += 1
+
+    def clear_surface(self):
+        del self.description_s
 
 
 def first_enemy(arr):

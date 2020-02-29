@@ -52,6 +52,7 @@ def resize(w, h, resize_driver):
         screen_w = w
         off_x = 0
         off_y = (h - w) // 2
+    w, h = max(w, 400), max(h, 400)
     pg.display.set_mode((w, h), RESIZABLE)
     if resize_driver:
         lvlDriver.resize()
@@ -146,3 +147,47 @@ def get_widest_string(strs, font_type="Times New Roman"):
             biggest = s
             last_w = font.size(s)[0]
     return biggest
+
+
+# Breaks text into the minimum number of lines needed to display it
+# Divides text into words with ' ' delimiter
+def wrap_text(string, font, w):
+    words = string.split(" ")
+    strs = []
+    line = ""
+    i = 0
+    # Go through each word
+    while i < len(words):
+        # Get the new line and check its width
+        temp = line + (" " if line != "" else "") + words[i]
+        # If it fits, go to the next word
+        if font.size(temp)[0] < w:
+            line = temp
+            i += 1
+        # If it doesn't and our line has other words, add the line
+        elif line != "":
+            strs.append(line)
+            line = ""
+        # Otherwise the word doesn't fit in one line so break it up
+        else:
+            wrap = wrap_string(temp, font, w)
+            for text in wrap[:-1]:
+                strs.append(text)
+            if i < len(words) - 1:
+                line = wrap[len(wrap) - 1]
+            else:
+                strs.append(wrap[len(wrap) - 1])
+            i += 1
+    strs.append(line)
+    return strs
+
+
+def wrap_string(string, font, w):
+    strs = []
+    text = ""
+    for char in string:
+        if font.size(text + char)[0] >= w:
+            strs.append(text)
+            text = ""
+        text += char
+    return strs

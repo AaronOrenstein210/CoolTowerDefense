@@ -1,8 +1,9 @@
 # Created on 27 January 2020
 # Created by Kyle Doster
-from Game.LevelReader import *
+from random import randint
 import pygame as pg
 from pygame.locals import *
+from Game.LevelReader import *
 from Game.Tower import TOWER_ORDER
 from Game.Enemy import ENEMY_ORDER, Enemy
 from random import uniform
@@ -70,14 +71,14 @@ class LevelDriver:
         self.finished_lvl = False
 
         self.paused = False
-        self.game_state = PLAYING
+        self.game_status = PLAYING
 
         # Background surface
         self.background = None
 
     # Called every iteration of the while loop
     def tick(self, dt):
-        if self.game_state == PLAYING:
+        if self.game_status == PLAYING:
             if self.paused:
                 if not self.move_enemy(self.test_enemy, dt):
                     self.test_enemy.reset(self.get_start())
@@ -207,15 +208,19 @@ class LevelDriver:
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
-        # Draw selected tower range
-        if self.selected_tower:
-            self.selected_tower.draw_range()
         # If paused, draw the test enemy
         if self.paused:
             i = self.test_enemy
             img_rect = i.blit_img.get_rect(center=(int(i.pos[0] * data.screen_w) + data.off_x,
                                                    int(i.pos[1] * data.screen_w) + data.off_y))
             d.blit(i.blit_img, img_rect)
+        # Draw selected tower range
+        if self.selected_tower:
+            i = self.selected_tower
+            i.draw_range()
+            d.fill((0, 0, 0), i.upgrade_r)
+            d.blit(i.upgrade_s, i.upgrade_r, area=pg.Rect((0, i.scroll), i.upgrade_r.size))
+            self.selected_tower.check_hovering()
         # Draw the menu
         if self.show_menu:
             self.menu.draw()
@@ -225,7 +230,7 @@ class LevelDriver:
         # Draw the menu toggle button
         d.blit(self.menu_toggle, self.menu_rects["toggle"])
         # Draw won and lose messages
-        if self.game_state != PLAYING:
+        if self.game_status != PLAYING:
             dim = d.get_size()
             # Draw black overlay
             s = pg.Surface(dim)
@@ -233,7 +238,7 @@ class LevelDriver:
             s.set_alpha(128)
             d.blit(s, (0, 0))
             # Draw lost or won text
-            text = "You Lost" if self.game_state == LOST else "You Won!"
+            text = "You Lost" if self.game_status == LOST else "You Won!"
             font = data.get_scaled_font(data.screen_w // 2, data.screen_w // 5, text)
             text_s = font.render(text, 1, (255, 255, 255))
             d.blit(text_s, text_s.get_rect(centerx=dim[0] // 2, bottom=dim[1] // 2))
@@ -305,11 +310,20 @@ class LevelDriver:
     # Draws the enemy path
     def draw_background(self):
         self.background = pg.Surface((data.screen_w, data.screen_w))
-        self.background.fill((0, 175, 0))
+        # Fill the screen randomly with grass texture
+        img_w = data.screen_w // 5
+        img = pg.transform.scale(pg.image.load("res/grassBlock.png"), (img_w, img_w))
+        y_pos = 0
+        while y_pos < data.screen_w:
+            x_pos = 0
+            while x_pos < data.screen_w:
+                self.background.blit(img, (x_pos, y_pos))
+                x_pos += randint(img_w // 2, img_w)
+            y_pos += randint(img_w // 2, img_w)
         self.background.blit(draw_paths(data.screen_w, self.paths), (0, 0))
 
     def resize(self):
-        self.draw_background()
+        self.background = pg.transform.scale(self.background, (data.screen_w, data.screen_w))
         # Get a list of objects to resize
         objects = self.enemies + self.towers + self.projectiles
         # Redraw objects
@@ -317,13 +331,16 @@ class LevelDriver:
             img_dim = (int(obj.dim[0] * data.screen_w), int(obj.dim[1] * data.screen_w))
             obj.img = pg.transform.scale(obj.img, img_dim)
             obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
+        # Redraw selected tower if applicable
+        if self.selected_tower:
+            self.selected_tower.draw_upgrades()
         self.draw_menu()
 
     # Handles and event
     def input(self, event):
-        if self.game_state == PLAYING:
-            if event.type == MOUSEBUTTONDOWN and self.show_menu:
-                if event.button == BUTTON_LEFT:
+        if self.game_status == PLAYING:
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == BUTTON_LEFT and self.show_menu:
                     pos = pg.mouse.get_pos()
                     m_rect = self.menu.rect
                     if m_rect.collidepoint(*pos):
@@ -346,25 +363,31 @@ class LevelDriver:
                         elif not self.menu_rects["pause"].collidepoint(*pos):
                             self.menu.dragging = True
                 elif event.button == BUTTON_WHEELUP or event.button == BUTTON_WHEELDOWN:
-                    rect = self.menu_rects["towers"]
-                    if event.button == BUTTON_WHEELUP:
-                        self.towers_scroll -= 2
-                        if self.towers_scroll < 0:
-                            self.towers_scroll = 0
-                    else:
-                        self.towers_scroll += 2
-                        max_scroll = max(0, self.menu_towers.get_size()[1] - rect.h)
-                        if self.towers_scroll > max_scroll:
-                            self.towers_scroll = max_scroll
-                    self.menu.surface.fill((0, 0, 0), rect)
-                    self.menu.surface.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
+                    pos = pg.mouse.get_pos()
+                    if self.show_menu and self.menu.rect.collidepoint(*pos):
+                        pos = [pos[0] - self.menu.rect.x, pos[1] - self.menu.rect.y]
+                        rect = self.menu_rects["towers"]
+                        if rect.collidepoint(*pos):
+                            if event.button == BUTTON_WHEELUP:
+                                self.towers_scroll -= 2
+                                if self.towers_scroll < 0:
+                                    self.towers_scroll = 0
+                            else:
+                                self.towers_scroll += 2
+                                max_scroll = max(0, self.menu_towers.get_size()[1] - rect.h)
+                                if self.towers_scroll > max_scroll:
+                                    self.towers_scroll = max_scroll
+                            self.menu.surface.fill((0, 0, 0), rect)
+                            self.menu.surface.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
+                    elif self.selected_tower and self.selected_tower.upgrade_r.collidepoint(*pos):
+                        self.selected_tower.scroll_upgrades(event.button == BUTTON_WHEELUP)
             if event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT:
                 pos = pg.mouse.get_pos()
                 self.menu.dragging = False
                 # Check if we finished dragging a tower
                 if self.drag_tower.dragging:
                     if not self.menu.rect.collidepoint(*pos):
-                        pos = [p / data.screen_w for p in pos]
+                        pos = [p / data.screen_w for p in data.get_mouse_pos()]
                         self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
                         self.add_money(-self.towers[-1].cost)
                     self.drag_tower.dragging = False
@@ -386,18 +409,24 @@ class LevelDriver:
                             img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
                             self.menu.surface.fill((0, 0, 0, 0), self.menu_rects["pause"])
                             self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
+                    # Clicked tower upgrades
+                    elif self.selected_tower and self.selected_tower.upgrade_r.collidepoint(*pos):
+                        self.add_money(-self.selected_tower.click_upgrades(self.money))
                     else:
                         pos = [(pos[0] - data.off_x) / data.screen_w, (pos[1] - data.off_y) / data.screen_w]
                         # Check if we clicked a tower
                         for i in self.towers:
                             if i.polygon.collides_point(pos):
                                 self.selected_tower = None if self.selected_tower is i else i
+                                if self.selected_tower:
+                                    i.draw_upgrades()
+                                break
             return True
         else:
             return not (event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT)
 
     def end(self, won):
-        self.game_state = WON if won else LOST
+        self.game_status = WON if won else LOST
         self.menu.dragging = self.drag_tower.dragging = False
         self.draw()
 
@@ -420,23 +449,32 @@ class LevelDriver:
         self.menu.surface.blit(text, text_rect)
 
     def reset(self):
+        # Reset object arrays
         self.enemies.clear()
         self.towers.clear()
         self.projectiles.clear()
+        # Reset spawning variables
         self.time = self.current_spawn = 0
-        self.hp = self.money = 100
-        self.game_state = PLAYING
         self.finished_lvl = False
+        # Reset money and hp
+        self.hp = self.money = 100
+        # Reset game status
+        self.game_status = PLAYING
+        # Reset ui variables
         self.paused = self.show_menu = True
         self.test_enemy.reset(self.get_start())
+        if self.selected_tower:
+            self.selected_tower.clear_upgrades()
+        self.selected_tower = None
+        # Call resize
         self.resize()
 
     # Sets level data
     def set_level(self, paths, spawn_lists):
-        self.reset()
         self.paths = paths
         self.spawn_lists = spawn_lists
         self.draw_background()
+        self.reset()
 
 
 class DragObject:

@@ -73,7 +73,7 @@ def new_level():
                         current = Start()
                     elif current.idx == LINE:
                         paths.append(current)
-                        current = Line(start=pos)
+                        current = Line(start=paths[-1].get_end())
                     elif current.idx == CIRCLE:
                         if mode == 0:
                             mode = 1

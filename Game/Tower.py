@@ -1,20 +1,48 @@
 # Created on 27 January 2020
 # Created by Isabelle Early
 
+from random import randint
 from Game.Abstract import Projectile
 import data
-from Game.Abstract import Tower
+from Game.Abstract import Tower, Upgrade
 
 TOWER_1, TOWER_2, BALLISTA, AAGUN = range(4)
 TOWER_ORDER = [TOWER_1, TOWER_2, AAGUN, BALLISTA]
 
 
 class DuckTower(Tower):
+    upgrades = [Upgrade(cost=30, img="",
+                        description="Sharper projectiles tear through multiple enemies\nIncreases damage by 1"),
+                Upgrade(cost=50, img="",
+                        description="Making the tower taller allows for more enemies to be seen\n"
+                                    "Increases range by 20%"),
+                Upgrade(cost=80, img="",
+                        description="More efficient engines speed up fire rate appreciably\n"
+                                    "Fire rate is increased by 50%"),
+                Upgrade(cost=120, img="",
+                        description="Matter manipulation technology allows projectiles to be duplicated "
+                                    "when shot\n50% chance to shoot two projectiles instead of one")]
+
     def __init__(self, pos=(0, 0)):
-        super().__init__(TOWER_1, pos=pos, dim=(.05, .05), img='res/duckTower1.png', cooldown=750, cost=25, range=.2)
+        super().__init__(TOWER_1, pos=pos, dim=(.05, .05), img='res/duckTower1.png', cooldown=750, cost=25,
+                         shoot_range=.2)
+
+    def upgrade(self):
+        self.upgrade_lvl += 1
+        if self.upgrade_lvl == 1:
+            self.range *= 1.2
+        elif self.upgrade_lvl == 2:
+            self.cooldown //= 1.5
+
+    def modify_projectile(self, projectile):
+        if self.upgrade_lvl >= 0:
+            projectile.damage += 1
 
     def shoot(self, enemy):
-        return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
+        result = [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
+        if self.upgrade_lvl >= 3 and randint(0, 1) == 0:
+            result.append(self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos)))
+        return result
 
     class P1(Projectile):
         def __init__(self, pos, angle):
@@ -23,7 +51,8 @@ class DuckTower(Tower):
 
 class DuckTower2(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(TOWER_2, pos=pos, dim=(.05, .05), img="res/duckTower2.png", cooldown=400, cost=50, range=.25)
+        super().__init__(TOWER_2, pos=pos, dim=(.05, .05), img="res/duckTower2.png", cooldown=400, cost=50,
+                         shoot_range=.25)
 
     def shoot(self, enemy):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
@@ -35,7 +64,7 @@ class DuckTower2(Tower):
 
 class DuckTowerAA(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(AAGUN, pos=pos, dim=(.1, .1), img="res/duckAAGun.png", cooldown=200, cost=100, range=.15)
+        super().__init__(AAGUN, pos=pos, dim=(.1, .1), img="res/duckAAGun.png", cooldown=200, cost=100, shoot_range=.15)
 
     def shoot(self, enemy):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
@@ -48,7 +77,7 @@ class DuckTowerAA(Tower):
 class DuckTowerBallista(Tower):
     def __init__(self, pos=(0, 0)):
         super().__init__(BALLISTA, pos=pos, dim=(.1, .1), img="res/duckTowerBallista.png", cooldown=1250, cost=175,
-                         range=.3)
+                         shoot_range=.3)
 
     def shoot(self, enemy):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
