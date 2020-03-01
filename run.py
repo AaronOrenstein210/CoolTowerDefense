@@ -26,11 +26,14 @@ def run_level():
         time += dt
         for e in pg.event.get():
             if e.type == QUIT:
+                data.calculate_dimensions(False)
                 return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, True)
+                data.lvlDriver.resize()
             else:
                 if not data.lvlDriver.input(e):
+                    data.calculate_dimensions(False)
                     return
         data.lvlDriver.tick(dt)
         pg.display.flip()

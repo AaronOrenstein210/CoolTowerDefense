@@ -6,6 +6,7 @@ from sys import byteorder
 import math
 import pygame as pg
 import data
+from Game.Enemy import ENEMY_ORDER
 
 
 # Loads a level from bytes
@@ -242,7 +243,7 @@ class Spawn:
         self.flip = flip
         # Dictionary containing chances to spawn each enemy type
         self.chances = {}
-        for key in data.enemies.keys():
+        for key in ENEMY_ORDER:
             self.chances[key] = 0
         from Game.Enemy import ENEMY_1
         self.chances[ENEMY_1] = 1
@@ -252,17 +253,26 @@ class Spawn:
         # Gets the conversion from model function value to enemy count
         return self.num_enemies / get_y[self.model](1)
 
+    # TODO: enemy frequencies
     def get_img(self, w, h):
         s = pg.Surface((w, h))
         # Draw some pretty lines
         pg.draw.line(s, (255, 255, 255), (0, h // 2), (w - 1, h // 2))
         pg.draw.line(s, (255, 255, 255), (0, 0), (0, h - 1))
         pg.draw.line(s, (255, 255, 255), (w - 1, 0), (w - 1, h - 1))
-        # Draw each enemy spawn time
+        # Draw each enemy at its spawn time
         y_i, y_f = h // 4, h * 3 // 4
         for i in range(self.num_enemies):
             dx = int((w - 1) * self.get_time(i + 1))
             pg.draw.line(s, (0, 200, 0), (dx, y_i), (dx, y_f))
+        # Draw enemy frequencies
+        total = sum(self.chances.values())
+        x, w = w // 8, w * 3 // 4
+        for key in ENEMY_ORDER:
+            if self.chances[key] > 0:
+                dx = int(w * self.chances[key] / total)
+                s.fill(data.enemies[key].color, (x, h // 16, dx, h // 8))
+                x += dx
         return s
 
     def get_count(self, t):

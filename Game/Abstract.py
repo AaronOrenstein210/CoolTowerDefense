@@ -67,6 +67,8 @@ class Tower(Sprite):
         # Determines how to pick enemy targets
         self.targeting = targeting_names[0]
 
+        self.set_up_upgrades()
+
     @property
     def upgrade_w(self):
         return data.screen_w // 5
@@ -123,12 +125,6 @@ class Tower(Sprite):
         if self.pos[0] < .5:
             self.upgrade_r.move_ip(data.screen_w - w, 0)
             self.tower_r.move_ip(data.screen_w - w, 0)
-
-    # Deletes the upgrade surface
-    def tear_down_upgrades(self):
-        del self.upgrade_s, self.tower_s
-        for upgrade in self.upgrades:
-            upgrade.clear_surface()
 
     # Changes upgrade surfcae scroll
     def scroll_upgrades(self, up):
@@ -244,9 +240,6 @@ class Upgrade:
                 self.description_s.blit(text, text_rect)
                 i += 1
 
-    def clear_surface(self):
-        del self.description_s
-
 
 def first_enemy(arr):
     return max(arr, key=lambda e: e.path + e.progress)
@@ -285,6 +278,7 @@ class Enemy(Sprite):
         self.path = 0
         self.progress = 0
         self.v = velocity
+        self.color = (0, 0, 0, 0)
 
     #  This method reduces the strength by the damage amount
     def hit(self, damage):

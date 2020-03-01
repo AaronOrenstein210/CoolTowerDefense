@@ -205,6 +205,7 @@ def choose_level():
                             break
             elif e.type == KEYUP and e.key == K_RETURN and selected_lvl != -1 and \
                     len(spawn_blacklist) != len(level_data[spawns]):
+                data.calculate_dimensions(True)
                 data.lvlDriver.set_level(level_data[levels][selected_lvl],
                                          [a for i, a in enumerate(level_data[spawns]) if i not in spawn_blacklist])
                 return True

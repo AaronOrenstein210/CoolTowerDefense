@@ -41,26 +41,41 @@ def init():
 
 
 # Resizes screen
-# @param resize_driver boolean tells whether to resize the level driver or not
-def resize(w, h, resize_driver):
+# playing tells whether we are playing the game or not
+def resize(w, h, playing):
     global screen_w, off_x, off_y
     if w >= h:
-        screen_w = h
         off_x = (w - h) // 2
         off_y = 0
     else:
-        screen_w = w
         off_x = 0
         off_y = (h - w) // 2
-    w, h = max(w, 400), max(h, 400)
+    w, h = max(w, 500), max(h, 500)
     pg.display.set_mode((w, h), RESIZABLE)
-    if resize_driver:
-        lvlDriver.resize()
+    calculate_dimensions(playing)
+
+
+# Calculates screen offsets and width based on if we are playing or not
+def calculate_dimensions(playing):
+    global screen_w, off_x, off_y
+    w, h = pg.display.get_surface().get_size()
+    if not playing:
+        screen_w = min(w, h)
+        off_x = (w - screen_w) // 2
+        off_y = (h - screen_w) // 2
+    else:
+        if w * 5 // 6 >= h:
+            screen_w = h
+            off_x = (w - screen_w * 6 / 5) // 2
+            off_y = 0
+        else:
+            screen_w = w * 5 // 6
+            off_x = 0
+            off_y = (h - screen_w) // 2
 
 
 # Resizes surface to fit within desired dimensions, keeping surface's w:h ratio
 def scale_to_fit(s, w=-1, h=-1):
-    import pygame as pg
     if w == -1 and h == -1:
         return s
     dim = s.get_size()

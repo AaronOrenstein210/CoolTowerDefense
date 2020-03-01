@@ -1,7 +1,6 @@
 # Created on 27 January 2020
 # Created by Kyle Doster
 from random import randint
-import pygame as pg
 from pygame.locals import *
 from Game.level_objects import *
 from Game.Tower import TOWER_ORDER
@@ -42,15 +41,16 @@ class LevelDriver:
         self.hp = self.money = 0
 
         # Menu and menu tower scroll surfaces
-        self.menu_towers = self.menu_toggle = None
-        # Menu and dragging tower
-        self.menu, self.drag_tower = DragObject(), DragObject()
+        self.menu = self.menu_towers = self.menu_toggle = None
+        # Tower being dragged to place
+        self.drag_tower = DragObject()
         # Menu rectangles
-        self.menu_rects = {"hp": pg.Rect(0, 0, 0, 0),
-                           "money": pg.Rect(0, 0, 0, 0),
-                           "towers": pg.Rect(0, 0, 0, 0),
-                           "toggle": pg.Rect(0, 0, 0, 0),
-                           "pause": pg.Rect(0, 0, 0, 0)}
+        self.rects = {"menu": pg.Rect(0, 0, 0, 0),
+                      "hp": pg.Rect(0, 0, 0, 0),
+                      "money": pg.Rect(0, 0, 0, 0),
+                      "towers": pg.Rect(0, 0, 0, 0),
+                      "toggle": pg.Rect(0, 0, 0, 0),
+                      "pause": pg.Rect(0, 0, 0, 0)}
         # Scroll amount of menu tower list, <= 0
         self.towers_scroll = 0
         # Width of a tower sprite in the menu
@@ -114,7 +114,8 @@ class LevelDriver:
                                     new_enemy.set_progress(j.path, j.progress)
                                     self.enemies.append(new_enemy)
                                     self.add_money(i.damage)
-                                # If the projectile damage is greater than enemy strength, lower its damage appropriately
+                                # If the projectile damage is greater than enemy strength,
+                                # lower its damage appropriately
                                 else:
                                     i.damage -= strength
                                     self.add_money(strength)
@@ -131,10 +132,8 @@ class LevelDriver:
                         return
                         # Get change in mouse position every time so that it can update the last mouse position
             mouse_delta = pg.mouse.get_rel()
-            # Check if we have moved the menu
-            if self.menu.dragging:
-                self.menu.drag(mouse_delta)
-            elif self.drag_tower.dragging:
+            # Check if we are dragging a tower
+            if self.drag_tower.dragging:
                 self.drag_tower.drag(mouse_delta)
         # Redraw the screen
         self.draw()
@@ -219,12 +218,12 @@ class LevelDriver:
             self.selected_tower.draw()
         # Draw the menu
         if self.show_menu:
-            self.menu.draw()
+            d.blit(self.menu, self.rects["menu"])
         # Draw the tower being placed
         if self.drag_tower.dragging:
             self.drag_tower.draw()
         # Draw the menu toggle button
-        d.blit(self.menu_toggle, self.menu_rects["toggle"])
+        d.blit(self.menu_toggle, self.rects["toggle"])
         # Draw won and lose messages
         if self.game_status != PLAYING:
             dim = d.get_size()
@@ -250,11 +249,12 @@ class LevelDriver:
         r = pg.Rect(0, 0, data.screen_w // 5, data.screen_w)
         img_w = r.h // 20
 
-        self.menu_rects["hp"] = pg.Rect(img_w, 0, r.w - img_w, img_w)
-        self.menu_rects["money"] = self.menu_rects["hp"].move(0, self.menu_rects["hp"].h)
-        self.menu_rects["towers"] = pg.Rect(0, self.menu_rects["money"].bottom, r.w,
-                                            r.h - self.menu_rects["money"].bottom - img_w)
-        self.menu_rects["pause"] = pg.Rect((r.w - img_w) // 2, self.menu_rects["towers"].bottom, img_w, img_w)
+        self.rects["menu"] = pg.Rect(data.off_x + data.screen_w, data.off_y, data.screen_w // 5, data.screen_w)
+        self.rects["hp"] = pg.Rect(img_w, 0, r.w - img_w, img_w)
+        self.rects["money"] = self.rects["hp"].move(0, self.rects["hp"].h)
+        self.rects["towers"] = pg.Rect(0, self.rects["money"].bottom, r.w,
+                                       r.h - self.rects["money"].bottom - img_w)
+        self.rects["pause"] = pg.Rect((r.w - img_w) // 2, self.rects["towers"].bottom, img_w, img_w)
         self.menu_tower_w = r.w // self.TOWER_COLUMNS
 
         # Create menu toggle button
@@ -262,30 +262,30 @@ class LevelDriver:
         toggle_r = pg.Rect(data.screen_w + data.off_x - toggle_w, data.screen_w + data.off_y - toggle_w, toggle_w,
                            toggle_w)
         self.menu_toggle = data.scale_to_fit(pg.image.load("res/menuButton.png"), w=toggle_r.w, h=toggle_r.h)
-        self.menu_rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
+        self.rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
 
         # Create surface
-        self.menu.set_surface(pg.Surface(r.size))
+        self.menu = pg.Surface(r.size)
 
         # Draw money and hp text
-        self.menu_font = data.get_scaled_font(*self.menu_rects["hp"].size, "999")
+        self.menu_font = data.get_scaled_font(*self.rects["hp"].size, "999")
         self.add_money(0)
         self.damage(0)
 
         # Draw money and hp icons
-        rect = self.menu_rects["money"]
+        rect = self.rects["money"]
         img = data.scale_to_fit(pg.image.load("res/money.png"), w=img_w, h=img_w)
         img_rect = img.get_rect(center=(rect.x - img_w // 2, rect.centery))
-        self.menu.surface.blit(img, img_rect)
-        rect = self.menu_rects["hp"]
+        self.menu.blit(img, img_rect)
+        rect = self.rects["hp"]
         img = data.scale_to_fit(pg.image.load("res/heart.png"), w=img_w, h=img_w)
         img_rect = img.get_rect(center=(rect.x - img_w // 2, rect.centery))
-        self.menu.surface.blit(img, img_rect)
+        self.menu.blit(img, img_rect)
 
         # Draw pause button
         path = "res/{}.png".format("play" if self.paused else "pause")
         img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
-        self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
+        self.menu.blit(img, img.get_rect(center=self.rects["pause"].center))
 
         # Display towers
         cost_font = data.get_scaled_font(self.menu_tower_w, self.menu_tower_w // 3, "9999")
@@ -300,8 +300,8 @@ class LevelDriver:
             self.menu_towers.blit(text, text.get_rect(bottomright=rect.bottomright))
             self.tower_imgs[idx] = img
         self.towers_scroll = 0
-        self.menu.surface.blit(self.menu_towers, self.menu_rects["towers"],
-                               area=((0, self.towers_scroll), self.menu_rects["towers"].size))
+        self.menu.blit(self.menu_towers, self.rects["towers"],
+                       area=((0, self.towers_scroll), self.rects["towers"].size))
 
     # Draws the enemy path
     def draw_background(self):
@@ -333,17 +333,7 @@ class LevelDriver:
         self.draw_menu()
 
     def select_tower(self, tower):
-        if self.selected_tower:
-            self.selected_tower.tear_down_upgrades()
-        if self.selected_tower is tower:
-            self.selected_tower = None
-        else:
-            tower.set_up_upgrades()
-            if tower.pos[0] < .5 and self.menu.rect.right == data.off_x + data.screen_w:
-                self.menu.set_pos([0, 0])
-            elif tower.pos[0] >= .5 and self.menu.rect.left == data.off_x:
-                self.menu.set_pos([1, 0])
-            self.selected_tower = tower
+        self.selected_tower = None if self.selected_tower is tower else tower
 
     # Handles and event
     def input(self, event):
@@ -351,10 +341,10 @@ class LevelDriver:
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == BUTTON_LEFT and self.show_menu:
                     pos = pg.mouse.get_pos()
-                    m_rect = self.menu.rect
+                    m_rect = self.rects["menu"]
                     if m_rect.collidepoint(*pos):
                         pos = [pos[0] - m_rect.x, pos[1] - m_rect.y]
-                        t_rect = self.menu_rects["towers"]
+                        t_rect = self.rects["towers"]
                         if t_rect.collidepoint(*pos):
                             pos = [pos[0] - t_rect.x, pos[1] - t_rect.y + self.towers_scroll]
                             col, row = pos[0] // self.menu_tower_w, pos[1] // self.menu_tower_w
@@ -362,20 +352,16 @@ class LevelDriver:
                             if idx < len(TOWER_ORDER):
                                 if self.money >= data.towers[idx].cost:
                                     self.drag_tower_idx = idx
-                                    temp = type(data.towers[idx])()
-                                    self.drag_tower.set_surface(temp.img,
+                                    dim = [int(d * data.screen_w) for d in data.towers[idx].dim]
+                                    img = pg.transform.scale(data.towers[idx].img, dim)
+                                    self.drag_tower.set_surface(img,
                                                                 pos=[p / data.screen_w for p in data.get_mouse_pos()])
-                                    del temp
                                     self.drag_tower.dragging = True
-                            else:
-                                self.menu.dragging = True
-                        elif not self.menu_rects["pause"].collidepoint(*pos):
-                            self.menu.dragging = True
                 elif event.button == BUTTON_WHEELUP or event.button == BUTTON_WHEELDOWN:
                     pos = pg.mouse.get_pos()
-                    if self.show_menu and self.menu.rect.collidepoint(*pos):
-                        pos = [pos[0] - self.menu.rect.x, pos[1] - self.menu.rect.y]
-                        rect = self.menu_rects["towers"]
+                    if self.show_menu and self.rects["menu"].collidepoint(*pos):
+                        pos = [pos[0] - self.rects["menu"].x, pos[1] - self.rects["menu"].y]
+                        rect = self.rects["towers"]
                         if rect.collidepoint(*pos):
                             if event.button == BUTTON_WHEELUP:
                                 self.towers_scroll -= 2
@@ -386,39 +372,38 @@ class LevelDriver:
                                 max_scroll = max(0, self.menu_towers.get_size()[1] - rect.h)
                                 if self.towers_scroll > max_scroll:
                                     self.towers_scroll = max_scroll
-                            self.menu.surface.fill((0, 0, 0), rect)
-                            self.menu.surface.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
+                            self.menu.fill((0, 0, 0), rect)
+                            self.menu.blit(self.menu_towers, rect, area=((0, self.towers_scroll), rect.size))
                     elif self.selected_tower and self.selected_tower.upgrade_r.collidepoint(*pos):
                         self.selected_tower.scroll_upgrades(event.button == BUTTON_WHEELUP)
             if event.type == MOUSEBUTTONUP and event.button == BUTTON_LEFT:
                 pos = pg.mouse.get_pos()
-                self.menu.dragging = False
                 # Check if we finished dragging a tower
                 if self.drag_tower.dragging:
-                    if not self.menu.rect.collidepoint(*pos):
-                        pos = [p / data.screen_w for p in data.get_mouse_pos()]
-                        self.towers.append(type(data.towers[self.drag_tower_idx])(pos=pos))
+                    half_w = [w / 2 / data.screen_w for w in self.drag_tower.rect.size]
+                    if all([w <= p <= 1 - w for p, w in zip(self.drag_tower.pos, half_w)]):
+                        self.towers.append(type(data.towers[self.drag_tower_idx])(pos=self.drag_tower.pos))
                         self.add_money(-self.towers[-1].cost)
                         self.select_tower(self.towers[-1])
                     self.drag_tower.dragging = False
                 else:
                     # Clicked the toggle menu button
-                    if self.menu_rects["toggle"].collidepoint(*pos):
+                    if self.rects["toggle"].collidepoint(*pos):
                         self.show_menu = not self.show_menu
                     # Clicked the menu
-                    elif self.show_menu and self.menu.rect.collidepoint(*pos):
-                        pos = [pos[0] - self.menu.rect.x, pos[1] - self.menu.rect.y]
-                        if self.menu_rects["pause"].collidepoint(*pos):
+                    elif self.show_menu and self.rects["menu"].collidepoint(*pos):
+                        pos = [pos[0] - self.rects["menu"].x, pos[1] - self.rects["menu"].y]
+                        if self.rects["pause"].collidepoint(*pos):
                             self.paused = not self.paused
                             # Reset test enemy
                             if self.paused:
                                 self.test_enemy.reset(self.get_start())
                             # Update paused button
-                            img_w = self.menu_rects["pause"].w
+                            img_w = self.rects["pause"].w
                             path = "res/{}.png".format("play" if self.paused else "pause")
                             img = data.scale_to_fit(pg.image.load(path), w=img_w, h=img_w)
-                            self.menu.surface.fill((0, 0, 0, 0), self.menu_rects["pause"])
-                            self.menu.surface.blit(img, img.get_rect(center=self.menu_rects["pause"].center))
+                            self.menu.fill((0, 0, 0, 0), self.rects["pause"])
+                            self.menu.blit(img, img.get_rect(center=self.rects["pause"].center))
                     # Check clicking tower upgrades
                     elif not self.selected_tower or not self.selected_tower.click():
                         pos = [(pos[0] - data.off_x) / data.screen_w, (pos[1] - data.off_y) / data.screen_w]
@@ -433,26 +418,26 @@ class LevelDriver:
 
     def end(self, won):
         self.game_status = WON if won else LOST
-        self.menu.dragging = self.drag_tower.dragging = False
+        self.drag_tower.dragging = False
         self.draw()
 
     # Adds input to money
     def add_money(self, amnt):
         self.money += amnt
-        rect = self.menu_rects["money"]
-        self.menu.surface.fill((0, 0, 0), rect)
+        rect = self.rects["money"]
+        self.menu.fill((0, 0, 0), rect)
         text = self.menu_font.render(str(self.money), 1, (255, 255, 255))
         text_rect = text.get_rect(centery=rect.centery, left=rect.left)
-        self.menu.surface.blit(text, text_rect)
+        self.menu.blit(text, text_rect)
 
     # Subtracts input from hp
     def damage(self, amnt):
         self.hp -= amnt
-        rect = self.menu_rects["hp"]
-        self.menu.surface.fill((0, 0, 0), rect)
+        rect = self.rects["hp"]
+        self.menu.fill((0, 0, 0), rect)
         text = self.menu_font.render(str(self.hp), 1, (255, 255, 255))
         text_rect = text.get_rect(centery=rect.centery, left=rect.left)
-        self.menu.surface.blit(text, text_rect)
+        self.menu.blit(text, text_rect)
 
     def reset(self):
         # Reset object arrays
@@ -503,13 +488,7 @@ class DragObject:
 
     def drag(self, dmouse):
         dmouse = [d / data.screen_w for d in dmouse]
-        for i in range(2):
-            self.pos[i] += dmouse[i]
-            half_dim = self.rect.size[i] / 2 / data.screen_w
-            if self.pos[i] < half_dim:
-                self.pos[i] = half_dim
-            elif self.pos[i] > 1 - half_dim:
-                self.pos[i] = 1 - half_dim
+        self.pos = [p + d for p, d in zip(self.pos, dmouse)]
         self.rect.center = [self.pos[0] * data.screen_w + data.off_x,
                             self.pos[1] * data.screen_w + data.off_y]
 
