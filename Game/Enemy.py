@@ -12,25 +12,25 @@ ENEMY_ORDER = [ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5]
 
 class Enemy1(Enemy):
     def __init__(self):
-        super().__init__(ENEMY_1, dim=(.1, .1), velocity=.25, img="res/enemy1.png", strength=1)
+        super().__init__(ENEMY_1, dim=(.1, .1), velocity=.2, img="res/enemy1.png", strength=1)
         self.color = (255, 0, 0)
 
 
 class Enemy2(Enemy):
     def __init__(self):
-        super().__init__(ENEMY_2, dim=(.1, .1), velocity=.375, img="res/enemy2.png", strength=2)
+        super().__init__(ENEMY_2, dim=(.1, .1), velocity=.325, img="res/enemy2.png", strength=2)
         self.color = (0, 0, 255)
 
 
 class Enemy3(Enemy):
     def __init__(self):
-        super().__init__(ENEMY_3, dim=(.1, .1), velocity=.5, img="res/enemy3.png", strength=3)
+        super().__init__(ENEMY_3, dim=(.1, .1), velocity=.433, img="res/enemy3.png", strength=3)
         self.color = (0, 255, 0)
 
 
 class Enemy4(Enemy):
     def __init__(self):
-        super().__init__(ENEMY_4, dim=(.1, .1), velocity=.75, img="res/enemy4.png", strength=4)
+        super().__init__(ENEMY_4, dim=(.1, .1), velocity=.6, img="res/enemy4.png", strength=4)
         self.color = (255, 255, 0)
 
 

@@ -40,6 +40,8 @@ class LevelDriver:
 
         self.hp = self.money = 0
 
+        # Wave progress and spawn chances
+        self.progression = self.wave_chances = None
         # Menu and menu tower scroll surfaces
         self.menu = self.menu_towers = self.menu_toggle = None
         # Tower being dragged to place
@@ -50,7 +52,9 @@ class LevelDriver:
                       "money": pg.Rect(0, 0, 0, 0),
                       "towers": pg.Rect(0, 0, 0, 0),
                       "toggle": pg.Rect(0, 0, 0, 0),
-                      "pause": pg.Rect(0, 0, 0, 0)}
+                      "pause": pg.Rect(0, 0, 0, 0),
+                      "progress": pg.Rect(0, 0, 0, 0),
+                      "chances": pg.Rect(0, 0, 0, 0)}
         # Scroll amount of menu tower list, <= 0
         self.towers_scroll = 0
         # Width of a tower sprite in the menu
@@ -66,8 +70,8 @@ class LevelDriver:
 
         self.time = 0
         self.paths = []
-        self.spawn_lists = []
-        self.current_spawn = 0
+        self.waves = []
+        self.wave_num = 0
         self.finished_lvl = False
 
         self.paused = False
@@ -83,15 +87,7 @@ class LevelDriver:
                 if not self.move_enemy(self.test_enemy, dt):
                     self.test_enemy.reset(self.get_start())
             else:
-                # Move all enemies, and update towers/projectiles
-                for i in self.enemies:
-                    if not self.move_enemy(i, dt):
-                        self.damage(i.strength)
-                        self.enemies.remove(i)
-                        # Check lost
-                        if self.hp <= 0:
-                            self.end(False)
-                            return
+                # Update towers/projectiles and move enemies
                 for i in self.towers:
                     i.tick(dt)
                 for i in self.projectiles:
@@ -120,14 +116,23 @@ class LevelDriver:
                                     i.damage -= strength
                                     self.add_money(strength)
                                 break
+                for i in self.enemies:
+                    if not self.move_enemy(i, dt):
+                        self.damage(i.strength)
+                        self.enemies.remove(i)
+                        # Check lost
+                        if self.hp <= 0:
+                            self.end(False)
+                            return
+                # Spawn enemies
                 if not self.finished_lvl:
-                    # Get all enemy spawns
                     self.spawn_enemies(dt)
+                # Move to the next wave or win the game
                 elif len(self.enemies) == 0:
                     self.time = 0
                     self.finished_lvl = False
-                    self.current_spawn += 1
-                    if self.current_spawn >= len(self.spawn_lists):
+                    self.wave_num += 1
+                    if self.wave_num >= len(self.waves):
                         self.end(True)
                         return
                         # Get change in mouse position every time so that it can update the last mouse position
@@ -149,8 +154,8 @@ class LevelDriver:
     def spawn_enemies(self, dt):
         t_i = self.time
         t_f = self.time + dt
-        spawn_list = self.spawn_lists[self.current_spawn]
-        for idx, spawn in enumerate(spawn_list):
+        wave = self.waves[self.wave_num]
+        for idx, spawn in enumerate(wave):
             if spawn.duration < t_i:
                 t_i -= spawn.duration
                 t_f -= spawn.duration
@@ -177,8 +182,24 @@ class LevelDriver:
                             break
                 t_i = 0
                 t_f -= spawn.duration
-                if idx == len(spawn_list) - 1:
+                if idx == len(wave) - 1:
                     self.finished_lvl = True
+                # Update wave chances
+                else:
+                    r = self.rects["chances"]
+                    self.wave_chances = wave[idx + 1].draw_chances(*r.size)
+                    self.menu.fill((0, 0, 0), r)
+                    self.menu.blit(self.wave_chances, r)
+        # If time is 0, draw the new wave
+        if self.time == 0:
+            self.draw_wave()
+        else:
+            # Update wave progression
+            r = self.rects["progress"]
+            off_x = int(self.progression.get_size()[0] * self.time / sum([i.duration for i in wave]))
+            self.menu.fill((0, 0, 0), r)
+            self.menu.blit(self.progression, r, area=((off_x, 0), r.size))
+        # Increment timer
         self.time += dt
 
     # Updates an enemy's position along the path
@@ -245,17 +266,22 @@ class LevelDriver:
 
     # Draws menu surface
     def draw_menu(self):
-        # Establish rectangles
-        r = pg.Rect(0, 0, data.screen_w // 5, data.screen_w)
-        img_w = r.h // 20
+        w, h = data.screen_w // 5, data.screen_w
+        img_w = h // 20
 
-        self.rects["menu"] = pg.Rect(data.off_x + data.screen_w, data.off_y, data.screen_w // 5, data.screen_w)
-        self.rects["hp"] = pg.Rect(img_w, 0, r.w - img_w, img_w)
-        self.rects["money"] = self.rects["hp"].move(0, self.rects["hp"].h)
-        self.rects["towers"] = pg.Rect(0, self.rects["money"].bottom, r.w,
-                                       r.h - self.rects["money"].bottom - img_w)
-        self.rects["pause"] = pg.Rect((r.w - img_w) // 2, self.rects["towers"].bottom, img_w, img_w)
-        self.menu_tower_w = r.w // self.TOWER_COLUMNS
+        # Establish rectangles
+        self.rects["menu"] = pg.Rect(data.off_x + data.screen_w, data.off_y, w, h)
+        # Top
+        self.rects["hp"] = pg.Rect(img_w, 0, w - img_w, img_w)
+        self.rects["money"] = self.rects["hp"].move(0, img_w)
+        # Bottom
+        self.rects["pause"] = pg.Rect((w - img_w) // 2, h - img_w, img_w, img_w)
+        self.rects["chances"] = pg.Rect(0, self.rects["pause"].top - img_w * 3 // 4, w, img_w // 2)
+        self.rects["progress"] = pg.Rect(0, self.rects["chances"].top - img_w * 9 // 4, w, img_w * 2)
+        # Middle
+        self.rects["towers"] = pg.Rect(0, self.rects["money"].bottom, w,
+                                       self.rects["progress"].top - self.rects["money"].bottom)
+        self.menu_tower_w = w // self.TOWER_COLUMNS
 
         # Create menu toggle button
         toggle_w = img_w * 2
@@ -265,7 +291,7 @@ class LevelDriver:
         self.rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
 
         # Create surface
-        self.menu = pg.Surface(r.size)
+        self.menu = pg.Surface((w, h))
 
         # Draw money and hp text
         self.menu_font = data.get_scaled_font(*self.rects["hp"].size, "999")
@@ -289,7 +315,7 @@ class LevelDriver:
 
         # Display towers
         cost_font = data.get_scaled_font(self.menu_tower_w, self.menu_tower_w // 3, "9999")
-        self.menu_towers = pg.Surface((r.w, self.menu_tower_w * (math.ceil(len(TOWER_ORDER) / 2) + 1)))
+        self.menu_towers = pg.Surface((w, self.menu_tower_w * (math.ceil(len(TOWER_ORDER) / 2) + 1)))
         for idx in TOWER_ORDER:
             tower = data.towers[idx]
             col, row = idx % self.TOWER_COLUMNS, idx // self.TOWER_COLUMNS
@@ -302,6 +328,28 @@ class LevelDriver:
         self.towers_scroll = 0
         self.menu.blit(self.menu_towers, self.rects["towers"],
                        area=((0, self.towers_scroll), self.rects["towers"].size))
+
+        self.draw_wave()
+
+    # Draws progression and chances for current wave
+    def draw_wave(self):
+        wave = self.waves[self.wave_num]
+        # Draw the wave progression
+        r = self.rects["progress"]
+        self.progression = draw_spawn_list(wave, r.h, draw_chances=False)
+        off_x = int(self.progression.get_size()[0] * self.time / sum([i.duration for i in wave]))
+        self.menu.fill((0, 0, 0), r)
+        self.menu.blit(self.progression, r, area=((off_x, 0), r.size))
+        # Draw wave chances
+        time = self.time
+        for part in wave:
+            time -= part.duration
+            if time <= 0:
+                r = self.rects["chances"]
+                self.wave_chances = wave[0].draw_chances(*r.size)
+                self.menu.fill((0, 0, 0), r)
+                self.menu.blit(self.wave_chances, r)
+                break
 
     # Draws the enemy path
     def draw_background(self):
@@ -324,12 +372,7 @@ class LevelDriver:
         objects = self.enemies + self.towers + self.projectiles
         # Redraw objects
         for obj in objects:
-            img_dim = (int(obj.dim[0] * data.screen_w), int(obj.dim[1] * data.screen_w))
-            obj.img = pg.transform.scale(obj.img, img_dim)
-            obj.blit_img = pg.transform.rotate(obj.img, obj.angle)
-        # Redraw selected tower if applicable
-        if self.selected_tower:
-            self.selected_tower.set_up_upgrades()
+            obj.resize()
         self.draw_menu()
 
     def select_tower(self, tower):
@@ -445,7 +488,7 @@ class LevelDriver:
         self.towers.clear()
         self.projectiles.clear()
         # Reset spawning variables
-        self.time = self.current_spawn = 0
+        self.time = self.wave_num = 0
         self.finished_lvl = False
         # Reset money and hp
         self.hp = self.money = 100
@@ -454,16 +497,14 @@ class LevelDriver:
         # Reset ui variables
         self.paused = self.show_menu = True
         self.test_enemy.reset(self.get_start())
-        if self.selected_tower:
-            self.selected_tower.clear_upgrades()
         self.selected_tower = None
         # Call resize
         self.resize()
 
     # Sets level data
-    def set_level(self, paths, spawn_lists):
+    def set_level(self, paths, waves):
         self.paths = paths
-        self.spawn_lists = spawn_lists
+        self.waves = waves
         self.draw_background()
         self.reset()
 

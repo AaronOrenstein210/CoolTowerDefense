@@ -40,6 +40,11 @@ class Sprite:
         self.polygon = Polygon(points)
         self.blit_img = pg.transform.rotate(self.img, self.angle + 90)
 
+    def resize(self):
+        img_dim = [int(d * data.screen_w) for d in self.dim]
+        self.img = pg.transform.scale(self.img, img_dim)
+        self.blit_img = pg.transform.rotate(self.img, self.angle)
+
 
 targeting_names = ["First", "Closest", "Strongest"]
 
@@ -76,6 +81,10 @@ class Tower(Sprite):
     @property
     def text_h(self):
         return self.tower_r.h // 3
+
+    def resize(self):
+        super().resize()
+        self.set_up_upgrades()
 
     # Draws range, upgrade menu, and any upgrade descriptions to screen
     def draw(self):

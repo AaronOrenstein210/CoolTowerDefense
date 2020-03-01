@@ -18,7 +18,7 @@ models = list(model_names.keys())
 model_idx = 0
 surfaces = {"Enemies": pg.Surface((0, 0))}
 slider_ends = [0, 0]
-slider_selected = -1
+slider = -1
 slider_off = 0
 
 show_cursor = True
@@ -26,13 +26,20 @@ show_cursor = True
 
 def reset():
     spawns.clear()
-    global current, selected, slider_off, slider_selected, model_idx
+    global current, selected, slider_off, slider, model_idx
     current = Spawn()
     selected = "Count"
     slider_off = model_idx = 0
-    slider_selected = -1
+    slider = -1
 
     resize()
+
+
+def reset_current():
+    global current, model_idx
+    current = Spawn()
+    update_sliders()
+    model_idx = 0
 
 
 def resize():
@@ -69,7 +76,7 @@ def resize():
         img = data.scale_to_fit(data.enemies[k].img, lineh, lineh)
         img_rect = img.get_rect(center=(lineh // 2, r_.centery))
         s_.blit(img, img_rect)
-        # Draw slider
+        # Draw slider - easier than calling update_sliders()
         pg.draw.line(s_, (0, 255, 0), (slider_ends[0], r_.centery), r_.center, 2)
         pg.draw.rect(s_, (128, 128, 128), r_)
     surfaces["Enemies"] = s_
@@ -81,9 +88,9 @@ def draw():
     d.fill((0, 0, 0))
     # Draw current timeline
     r_ = rects["Current"]
-    d.blit(current.get_img(*r_.size), r_.topleft)
+    d.blit(current.draw_img(*r_.size, True), r_.topleft)
     # Draw entire timeline
-    d.blit(draw_spawn_list(*rects["Timeline"].size, spawns), rects["Timeline"].topleft)
+    d.blit(draw_spawn_list(spawns, rects["Timeline"].h, w=rects["Timeline"].w), rects["Timeline"].topleft)
     # Draw text for number of spawns
     text = "Enemies: {}{}".format(current.num_enemies, "|" if selected == "Count" and show_cursor else "")
     color_ = (255, 255, 255) if current.num_enemies >= 1 else (255, 0, 0)
@@ -113,8 +120,21 @@ def draw_text(text, rect, surface, text_color=(255, 255, 255), bkgrnd_color=()):
     surface.blit(text_s, text_rect)
 
 
+def update_sliders(idxs=ENEMY_ORDER):
+    for idx in [i for i in idxs if i in ENEMY_ORDER]:
+        frac = current.chances[idx]
+        d = pg.display.get_surface()
+        line_h = rects["SlideBar"].h
+        surfaces["Enemies"].fill((0, 0, 0), (line_h, idx * line_h, rects["Enemies"].w - line_h, line_h))
+        rects["Slider"].top = idx * line_h
+        r = rects["Slider"].move(int(rects["SlideBar"].w * frac), 0)
+        pg.draw.line(surfaces["Enemies"], (0, 255, 0), (slider_ends[0], r.centery), r.center, 2)
+        pg.draw.rect(surfaces["Enemies"], (128, 128, 128), r)
+        d.blit(surfaces["Enemies"], rects["Enemies"].topleft, area=((0, -slider_off), rects["Enemies"].size))
+
+
 # Runs screen to set spawn order
-def new_enemy_list():
+def new_wave():
     global show_cursor
     reset()
     while True:
@@ -131,37 +151,39 @@ def new_enemy_list():
                 resize()
             elif e.type == MOUSEBUTTONUP:
                 if e.button == BUTTON_LEFT:
-                    global slider_selected, current, selected
-                    slider_selected = -1
-                    # Offset is include in the rectangles
-                    pos = pg.mouse.get_pos()
-                    if rects["Count"].collidepoint(*pos):
-                        selected = "Count"
-                    elif rects["Time"].collidepoint(*pos):
-                        selected = "Time"
-                    elif rects["Model"].collidepoint(*pos):
-                        global model_idx
-                        model_idx = (model_idx + 1) % len(models)
-                        current.model = models[model_idx]
-                    elif rects["Flip"].collidepoint(*pos):
-                        current.flip = not current.flip
-                    elif rects["Add"].collidepoint(*pos):
-                        if current.num_enemies >= 1 and current.duration >= 100:
-                            spawns.append(current)
-                            current = Spawn()
-                    elif rects["Clear"].collidepoint(*pos):
-                        current = Spawn()
-                    elif rects["Save"].collidepoint(*pos):
-                        if len(spawns) > 0:
-                            byte_data = len(spawns).to_bytes(1, byteorder)
-                            for s in spawns:
-                                byte_data += s.to_bytes()
-                            with open(data.SPAWNS, "ab+") as file:
-                                file.write(byte_data)
-                            return byte_data
+                    global slider, selected
+                    if slider == -1:
+                        # Offset is include in the rectangles
+                        pos = pg.mouse.get_pos()
+                        if rects["Count"].collidepoint(*pos):
+                            selected = "Count"
+                        elif rects["Time"].collidepoint(*pos):
+                            selected = "Time"
+                        elif rects["Model"].collidepoint(*pos):
+                            global model_idx
+                            model_idx = (model_idx + 1) % len(models)
+                            current.model = models[model_idx]
+                        elif rects["Flip"].collidepoint(*pos):
+                            current.flip = not current.flip
+                        elif rects["Add"].collidepoint(*pos):
+                            if current.num_enemies >= 1 and current.duration >= 100:
+                                spawns.append(current)
+                                reset_current()
+                        elif rects["Clear"].collidepoint(*pos):
+                            reset_current()
+                        elif rects["Save"].collidepoint(*pos):
+                            if len(spawns) > 0:
+                                byte_data = len(spawns).to_bytes(1, byteorder)
+                                for s in spawns:
+                                    byte_data += s.to_bytes()
+                                with open(data.SPAWNS, "ab+") as file:
+                                    file.write(byte_data)
+                                return byte_data
+                        else:
+                            continue
+                        draw()
                     else:
-                        continue
-                    draw()
+                        slider = -1
                 elif e.button == BUTTON_WHEELDOWN or e.button == BUTTON_WHEELUP:
                     if rects["Enemies"].collidepoint(*pg.mouse.get_pos()):
                         global slider_off
@@ -184,8 +206,8 @@ def new_enemy_list():
                     if slider_ends[0] <= pos[0] <= slider_ends[1]:
                         idx = pos[1] // rects["SlideBar"].h
                         if idx < len(current.chances.keys()):
-                            slider_selected = idx
-            elif e.type == MOUSEMOTION and slider_selected != -1:
+                            slider = idx
+            elif e.type == MOUSEMOTION and slider != -1:
                 pos = pg.mouse.get_pos()
                 pos = [pos[0] - rects["Enemies"].x, pos[1] - rects["Enemies"].y + slider_off]
                 # Get slider fractions
@@ -194,17 +216,14 @@ def new_enemy_list():
                     frac = 0
                 elif frac > 1:
                     frac = 1
-                idx = slider_selected
-                current.chances[idx] = frac
+                current.chances[slider] = frac
                 # Update slider
-                line_h = rects["SlideBar"].h
-                surfaces["Enemies"].fill((0, 0, 0), (line_h, idx * line_h, rects["Enemies"].w - line_h, line_h))
-                rects["Slider"].top = idx * line_h
-                r = rects["Slider"].move(int(rects["SlideBar"].w * frac), 0)
-                pg.draw.line(surfaces["Enemies"], (0, 255, 0), (slider_ends[0], r.centery), r.center, 2)
-                pg.draw.rect(surfaces["Enemies"], (128, 128, 128), r)
-                pg.display.get_surface().blit(surfaces["Enemies"], rects["Enemies"].topleft,
-                                              area=((0, -slider_off), rects["Enemies"].size))
+                update_sliders([slider])
+                # Update wave image
+                d = pg.display.get_surface()
+                r = rects["Current"]
+                d.fill((0, 0, 0), r)
+                d.blit(current.draw_img(*r.size, True), r.topleft)
             elif e.type == KEYUP:
                 if e.key == K_BACKSPACE:
                     if selected == "Count":

@@ -64,14 +64,18 @@ def load_spawn_list(file_data):
 
 
 # Draws a spawn list
-def draw_spawn_list(w, h, spawn_list):
-    s = pg.Surface((w, h))
+# If no width is given, 1 second is represented by h pixels
+# Chances determines whether to draw enemy spawn chances or not
+def draw_spawn_list(spawn_list, h, w=-1, draw_chances=True):
     max_time = sum(i.duration for i in spawn_list)
+    if w == -1:
+        w = max(h * max_time // 1000, h + h)
+    s = pg.Surface((w, h))
     start_time = 0
     for i in spawn_list:
         w_ = w * i.duration // max_time
         x = w * start_time // max_time
-        s.blit(i.get_img(w_, h), (x, 0))
+        s.blit(i.draw_img(w_, h, draw_chances), (x, 0))
         start_time += i.duration
     return s
 
@@ -253,8 +257,9 @@ class Spawn:
         # Gets the conversion from model function value to enemy count
         return self.num_enemies / get_y[self.model](1)
 
-    # TODO: enemy frequencies
-    def get_img(self, w, h):
+    def draw_img(self, w, h, draw_chances):
+        if w == -1:
+            w = h * self.duration // 1000
         s = pg.Surface((w, h))
         # Draw some pretty lines
         pg.draw.line(s, (255, 255, 255), (0, h // 2), (w - 1, h // 2))
@@ -265,13 +270,19 @@ class Spawn:
         for i in range(self.num_enemies):
             dx = int((w - 1) * self.get_time(i + 1))
             pg.draw.line(s, (0, 200, 0), (dx, y_i), (dx, y_f))
-        # Draw enemy frequencies
+        # Check if we show draw enemy frequencies
+        if draw_chances:
+            s.blit(self.draw_chances(w * 3 // 4, h // 8), (w // 8, h // 16))
+        return s
+
+    def draw_chances(self, w, h):
         total = sum(self.chances.values())
-        x, w = w // 8, w * 3 // 4
+        x = 0
+        s = pg.Surface((w, h))
         for key in ENEMY_ORDER:
             if self.chances[key] > 0:
                 dx = int(w * self.chances[key] / total)
-                s.fill(data.enemies[key].color, (x, h // 16, dx, h // 8))
+                s.fill(data.enemies[key].color, (x, 0, dx, h))
                 x += dx
         return s
 

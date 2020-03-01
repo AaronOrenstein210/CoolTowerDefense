@@ -3,7 +3,7 @@ import pygame as pg
 from pygame.locals import *
 from Game.level_objects import draw_paths, draw_spawn_list, load_paths, load_spawn_list
 from MainScreen.new_level import new_level
-from MainScreen.new_enemy_list import new_enemy_list
+from MainScreen.new_wave import new_wave
 import data
 
 levels, spawns = 0, 1
@@ -143,7 +143,7 @@ def choose_level():
                         if i == levels:
                             previews[i] = draw_paths(data.screen_w // 4, array[idx])
                         else:
-                            previews[i] = draw_spawn_list(rects[i].w - 1, data.screen_w // 4, array[idx])
+                            previews[i] = draw_spawn_list(array[idx], data.screen_w // 4, w=rects[i].w - 1)
                         pg.display.get_surface().fill((0, 0, 0), preview_rects[i])
                         pg.display.get_surface().blit(previews[i], preview_rects[i])
             elif e.type == MOUSEBUTTONUP:
@@ -182,7 +182,7 @@ def choose_level():
                                 d.fill((0, 0, 0), r)
                                 d.blit(surfaces[i], r.topleft, area=((0, -off[i]), r.size))
                             elif idx == len(level_data[i]):
-                                result = new_level() if i == levels else new_enemy_list()
+                                result = new_level() if i == levels else new_wave()
                                 if result != "":
                                     obj, result = load_paths(result) if i == levels else load_spawn_list(result)
                                     level_data[i].append(obj)

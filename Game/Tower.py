@@ -64,7 +64,8 @@ class DuckTower2(Tower):
 
 class DuckTowerAA(Tower):
     def __init__(self, pos=(0, 0)):
-        super().__init__(AAGUN, pos=pos, dim=(.1, .1), img="res/duckAAGun.png", cooldown=200, cost=100, shoot_range=.15)
+        super().__init__(AAGUN, pos=pos, dim=(.04, .04), img="res/duckAAGun.png", cooldown=200, cost=100,
+                         shoot_range=.15)
 
     def shoot(self, enemy):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
