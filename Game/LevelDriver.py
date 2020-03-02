@@ -43,7 +43,7 @@ class LevelDriver:
         # Wave progress and spawn chances
         self.progression = self.wave_chances = None
         # Menu and menu tower scroll surfaces
-        self.menu = self.menu_towers = self.menu_toggle = None
+        self.menu = self.menu_towers = None
         # Tower being dragged to place
         self.drag_tower = DragObject()
         # Menu rectangles
@@ -51,7 +51,6 @@ class LevelDriver:
                       "hp": pg.Rect(0, 0, 0, 0),
                       "money": pg.Rect(0, 0, 0, 0),
                       "towers": pg.Rect(0, 0, 0, 0),
-                      "toggle": pg.Rect(0, 0, 0, 0),
                       "pause": pg.Rect(0, 0, 0, 0),
                       "progress": pg.Rect(0, 0, 0, 0),
                       "chances": pg.Rect(0, 0, 0, 0)}
@@ -61,8 +60,6 @@ class LevelDriver:
         self.menu_tower_w = 0
         # Menu text font
         self.menu_font = None
-        # Are we moving the menu (dragging it), Is the menu open
-        self.show_menu = False
         # Type of tower being dragged
         self.drag_tower_idx = -1
         # Tower currently being clicked on
@@ -238,13 +235,10 @@ class LevelDriver:
         if self.selected_tower:
             self.selected_tower.draw()
         # Draw the menu
-        if self.show_menu:
-            d.blit(self.menu, self.rects["menu"])
+        d.blit(self.menu, self.rects["menu"])
         # Draw the tower being placed
         if self.drag_tower.dragging:
             self.drag_tower.draw()
-        # Draw the menu toggle button
-        d.blit(self.menu_toggle, self.rects["toggle"])
         # Draw won and lose messages
         if self.game_status != PLAYING:
             dim = d.get_size()
@@ -282,13 +276,6 @@ class LevelDriver:
         self.rects["towers"] = pg.Rect(0, self.rects["money"].bottom, w,
                                        self.rects["progress"].top - self.rects["money"].bottom)
         self.menu_tower_w = w // self.TOWER_COLUMNS
-
-        # Create menu toggle button
-        toggle_w = img_w * 2
-        toggle_r = pg.Rect(data.screen_w + data.off_x - toggle_w, data.screen_w + data.off_y - toggle_w, toggle_w,
-                           toggle_w)
-        self.menu_toggle = data.scale_to_fit(pg.image.load("res/menuButton.png"), w=toggle_r.w, h=toggle_r.h)
-        self.rects["toggle"] = self.menu_toggle.get_rect(center=toggle_r.center)
 
         # Create surface
         self.menu = pg.Surface((w, h))
@@ -382,7 +369,7 @@ class LevelDriver:
     def input(self, event):
         if self.game_status == PLAYING:
             if event.type == MOUSEBUTTONDOWN:
-                if event.button == BUTTON_LEFT and self.show_menu:
+                if event.button == BUTTON_LEFT:
                     pos = pg.mouse.get_pos()
                     m_rect = self.rects["menu"]
                     if m_rect.collidepoint(*pos):
@@ -402,7 +389,7 @@ class LevelDriver:
                                     self.drag_tower.dragging = True
                 elif event.button == BUTTON_WHEELUP or event.button == BUTTON_WHEELDOWN:
                     pos = pg.mouse.get_pos()
-                    if self.show_menu and self.rects["menu"].collidepoint(*pos):
+                    if self.rects["menu"].collidepoint(*pos):
                         pos = [pos[0] - self.rects["menu"].x, pos[1] - self.rects["menu"].y]
                         rect = self.rects["towers"]
                         if rect.collidepoint(*pos):
@@ -430,11 +417,8 @@ class LevelDriver:
                         self.select_tower(self.towers[-1])
                     self.drag_tower.dragging = False
                 else:
-                    # Clicked the toggle menu button
-                    if self.rects["toggle"].collidepoint(*pos):
-                        self.show_menu = not self.show_menu
                     # Clicked the menu
-                    elif self.show_menu and self.rects["menu"].collidepoint(*pos):
+                    if self.rects["menu"].collidepoint(*pos):
                         pos = [pos[0] - self.rects["menu"].x, pos[1] - self.rects["menu"].y]
                         if self.rects["pause"].collidepoint(*pos):
                             self.paused = not self.paused
@@ -495,7 +479,7 @@ class LevelDriver:
         # Reset game status
         self.game_status = PLAYING
         # Reset ui variables
-        self.paused = self.show_menu = True
+        self.paused = True
         self.test_enemy.reset(self.get_start())
         self.selected_tower = None
         # Call resize
