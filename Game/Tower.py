@@ -6,8 +6,8 @@ from Game.Abstract import Projectile
 import data
 from Game.Abstract import Tower, Upgrade
 
-TOWER_1, TOWER_2, BALLISTA, AAGUN = range(4)
-TOWER_ORDER = [TOWER_1, TOWER_2, AAGUN, BALLISTA]
+TOWER_1, TOWER_2, BALLISTA, AAGUN, BFG = range(5)
+TOWER_ORDER = [TOWER_1, TOWER_2, AAGUN, BALLISTA, BFG]
 
 
 class DuckTower(Tower):
@@ -182,3 +182,15 @@ class DuckTowerBallista(Tower):
 
         def addDamage(self, num):
             self.damage += num
+
+class DuckTowerBFG(Tower):
+    def __init__(self, pos=(0, 0)):
+        super().__init__(BFG, pos=pos, dim=(.1,.1), img="res/bfgpixel.png", cooldown=1000, cost=1,
+                         shoot_range=.4)
+
+    def shoot(self, enemy):
+        return [self.P1(self.pos,data.get_angle_pixels(self.pos, enemy.pos))]
+
+    class P1(Projectile):
+        def __init__(self, pos, angle):
+            super().__init__(pos=pos, angle=angle, speed=.4, dim=(.1, .1), damage=100, img="res/bfgProj.png")
