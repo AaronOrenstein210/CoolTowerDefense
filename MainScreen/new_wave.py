@@ -145,7 +145,7 @@ def new_wave():
             draw()
         for e in pg.event.get():
             if e.type == QUIT:
-                return ""
+                return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, False)
                 resize()
@@ -173,12 +173,7 @@ def new_wave():
                             reset_current()
                         elif rects["Save"].collidepoint(*pos):
                             if len(spawns) > 0:
-                                byte_data = len(spawns).to_bytes(1, byteorder)
-                                for s in spawns:
-                                    byte_data += s.to_bytes()
-                                with open(data.SPAWNS, "ab+") as file:
-                                    file.write(byte_data)
-                                return byte_data
+                                return spawns
                         else:
                             continue
                         draw()

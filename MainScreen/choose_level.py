@@ -1,3 +1,4 @@
+from sys import byteorder
 from os.path import isfile
 import pygame as pg
 from pygame.locals import *
@@ -10,6 +11,7 @@ levels, spawns = 0, 1
 # Load all levels and spawn lists
 level_data = [[], []]
 spawn_blacklist = []
+delete = False
 
 surfaces = [pg.Surface] * 2
 rects = [pg.Rect(0, 0, 0, 0)] * 2
@@ -56,8 +58,9 @@ def resize():
     overlay.set_alpha(128)
     # Set up surfaces and rectangles
     for j, arr in enumerate(level_data):
-        num_rows = (len(arr) + 1) // row_len + 1
+        num_rows = (len(arr) + 2) // row_len + 1
         surfaces[j] = pg.Surface((rects[j].w, item_w * num_rows))
+        k = 0
         for k in range(len(arr)):
             row, col = k // row_len, k % row_len
             text_s = lvl_font.render(str(k + 1), 1, (255, 255, 255))
@@ -69,11 +72,14 @@ def resize():
             elif j == spawns and k in spawn_blacklist:
                 surfaces[j].blit(overlay, (col * item_w, row * item_w))
                 surfaces[j].fill((0, 0, 0), (col * item_w, row * item_w, item_w, item_w))
-        # Add plus sign at the end
-        row, col = len(arr) // row_len, len(arr) % row_len
-        plus = pg.transform.scale(pg.image.load("res/add.png"), (int(item_w * .9), int(item_w * .9)))
-        plus_rect = plus.get_rect(center=(int((col + .5) * item_w), int((row + .5) * item_w)))
-        surfaces[j].blit(plus, plus_rect)
+        # Add add and delete buttons
+        for img in ("res/add.png", "res/delete.png"):
+            # Add plus sign to create a new one
+            k += 1
+            row, col = k // row_len, k % row_len
+            plus = pg.transform.scale(pg.image.load(img), (int(item_w * .9), int(item_w * .9)))
+            plus_rect = plus.get_rect(center=(int((col + .5) * item_w), int((row + .5) * item_w)))
+            surfaces[j].blit(plus, plus_rect)
         off[j] = 0
         d.blit(surfaces[j], rects[j].topleft, area=((0, off[j]), rects[j].size))
         # Draw preview for selected items
@@ -100,8 +106,26 @@ def update_title():
             d.blit(title_text[j], title_rects[j])
 
 
+def save_data():
+    with open(data.LEVELS, "wb+") as file:
+        for paths in level_data[levels]:
+            byte_data = len(paths).to_bytes(1, byteorder)
+            for p in paths:
+                byte_data += p.to_bytes()
+            file.write(byte_data)
+    with open(data.WAVES, "wb+") as file:
+        for wave in level_data[spawns]:
+            byte_data = len(wave).to_bytes(1, byteorder)
+            for s in wave:
+                byte_data += s.to_bytes()
+            file.write(byte_data)
+
+
 # Runs level selection screen
 def choose_level():
+    global delete
+    delete = False
+
     for arr in level_data:
         arr.clear()
     if isfile(data.LEVELS):
@@ -111,8 +135,8 @@ def choose_level():
         while len(file_data) > 0:
             arr, file_data = load_paths(file_data)
             level_data[levels].append(arr)
-    if isfile(data.SPAWNS):
-        with open(data.SPAWNS, 'rb') as file:
+    if isfile(data.WAVES):
+        with open(data.WAVES, 'rb') as file:
             file_data = file.read()
         # Loop through data
         while len(file_data) > 0:
@@ -124,6 +148,7 @@ def choose_level():
     while True:
         for e in pg.event.get():
             if e.type == QUIT:
+                save_data()
                 return False
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, False)
@@ -155,38 +180,43 @@ def choose_level():
                             row, col = pos[1] // item_w, pos[0] // item_w
                             idx = row * row_len + col
                             if idx < len(level_data[i]):
-                                item_r = pg.Rect(col * item_w, row * item_w, item_w, item_w)
-                                if i == levels:
-                                    global selected_lvl
-                                    # Remove yellow border
-                                    if selected_lvl != -1:
-                                        row, col = selected_lvl // row_len, selected_lvl % row_len
-                                        pg.draw.rect(surfaces[i], (0, 0, 0),
-                                                     (col * item_w, row * item_w, item_w, item_w), 2)
-                                    selected_lvl = idx if idx != selected_lvl else -1
-                                    # Draw yellow border
-                                    if selected_lvl != -1:
-                                        pg.draw.rect(surfaces[i], (255, 255, 0), item_r, 2)
+                                if delete:
+                                    del level_data[i][idx]
+                                    resize()
                                 else:
-                                    if idx in spawn_blacklist:
-                                        spawn_blacklist.remove(idx)
-                                        surfaces[i].fill((0, 0, 0), item_r)
-                                        surfaces[i].blit(back_img, item_r)
-                                        text_s = lvl_font.render(str(idx + 1), 1, (255, 255, 255))
-                                        surfaces[i].blit(text_s, text_s.get_rect(center=item_r.center))
+                                    item_r = pg.Rect(col * item_w, row * item_w, item_w, item_w)
+                                    if i == levels:
+                                        global selected_lvl
+                                        # Remove yellow border
+                                        if selected_lvl != -1:
+                                            row, col = selected_lvl // row_len, selected_lvl % row_len
+                                            pg.draw.rect(surfaces[i], (0, 0, 0),
+                                                         (col * item_w, row * item_w, item_w, item_w), 2)
+                                        selected_lvl = idx if idx != selected_lvl else -1
+                                        # Draw yellow border
+                                        if selected_lvl != -1:
+                                            pg.draw.rect(surfaces[i], (255, 255, 0), item_r, 2)
                                     else:
-                                        spawn_blacklist.append(idx)
-                                        surfaces[i].blit(overlay, item_r)
-                                update_title()
-                                d = pg.display.get_surface()
-                                d.fill((0, 0, 0), r)
-                                d.blit(surfaces[i], r.topleft, area=((0, -off[i]), r.size))
+                                        if idx in spawn_blacklist:
+                                            spawn_blacklist.remove(idx)
+                                            surfaces[i].fill((0, 0, 0), item_r)
+                                            surfaces[i].blit(back_img, item_r)
+                                            text_s = lvl_font.render(str(idx + 1), 1, (255, 255, 255))
+                                            surfaces[i].blit(text_s, text_s.get_rect(center=item_r.center))
+                                        else:
+                                            spawn_blacklist.append(idx)
+                                            surfaces[i].blit(overlay, item_r)
+                                    update_title()
+                                    d = pg.display.get_surface()
+                                    d.fill((0, 0, 0), r)
+                                    d.blit(surfaces[i], r.topleft, area=((0, -off[i]), r.size))
                             elif idx == len(level_data[i]):
                                 result = new_level() if i == levels else new_wave()
-                                if result != "":
-                                    obj, result = load_paths(result) if i == levels else load_spawn_list(result)
-                                    level_data[i].append(obj)
+                                if result:
+                                    level_data[i].append(result)
                                 resize()
+                            elif idx == len(level_data[i]) + 1:
+                                delete = not delete
                             break
                 elif e.button == BUTTON_WHEELUP or e.button == BUTTON_WHEELDOWN:
                     pos = pg.mouse.get_pos()
@@ -205,6 +235,7 @@ def choose_level():
                             break
             elif e.type == KEYUP and e.key == K_RETURN and selected_lvl != -1 and \
                     len(spawn_blacklist) != len(level_data[spawns]):
+                save_data()
                 data.calculate_dimensions(True)
                 data.lvlDriver.set_level(level_data[levels][selected_lvl],
                                          [a for i, a in enumerate(level_data[spawns]) if i not in spawn_blacklist])

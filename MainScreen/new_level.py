@@ -57,7 +57,7 @@ def new_level():
     while True:
         for e in pg.event.get():
             if e.type == QUIT:
-                return ""
+                return
             elif e.type == VIDEORESIZE:
                 data.resize(e.w, e.h, False)
                 draw()
@@ -88,12 +88,7 @@ def new_level():
                     idx = (pos[1] - data.off_y) * len(types) // data.screen_w
                     # Clicked save, make sure we have at least one non-start path
                     if idx == len(types) - 1 and len(paths) >= 2:
-                        byte_data = len(paths).to_bytes(1, byteorder)
-                        for p in paths:
-                            byte_data += p.to_bytes()
-                        with open(data.LEVELS, "ab+") as file:
-                            file.write(byte_data)
-                        return byte_data
+                        return paths
                     # Clicked undo
                     elif idx == len(types) - 2 and len(paths) >= 1:
                         paths = last_paths
