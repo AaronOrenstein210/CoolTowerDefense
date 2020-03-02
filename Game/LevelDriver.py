@@ -356,7 +356,7 @@ class LevelDriver:
         self.background = pg.Surface((data.screen_w, data.screen_w))
         # Fill the screen randomly with grass texture
         img_w = data.screen_w // 5
-        img = pg.transform.scale(pg.image.load("res/grassBlock.png"), (img_w, img_w))
+        img = pg.transform.scale(pg.image.load("res/grassblock.png"), (img_w, img_w))
         y_pos = 0
         while y_pos < data.screen_w:
             x_pos = 0
