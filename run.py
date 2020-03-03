@@ -24,6 +24,7 @@ def run_level():
     while True:
         dt = pg.time.get_ticks() - time
         time += dt
+        dt = min(20, dt)
         for e in pg.event.get():
             if e.type == QUIT:
                 data.calculate_dimensions(False)
