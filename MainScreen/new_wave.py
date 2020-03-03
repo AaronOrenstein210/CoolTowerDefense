@@ -8,7 +8,8 @@ current = Spawn()
 rects = {"Count": Rect(0, 0, 0, 0), "Time": Rect(0, 0, 0, 0),
          "Model": Rect(0, 0, 0, 0), "Flip": Rect(0, 0, 0, 0),
          "Add": Rect(0, 0, 0, 0), "Clear": Rect(0, 0, 0, 0),
-         "Save": Rect(0, 0, 0, 0), "Enemies": Rect(0, 0, 0, 0),
+         "Save": Rect(0, 0, 0, 0), "Undo": Rect(0, 0, 0, 0),
+         "Enemies": Rect(0, 0, 0, 0),
          "Current": Rect(0, 0, 0, 0), "Timeline": Rect(0, 0, 0, 0),
          "SlideBar": Rect(0, 0, 0, 0), "Slider": Rect(0, 0, 0, 0)}
 selected = "Count"
@@ -53,9 +54,10 @@ def resize():
     rects["Current"] = Rect(rects["Count"].right + w // 16, data.off_y + fifteenth // 2, w * 5 // 8, fifteenth * 3)
     rects["Enemies"] = Rect(rects["Current"].x, rects["Flip"].bottom + fifteenth // 2, rects["Current"].w,
                             fifteenth * 5)
-    rects["Add"] = Rect(data.off_x, rects["Enemies"].y + fifteenth // 2, rects["Flip"].w, fifteenth)
-    rects["Clear"] = rects["Add"].move(0, fifteenth * 3 // 2)
-    rects["Save"] = rects["Clear"].move(0, fifteenth * 3 // 2)
+    rects["Clear"] = Rect(data.off_x, rects["Enemies"].y, rects["Flip"].w, fifteenth)
+    rects["Add"] = rects["Clear"].move(0, fifteenth * 4 // 3)
+    rects["Undo"] = rects["Add"].move(0, fifteenth * 4 // 3)
+    rects["Save"] = rects["Undo"].move(0, fifteenth * 4 // 3)
     rects["Timeline"] = Rect(data.off_x + fifteenth, w * 2 // 3 + data.off_y, fifteenth * 13,
                              fifteenth * 5)
     # Draw enemy sliders
@@ -106,7 +108,7 @@ def draw():
               bkgrnd_color=(150, 150, 150))
     draw_text("Flip: " + str(current.flip), rects["Flip"], d, text_color=(0, 0, 0), bkgrnd_color=(150, 150, 150))
     # Draw add, delete, and save buttons
-    for string in ["Add", "Clear", "Save"]:
+    for string in ["Add", "Clear", "Save", "Undo"]:
         draw_text(string, rects[string], d)
     d.blit(surfaces["Enemies"], rects["Enemies"].topleft, area=((0, -slider_off), rects["Enemies"].size))
 
@@ -134,9 +136,10 @@ def update_sliders(idxs=ENEMY_ORDER):
 
 
 # Runs screen to set spawn order
-def new_wave():
-    global show_cursor
+def new_wave(spawn_list=()):
+    global show_cursor, spawns
     reset()
+    spawns = list(spawn_list)
     while True:
         # Update whether to show the cursor or not
         temp = show_cursor
@@ -151,7 +154,7 @@ def new_wave():
                 resize()
             elif e.type == MOUSEBUTTONUP:
                 if e.button == BUTTON_LEFT:
-                    global slider, selected
+                    global slider, selected, current
                     if slider == -1:
                         # Offset is include in the rectangles
                         pos = pg.mouse.get_pos()
@@ -169,6 +172,12 @@ def new_wave():
                             if current.num_enemies >= 1 and current.duration >= 100:
                                 spawns.append(current)
                                 reset_current()
+                        elif rects["Undo"].collidepoint(*pos):
+                            if len(spawns) > 0:
+                                current = spawns[-1]
+                                spawns = spawns[:-1]
+                                draw()
+                                update_sliders()
                         elif rects["Clear"].collidepoint(*pos):
                             reset_current()
                         elif rects["Save"].collidepoint(*pos):

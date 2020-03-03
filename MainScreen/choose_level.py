@@ -13,7 +13,7 @@ level_data = [[], []]
 spawn_blacklist = []
 # Stores which array, position, and value of deleted items
 history = []
-delete = False
+delete = edit = False
 
 # Surface and rectangle for all levels and waves
 surfaces = [pg.Surface((0, 0))] * 2
@@ -27,7 +27,7 @@ title_text = [pg.Surface((0, 0))] * 3
 title_rects = [pg.Rect(0, 0, 0, 0)] * 3
 # Misc buttons
 button_order = ["new level", "edit", "delete", "undo", "new wave"]
-button_imgs = ["res/{}.png".format(s) for s in ["add", "lock", "delete", "undo", "add"]]
+button_imgs = ["res/{}.png".format(s) for s in ["add", "edit", "delete", "undo", "add"]]
 button_rects = {s: pg.Rect(0, 0, 0, 0) for s in button_order}
 # Other ui variables
 off = [0, 0]
@@ -43,11 +43,12 @@ item_w = 0
 
 
 def reset():
-    global delete
-    delete = False
+    global delete, edit
+    delete = edit = False
     history.clear()
     level_data[0].clear()
     level_data[1].clear()
+    spawn_blacklist.clear()
 
 
 def resize():
@@ -114,9 +115,10 @@ def draw():
                 pg.draw.rect(surfaces[j], (255, 255, 0), rect, 2)
             elif j == spawns and k in spawn_blacklist:
                 surfaces[j].blit(overlay, rect)
-                surfaces[j].fill((0, 0, 0), rect)
             if delete:
                 pg.draw.rect(surfaces[j], (255, 0, 0), rect, 2)
+            elif edit:
+                pg.draw.rect(surfaces[j], (0, 0, 255), rect, 2)
         off[j] = 0
         pg.display.get_surface().fill((0, 0, 0), rects[j])
         pg.display.get_surface().blit(surfaces[j], rects[j].topleft, area=((0, off[j]), rects[j].size))
@@ -126,7 +128,7 @@ def draw():
 
 def update_title():
     d = pg.display.get_surface()
-    d.fill((0, 0, 0), title_rects[2])
+    d.fill((0, 0, 0), (data.off_x, data.off_y, data.screen_w, data.screen_w // 8))
     # Update title text
     if selected_lvl != -1:
         d.blit(title_text[2], title_rects[2])
@@ -172,7 +174,6 @@ def choose_level():
         while len(file_data) > 0:
             arr, file_data = load_spawn_list(file_data)
             level_data[spawns].append(arr)
-    spawn_blacklist.clear()
 
     resize()
     while True:
@@ -203,7 +204,7 @@ def choose_level():
                         pg.display.get_surface().blit(previews[i], preview_rects[i])
             elif e.type == MOUSEBUTTONUP:
                 if e.button == BUTTON_LEFT:
-                    global delete
+                    global delete, edit, selected_lvl
                     pos = pg.mouse.get_pos()
                     done = False
                     for i, r in enumerate(rects):
@@ -215,11 +216,29 @@ def choose_level():
                                 if delete:
                                     history.append([i, idx, level_data[i][idx]])
                                     del level_data[i][idx]
+                                    if i == levels:
+                                        # Unselect
+                                        if selected_lvl >= idx:
+                                            selected_lvl = -1
+                                            update_title()
+                                    else:
+                                        # Update blacklist
+                                        for j in range(len(spawn_blacklist)):
+                                            if spawn_blacklist[j] > idx:
+                                                spawn_blacklist[j] -= 1
+                                            elif spawn_blacklist[j] == idx:
+                                                del spawn_blacklist[j]
                                     draw()
+                                elif edit:
+                                    obj_list = level_data[i][idx]
+                                    result = new_level(path_list=obj_list) if i == levels else new_wave(
+                                        spawn_list=obj_list)
+                                    if result:
+                                        level_data[i][idx] = result
+                                    resize()
                                 else:
                                     item_r = pg.Rect(col * item_w, row * item_w, item_w, item_w)
                                     if i == levels:
-                                        global selected_lvl
                                         # Remove yellow border
                                         if selected_lvl != -1:
                                             row, col = selected_lvl // row_len, selected_lvl % row_len
@@ -258,15 +277,30 @@ def choose_level():
                                     if result:
                                         level_data[spawns].append(result)
                                     resize()
+                                elif key == "edit":
+                                    edit = not edit
+                                    delete = False
+                                    draw()
                                 elif key == "delete":
                                     delete = not delete
+                                    edit = False
                                     draw()
                                 elif key == "undo":
                                     if len(history) > 0:
                                         idx1, idx2, val = history[-1]
                                         level_data[idx1].insert(idx2, val)
                                         del history[-1]
-                                    resize()
+                                        if idx1 == levels:
+                                            # Update selected
+                                            if selected_lvl >= idx2:
+                                                selected_lvl += 1
+                                                update_title()
+                                        else:
+                                            # Update spawn blacklist
+                                            for j in range(len(spawn_blacklist)):
+                                                if spawn_blacklist[j] >= idx2:
+                                                    spawn_blacklist[j] += 1
+                                        resize()
                                 break
                 elif e.button == BUTTON_WHEELUP or e.button == BUTTON_WHEELDOWN:
                     pos = pg.mouse.get_pos()
