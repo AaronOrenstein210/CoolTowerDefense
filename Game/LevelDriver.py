@@ -475,7 +475,7 @@ class LevelDriver:
         self.time = self.wave_num = 0
         self.finished_lvl = False
         # Reset money and hp
-        self.hp = self.money = 100
+        self.hp = self.money = 10000
         # Reset game status
         self.game_status = PLAYING
         # Reset ui variables

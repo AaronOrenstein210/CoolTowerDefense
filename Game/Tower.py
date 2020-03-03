@@ -29,39 +29,29 @@ class DuckTower(Tower):
 
     def upgrade(self):
         self.upgrade_lvl += 1
-        if self.upgrade_lvl == 0:
-            # self.modify_projectile(self.result)
-            self.P1.addDamage()
-        elif self.upgrade_lvl == 1:
+        if self.upgrade_lvl == 1:
             self.range *= 1.2
         elif self.upgrade_lvl == 2:
             self.cooldown //= 1.5
-        elif self.upgrade_lvl == 3:
-            ran = randint(0, 2)
-            if ran == 0:
-                self.P1.addDamage()
 
     def modify_projectile(self, projectile):
         if self.upgrade_lvl >= 0:
             projectile.damage += 1
 
     def shoot(self, enemy):
-        self.result = [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
+        result = [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
         if self.upgrade_lvl >= 3 and randint(0, 1) == 0:
-            self.result.append(self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos)))
-        return self.result
+            result.append(self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos)))
+        return result
 
     class P1(Projectile):
         def __init__(self, pos, angle):
             super().__init__(pos=pos, angle=angle, speed=.5, dim=(.05, .05), damage=1, img="res/baseProj.png")
 
-        def addDamage(self):
-            self.damage += 1
-
 
 class DuckTower2(Tower):
     upgrades = [Upgrade(cost=50, img="",
-                        description="Put your duck through a strict training regimen, increasing its strength"
+                        description="Put your duck through a strict training regimen, increasing its sight"
                                     "\nIncreases range by 20%"),
                 Upgrade(cost=80, img="",
                         description="Making the tower taller allows for more enemies to be seen\n"
@@ -79,32 +69,29 @@ class DuckTower2(Tower):
 
     def upgrade(self):
         self.upgrade_lvl += 1
-        if self.upgrade_lvl == 0:
-            # self.modify_projectile(self.result)
-            self.P1.addDamage()
-        elif self.upgrade_lvl == 1:
+        if self.upgrade_lvl == 0 or self.upgrade_lvl == 1:
             self.range *= 1.2
         elif self.upgrade_lvl == 2:
             self.cooldown //= 1.5
-        elif self.upgrade_lvl == 3:
-            ran = randint(0, 2)
-            if ran == 0:
-                self.P1.addDamage()
+
+    def modify_projectile(self, projectile):
+        if self.upgrade_lvl >= 0:
+            projectile.damage += 1
 
     def shoot(self, enemy):
-        return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
+        result = [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
+        if self.upgrade_lvl >= 3 and randint(0, 1) == 0:
+            result.append(self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos)))
+        return result
 
     class P1(Projectile):
         def __init__(self, pos, angle):
             super().__init__(pos=pos, angle=angle, speed=1, dim=(.025, .025), damage=1, img="res/smallProj.png")
 
-        def addDamage(self):
-            self.damage += 1
-
 
 class DuckTowerAA(Tower):
     upgrades = [Upgrade(cost=30, img="",
-                        description="Microwaved grapes explode, damaging even more enemies\nIncreases damage by 3"),
+                        description="Microwaved grapes explode, damaging even more enemies\nIncreases damage by 1"),
                 Upgrade(cost=50, img="",
                         description="Your duck suddenly and unexpectedly grows to monstrous heights\n"
                                     "Increases range by 20%"),
@@ -121,41 +108,35 @@ class DuckTowerAA(Tower):
 
     def upgrade(self):
         self.upgrade_lvl += 1
-        if self.upgrade_lvl == 0:
-            # self.modify_projectile(self.result)
-            self.P1.addDamage()
-        elif self.upgrade_lvl == 1:
+        if self.upgrade_lvl == 1:
             self.range *= 1.2
         elif self.upgrade_lvl == 2:
             self.cooldown //= 1.5
-        elif self.upgrade_lvl == 3:
-            ran = randint(0, 2)
-            if ran == 0:
-                self.P1.addDamage()
+
+    def modify_projectile(self, projectile):
+        if self.upgrade_lvl >= 0:
+            projectile.damage += 1
 
     def shoot(self, enemy):
-        return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
+        result = [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
+        if self.upgrade_lvl >= 3 and randint(0, 1) == 0:
+            result.append(self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos)))
+        return result
 
     class P1(Projectile):
         def __init__(self, pos, angle):
             super().__init__(pos=pos, angle=angle, speed=.33, dim=(.04, .04), damage=1, img="res/AAProj.png")
 
-        def addDamage(self):
-            self.damage += 1
-
 
 class DuckTowerBallista(Tower):
-    upgrades = [Upgrade(cost=200, img="",
-                        description="Frozen grapes tear through multiple enemies\nIncreases damage by 5"),
-                Upgrade(cost=500, img="",
-                        description="You get in good standing with your weapon dealership\n"
-                                    "Additional towers will be 50 coins cheaper"),
+    upgrades = [Upgrade(cost=120, img="",
+                        description="A wormhole appears, allowing your duck to summon grapes at a higher rate\n "
+                                    "Fire rate is increased by 30%"),
+                Upgrade(cost=200, img="",
+                        description="Frozen grapes tear through multiple enemies\nIncreases damage by 2"),
                 Upgrade(cost=300, img="",
                         description="Your duck eats some radioactive grapes, and gains super speed\n"
-                                    "Fire rate is increased by 50%"),
-                Upgrade(cost=120, img="",
-                        description="A wormhole appears, allowing your duck to summon grapes at a higher rate\n "
-                                    "Fire rate is increased even more")]
+                                    "Fire rate is increased by 50%")]
 
     def __init__(self, pos=(0, 0)):
         super().__init__(BALLISTA, pos=pos, dim=(.1, .1), img="res/duckTowerBallista.png", cooldown=1250, cost=175,
@@ -164,14 +145,13 @@ class DuckTowerBallista(Tower):
     def upgrade(self):
         self.upgrade_lvl += 1
         if self.upgrade_lvl == 0:
-            # self.modify_projectile(self.result)
-            self.P1.addDamage(5)
-        elif self.upgrade_lvl == 1:
-            self.cost -= 50
-        elif self.upgrade_lvl == 2:
             self.cooldown //= 1.5
-        elif self.upgrade_lvl == 3:
+        elif self.upgrade_lvl == 2:
             self.cooldown //= 1.3
+
+    def modify_projectile(self, projectile):
+        if self.upgrade_lvl >= 1:
+            projectile.damage += 2
 
     def shoot(self, enemy):
         return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
@@ -180,16 +160,28 @@ class DuckTowerBallista(Tower):
         def __init__(self, pos, angle):
             super().__init__(pos=pos, angle=angle, speed=.25, dim=(.05, .05), damage=2, img="res/ballistaProj.png")
 
-        def addDamage(self, num):
-            self.damage += num
 
 class DuckTowerBFG(Tower):
+    upgrades = [Upgrade(cost=100, img="",
+                        description="2X fire rate"),
+                Upgrade(cost=300, img="",
+                        description="2X fire rate"),
+                Upgrade(cost=1000, img="",
+                        description="Range covers the whol screen")]
+
     def __init__(self, pos=(0, 0)):
-        super().__init__(BFG, pos=pos, dim=(.1,.1), img="res/bfgpixel.png", cooldown=1000, cost=1,
+        super().__init__(BFG, pos=pos, dim=(.1, .1), img="res/bfgpixel.png", cooldown=1000, cost=1,
                          shoot_range=.4)
 
+    def upgrade(self):
+        self.upgrade_lvl += 1
+        if self.upgrade_lvl == 0 or self.upgrade_lvl == 1:
+            self.cooldown //= 2
+        elif self.upgrade_lvl == 2:
+            self.range = .75
+
     def shoot(self, enemy):
-        return [self.P1(self.pos,data.get_angle_pixels(self.pos, enemy.pos))]
+        return [self.P1(self.pos, data.get_angle_pixels(self.pos, enemy.pos))]
 
     class P1(Projectile):
         def __init__(self, pos, angle):
