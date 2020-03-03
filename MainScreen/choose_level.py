@@ -11,15 +11,25 @@ levels, spawns = 0, 1
 # Load all levels and spawn lists
 level_data = [[], []]
 spawn_blacklist = []
+# Stores which array, position, and value of deleted items
+history = []
 delete = False
 
-surfaces = [pg.Surface] * 2
+# Surface and rectangle for all levels and waves
+surfaces = [pg.Surface((0, 0))] * 2
 rects = [pg.Rect(0, 0, 0, 0)] * 2
-previews = [None] * 2
+# Surface and rectangle for level/wave previews
+previews = [pg.Surface((0, 0))] * 2
 preview_rects = [pg.Rect(0, 0, 0, 0)] * 2
-text = ["Select Map", "Select Levels", "Press Enter to Start"]
-title_text = [None] * 3
+# Text, surfaces, and rectangles for top text
+text = ["Select Level", "Select Waves", "Press Enter to Start"]
+title_text = [pg.Surface((0, 0))] * 3
 title_rects = [pg.Rect(0, 0, 0, 0)] * 3
+# Misc buttons
+button_order = ["new level", "edit", "delete", "undo", "new wave"]
+button_imgs = ["res/{}.png".format(s) for s in ["add", "lock", "delete", "undo", "add"]]
+button_rects = {s: pg.Rect(0, 0, 0, 0) for s in button_order}
+# Other ui variables
 off = [0, 0]
 selected_lvl = -1
 hovering = [-1, -1]
@@ -32,22 +42,44 @@ margin = 10
 item_w = 0
 
 
+def reset():
+    global delete
+    delete = False
+    history.clear()
+    level_data[0].clear()
+    level_data[1].clear()
+
+
 def resize():
     global item_w, lvl_font, back_img, overlay
+    # Get specific dimensions
     half_w = data.screen_w // 2
-    # Draw middle line
+    eighth_w = data.screen_w // 8
     d = pg.display.get_surface()
     d.fill((0, 0, 0))
+    # Draw middle line
     pg.draw.line(d, (200, 200, 0), [half_w + data.off_x, data.off_y],
-                 [half_w + data.off_x, data.screen_w + data.off_y], int(margin * .9))
-    # Define rectangles
-    title_rects[2] = pg.Rect(data.off_x, data.off_y, data.screen_w, half_w // 4)
-    title_rects[levels] = pg.Rect(data.off_x, data.off_y, half_w - margin, half_w // 4)
+                 [half_w + data.off_x, data.screen_w * 7 // 8 + data.off_y], int(margin * .9))
+    # Title = w/8
+    title_rects[2] = pg.Rect(data.off_x, data.off_y, data.screen_w, eighth_w)
+    title_rects[levels] = pg.Rect(data.off_x, data.off_y, half_w - margin, eighth_w)
     title_rects[spawns] = title_rects[levels].move(half_w + margin, 0)
-    rects[levels] = pg.Rect(*title_rects[levels].bottomleft, title_rects[levels].w, half_w * 5 // 4)
+    # Scroll = w*4/8
+    rects[levels] = pg.Rect(*title_rects[levels].bottomleft, title_rects[levels].w, half_w)
     rects[spawns] = rects[levels].move(half_w + margin, 0)
+    # Level/Wave preview = w*2/8
     preview_rects[levels] = pg.Rect(data.off_x + half_w // 4, rects[levels].bottom, half_w // 2, half_w // 2)
     preview_rects[spawns] = pg.Rect(*rects[spawns].bottomleft, rects[spawns].w, half_w // 2)
+    # Bottom buttons = w/8
+    but_w = eighth_w * 9 // 10
+    off_ = (eighth_w - but_w) // 2
+    space = (data.screen_w - eighth_w) // (len(button_order) - 1)
+    y = data.off_y + data.screen_w - off_ - but_w
+    for i, string in enumerate(button_order):
+        r = pg.Rect(data.off_x + off_ + space * i, y, but_w, but_w)
+        img = data.scale_to_fit(pg.image.load(button_imgs[i]), w=but_w, h=but_w)
+        d.blit(img, img.get_rect(center=r.center))
+        button_rects[string] = r
     # Set up parts of the surfaces
     item_w = rects[levels].w // row_len
     back_img = pg.transform.scale(pg.image.load("res/back.png"), (item_w, item_w))
@@ -56,34 +88,8 @@ def resize():
     overlay = pg.Surface((item_w, item_w))
     overlay.fill((0, 0, 0))
     overlay.set_alpha(128)
-    # Set up surfaces and rectangles
-    for j, arr in enumerate(level_data):
-        num_rows = (len(arr) + 2) // row_len + 1
-        surfaces[j] = pg.Surface((rects[j].w, item_w * num_rows))
-        k = 0
-        for k in range(len(arr)):
-            row, col = k // row_len, k % row_len
-            text_s = lvl_font.render(str(k + 1), 1, (255, 255, 255))
-            text_rect = text_s.get_rect(center=(int((col + .5) * item_w), int((row + .5) * item_w)))
-            surfaces[j].blit(back_img, (col * item_w, row * item_w))
-            surfaces[j].blit(text_s, text_rect)
-            if j == levels and k == selected_lvl:
-                pg.draw.rect(surfaces[j], (255, 255, 0), (col * item_w, row * item_w, item_w, item_w), 2)
-            elif j == spawns and k in spawn_blacklist:
-                surfaces[j].blit(overlay, (col * item_w, row * item_w))
-                surfaces[j].fill((0, 0, 0), (col * item_w, row * item_w, item_w, item_w))
-        # Add add and delete buttons
-        for img in ("res/add.png", "res/delete.png"):
-            # Add plus sign to create a new one
-            k += 1
-            row, col = k // row_len, k % row_len
-            plus = pg.transform.scale(pg.image.load(img), (int(item_w * .9), int(item_w * .9)))
-            plus_rect = plus.get_rect(center=(int((col + .5) * item_w), int((row + .5) * item_w)))
-            surfaces[j].blit(plus, plus_rect)
-        off[j] = 0
-        d.blit(surfaces[j], rects[j].topleft, area=((0, off[j]), rects[j].size))
-        # Draw preview for selected items
-        hovering[j] = -1
+    # Draw levels and waves
+    draw()
     # Set up title text
     font = data.get_scaled_font(half_w - margin, title_rects[levels].h, data.get_widest_string(text))
     for j in range(3):
@@ -92,16 +98,43 @@ def resize():
     update_title()
 
 
+def draw():
+    # Set up surfaces and rectangles
+    for j, arr in enumerate(level_data):
+        num_rows = len(arr) // row_len + 1
+        surfaces[j] = pg.Surface((rects[j].w, item_w * num_rows))
+        for k in range(len(arr)):
+            row, col = k // row_len, k % row_len
+            rect = pg.Rect(col * item_w, row * item_w, item_w, item_w)
+            text_s = lvl_font.render(str(k + 1), 1, (255, 255, 255))
+            text_rect = text_s.get_rect(center=rect.center)
+            surfaces[j].blit(back_img, rect)
+            surfaces[j].blit(text_s, text_rect)
+            if j == levels and k == selected_lvl:
+                pg.draw.rect(surfaces[j], (255, 255, 0), rect, 2)
+            elif j == spawns and k in spawn_blacklist:
+                surfaces[j].blit(overlay, rect)
+                surfaces[j].fill((0, 0, 0), rect)
+            if delete:
+                pg.draw.rect(surfaces[j], (255, 0, 0), rect, 2)
+        off[j] = 0
+        pg.display.get_surface().fill((0, 0, 0), rects[j])
+        pg.display.get_surface().blit(surfaces[j], rects[j].topleft, area=((0, off[j]), rects[j].size))
+        # Draw preview for selected items
+        hovering[j] = -1
+
+
 def update_title():
     d = pg.display.get_surface()
-    d.fill((0, 0, 0), (data.off_x, data.off_y, data.screen_w, rects[0].y - data.off_y))
+    d.fill((0, 0, 0), title_rects[2])
     # Update title text
     if selected_lvl != -1:
         d.blit(title_text[2], title_rects[2])
     else:
         half_w = data.screen_w // 2
+        # Draw middle line
         pg.draw.line(d, (200, 200, 0), [half_w + data.off_x, data.off_y],
-                     [half_w + data.off_x, data.screen_w + data.off_y], int(margin * .9))
+                     [half_w + data.off_x, data.screen_w * 7 // 8 + data.off_y], int(margin * .9))
         for j in range(2):
             d.blit(title_text[j], title_rects[j])
 
@@ -123,11 +156,8 @@ def save_data():
 
 # Runs level selection screen
 def choose_level():
-    global delete
-    delete = False
+    reset()
 
-    for arr in level_data:
-        arr.clear()
     if isfile(data.LEVELS):
         with open(data.LEVELS, 'rb') as file:
             file_data = file.read()
@@ -173,7 +203,9 @@ def choose_level():
                         pg.display.get_surface().blit(previews[i], preview_rects[i])
             elif e.type == MOUSEBUTTONUP:
                 if e.button == BUTTON_LEFT:
+                    global delete
                     pos = pg.mouse.get_pos()
+                    done = False
                     for i, r in enumerate(rects):
                         if r.collidepoint(*pos):
                             pos = [pos[0] - r.x, pos[1] - r.y]
@@ -181,8 +213,9 @@ def choose_level():
                             idx = row * row_len + col
                             if idx < len(level_data[i]):
                                 if delete:
+                                    history.append([i, idx, level_data[i][idx]])
                                     del level_data[i][idx]
-                                    resize()
+                                    draw()
                                 else:
                                     item_r = pg.Rect(col * item_w, row * item_w, item_w, item_w)
                                     if i == levels:
@@ -210,14 +243,31 @@ def choose_level():
                                     d = pg.display.get_surface()
                                     d.fill((0, 0, 0), r)
                                     d.blit(surfaces[i], r.topleft, area=((0, -off[i]), r.size))
-                            elif idx == len(level_data[i]):
-                                result = new_level() if i == levels else new_wave()
-                                if result:
-                                    level_data[i].append(result)
-                                resize()
-                            elif idx == len(level_data[i]) + 1:
-                                delete = not delete
+                            done = True
                             break
+                    if not done:
+                        for i, key in enumerate(button_order):
+                            if button_rects[key].collidepoint(*pos):
+                                if key == "new level":
+                                    result = new_level()
+                                    if result:
+                                        level_data[levels].append(result)
+                                    resize()
+                                elif key == "new wave":
+                                    result = new_wave()
+                                    if result:
+                                        level_data[spawns].append(result)
+                                    resize()
+                                elif key == "delete":
+                                    delete = not delete
+                                    draw()
+                                elif key == "undo":
+                                    if len(history) > 0:
+                                        idx1, idx2, val = history[-1]
+                                        level_data[idx1].insert(idx2, val)
+                                        del history[-1]
+                                    resize()
+                                break
                 elif e.button == BUTTON_WHEELUP or e.button == BUTTON_WHEELDOWN:
                     pos = pg.mouse.get_pos()
                     up = e.button == BUTTON_WHEELUP
