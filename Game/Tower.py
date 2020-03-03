@@ -193,4 +193,4 @@ class DuckTowerBFG(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed=.4, dim=(.1, .1), damage=50000, img="res/bfgProj.png")
+            super().__init__(pos=pos, angle=angle, speed=.4, dim=(.1, .1), damage=100, img="res/bfgProj.png")
