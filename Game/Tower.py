@@ -64,7 +64,7 @@ class DuckTower2(Tower):
                                     "when shot\n50% chance to shoot two projectiles instead of one")]
 
     def __init__(self, pos=(0, 0)):
-        super().__init__(TOWER_2, pos=pos, dim=(.05, .05), img="res/duckTower2.png", cooldown=400, cost=50,
+        super().__init__(TOWER_2, pos=pos, dim=(.05, .05), img="res/duckTower2.png", cooldown=200, cost=50,
                          shoot_range=.25)
 
     def upgrade(self):
@@ -103,8 +103,8 @@ class DuckTowerAA(Tower):
                                     "when shot\n50% chance to shoot two projectiles instead of one")]
 
     def __init__(self, pos=(0, 0)):
-        super().__init__(AAGUN, pos=pos, dim=(.04, .04), img="res/duckAAGun.png", cooldown=200, cost=100,
-                         shoot_range=.15)
+        super().__init__(AAGUN, pos=pos, dim=(.04, .04), img="res/duckAAGun.png", cooldown=400, cost=100,
+                         shoot_range=.3)
 
     def upgrade(self):
         self.upgrade_lvl += 1
@@ -139,7 +139,7 @@ class DuckTowerBallista(Tower):
                                     "Fire rate is increased by 50%")]
 
     def __init__(self, pos=(0, 0)):
-        super().__init__(BALLISTA, pos=pos, dim=(.1, .1), img="res/duckTowerBallista.png", cooldown=1250, cost=175,
+        super().__init__(BALLISTA, pos=pos, dim=(.05, .05), img="res/duckTowerBallista.png", cooldown=1250, cost=175,
                          shoot_range=.3)
 
     def upgrade(self):
@@ -158,7 +158,7 @@ class DuckTowerBallista(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed=.25, dim=(.05, .05), damage=2, img="res/ballistaProj.png")
+            super().__init__(pos=pos, angle=angle, speed=.9, dim=(.08, .08), damage=5, img="res/ballistaProj.png")
 
 
 class DuckTowerBFG(Tower):
@@ -185,4 +185,4 @@ class DuckTowerBFG(Tower):
 
     class P1(Projectile):
         def __init__(self, pos, angle):
-            super().__init__(pos=pos, angle=angle, speed=.4, dim=(.1, .1), damage=100, img="res/bfgProj.png")
+            super().__init__(pos=pos, angle=angle, speed=.5, dim=(.1, .1), damage=100, img="res/bfgProj.png")
