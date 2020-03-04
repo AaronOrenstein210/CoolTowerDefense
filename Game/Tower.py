@@ -51,7 +51,7 @@ class DuckTower(Tower):
 
 class DuckTower2(Tower):
     upgrades = [Upgrade(cost=50, img="",
-                        description="Put your duck through a strict training regimen, increasing its sight"
+                        description="Put your duck through a strict training regimen, increasing its strength"
                                     "\nIncreases range by 20%"),
                 Upgrade(cost=80, img="",
                         description="Making the tower taller allows for more enemies to be seen\n"
