@@ -6,8 +6,8 @@ from Game.Abstract import Enemy
 
 WINDOW = data.screen_w
 
-ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5 = range(5)
-ENEMY_ORDER = [ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5]
+ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5, ENEMY_6 = range(6)
+ENEMY_ORDER = [ENEMY_1, ENEMY_2, ENEMY_3, ENEMY_4, ENEMY_5, ENEMY_6]
 
 
 class Enemy1(Enemy):
@@ -38,3 +38,9 @@ class Enemy5(Enemy):
     def __init__(self):
         super().__init__(ENEMY_5, dim=(.1, .1), velocity=1, img="res/enemy5.png", strength=5)
         self.color = (255, 150, 150)
+
+
+class Enemy6(Enemy):
+    def __init__(self):
+        super().__init__(ENEMY_6, dim=(.1, .1), velocity=.1, img="res/tankClass.png", strength=20)
+        self.color = (0, 187, 212)
