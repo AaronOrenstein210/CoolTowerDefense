@@ -94,24 +94,24 @@ class LevelDriver:
                         for j in self.enemies:
                             if i.polygon.collides_polygon(j.polygon):
                                 self.enemies.remove(j)
-                                strength = ENEMY_ORDER.index(j.idx) + 1
-                                # If projectile damage equals enemy strength, delete the projectile
-                                if strength == i.damage:
+                                arr1, arr2 = j.destroy(), []
+                                prev_dmg = i.damage
+                                i.damage -= 1
+                                while i.damage > 0 and not all(a == -1 for a in arr1):
+                                    for idx in arr1:
+                                        if idx != -1:
+                                            arr2 += data.enemies[idx].destroy()
+                                    arr1 = arr2.copy()
+                                    arr2.clear()
+                                    i.damage -= 1
+                                if i.damage <= 0:
                                     self.projectiles.remove(i)
-                                    self.add_money(strength)
-                                # If the projectile damage is less than enemy strength, delete the projectile
-                                # and create a new enemy of appropriate strength
-                                elif strength > i.damage:
-                                    self.projectiles.remove(i)
-                                    new_enemy = type(data.enemies[ENEMY_ORDER[strength - i.damage - 1]])()
-                                    new_enemy.set_progress(j.path, j.progress)
-                                    self.enemies.append(new_enemy)
-                                    self.add_money(i.damage)
-                                # If the projectile damage is greater than enemy strength,
-                                # lower its damage appropriately
-                                else:
-                                    i.damage -= strength
-                                    self.add_money(strength)
+                                for idx in arr1:
+                                    if idx != -1:
+                                        self.enemies.append(type(data.enemies[idx])())
+                                        self.enemies[-1].set_progress(j.path, j.progress)
+                                self.add_money(prev_dmg - i.damage)
+                                pg.mixer.Channel(2).play(pg.mixer.Sound("res/burp.wav"), 1)
                                 break
                 for i in self.enemies:
                     if not self.move_enemy(i, dt):

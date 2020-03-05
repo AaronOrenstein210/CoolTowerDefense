@@ -202,7 +202,10 @@ class Tower(Sprite):
                     enemy = strongest_enemy(in_range)
                 else:
                     continue
-                for projectile in self.shoot(enemy):
+                arr = self.shoot(enemy)
+                if arr:
+                    pg.mixer.Channel(1).play(pg.mixer.Sound("res/laser.wav"), 1)
+                for projectile in arr:
                     self.modify_projectile(projectile)
                     data.lvlDriver.projectiles.append(projectile)
 
@@ -299,6 +302,12 @@ class Enemy(Sprite):
     def set_progress(self, path, progress):
         self.path = path
         self.progress = progress
+
+    # Get what enemies to spawn when this enemy dies
+    def destroy(self):
+        from Game.Enemy import ENEMY_ORDER
+        idx = ENEMY_ORDER.index(self.idx)
+        return [idx - 1]
 
 
 def rotate_point(p, center, dtheta):

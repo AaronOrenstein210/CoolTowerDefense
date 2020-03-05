@@ -44,3 +44,7 @@ class Enemy6(Enemy):
     def __init__(self):
         super().__init__(ENEMY_6, dim=(.1, .1), velocity=.1, img="res/tankClass.png", strength=20)
         self.color = (0, 187, 212)
+
+    def destroy(self):
+        idx = ENEMY_ORDER.index(self.idx)
+        return [ENEMY_ORDER[idx - 1]] * 2
