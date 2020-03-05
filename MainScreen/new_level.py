@@ -92,7 +92,7 @@ def new_level(path_list=()):
                     idx = (pos[1] - data.off_y) * len(types) // data.screen_w
                     # Clicked save, make sure we have at least one non-start path
                     if idx == len(types) - 1 and len(paths) >= 2:
-                        return paths
+                        return paths.copy()
                     # Clicked undo
                     elif idx == len(types) - 2:
                         if len(paths) > 0:
