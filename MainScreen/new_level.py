@@ -48,6 +48,7 @@ def draw_options():
             pg.draw.rect(d, (175, 175, 0), (data.off_x, i * item_h + data.off_y, side_w, item_h), 5)
 
 
+# TODO: Background images
 # Runs level creator
 def new_level(path_list=()):
     reset()
