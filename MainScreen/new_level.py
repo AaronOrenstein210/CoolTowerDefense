@@ -1,12 +1,13 @@
 from pygame.locals import *
 from Game.level_objects import *
+from MainScreen.choose_file import choose_file
 import data
 
-paths = []
+level = Level()
 selected = "Start"
 current = Start()
-last_path_list = []
-types = ["Start", "Line", "Circle", "Undo", "Save & Exit"]
+last_level = []
+buttons = ["Start", "Line", "Circle", "Undo", "Background", "Save & Exit"]
 rect = pg.Rect(0, 0, 0, 0)
 
 # Width of side bar and height of each option text box
@@ -14,10 +15,10 @@ side_w = item_h = 0
 
 
 def reset():
-    paths.clear()
-    last_path_list.clear()
-    global selected, current
+    global selected, current, level, last_level
     selected, current = "Start", Start()
+    level = Level()
+    last_level = Level()
 
 
 def draw():
@@ -31,16 +32,19 @@ def draw():
 
 def draw_level():
     pg.display.get_surface().fill((0, 200, 0), rect)
-    pg.display.get_surface().blit(draw_paths(rect.w, paths + [current]), rect)
+    # Add the current path and draw
+    level.add(current)
+    pg.display.get_surface().blit(level.draw(rect.w), rect)
+    level.paths.pop(-1)
 
 
 def draw_options():
     global item_h
     d = pg.display.get_surface()
-    item_h = data.screen_w // len(types)
-    font = data.get_scaled_font(side_w, item_h, data.get_widest_string(types))
+    item_h = data.screen_w // len(buttons)
+    font = data.get_scaled_font(side_w, item_h, data.get_widest_string(buttons))
     d.fill((128, 128, 128), (data.off_x, data.off_y, side_w, data.screen_w))
-    for i, t_ in enumerate(types):
+    for i, t_ in enumerate(buttons):
         text = font.render(t_, 1, (0, 0, 0))
         text_rect = text.get_rect(center=(side_w // 2 + data.off_x, int(item_h * (i + .5)) + data.off_y))
         d.blit(text, text_rect)
@@ -48,13 +52,13 @@ def draw_options():
             pg.draw.rect(d, (175, 175, 0), (data.off_x, i * item_h + data.off_y, side_w, item_h), 5)
 
 
-# TODO: Background images
 # Runs level creator
-def new_level(path_list=()):
+def new_level(lvl=None):
     reset()
 
-    global paths
-    paths = list(path_list)
+    if lvl:
+        global level
+        level = lvl
 
     draw()
 
@@ -67,43 +71,51 @@ def new_level(path_list=()):
                 data.resize(e.w, e.h, False)
                 draw()
             elif e.type == MOUSEBUTTONUP and e.button == BUTTON_LEFT:
-                global selected, last_path_list, current
+                global selected, last_level, current
                 pos = pg.mouse.get_pos()
                 if rect.collidepoint(*pos):
                     pos = [(pos[0] - rect.x) / rect.w, (pos[1] - rect.y) / rect.h]
                     if current.idx == START:
                         current.pos = pos
-                        # If we are overriding other paths, save them for undo button
-                        if len(paths) > 1:
-                            last_path_list = paths
-                        paths = [current]
+                        # If we are overriding other level, save them for undo button
+                        if level.len > 1:
+                            last_level = level
+                        level = Level()
+                        level.add(current)
                         current = Start()
                     elif current.idx == LINE:
-                        paths.append(current)
-                        current = Line(start=paths[-1].get_end())
+                        level.add(current)
+                        current = Line(start=level.end)
                     elif current.idx == CIRCLE:
                         if mode == 0:
                             mode = 1
                         else:
-                            paths.append(current)
+                            level.add(current)
                             current = Circle()
                             mode = 0
                 elif pos[0] - data.off_x < side_w:
-                    idx = (pos[1] - data.off_y) * len(types) // data.screen_w
+                    idx = (pos[1] - data.off_y) * len(buttons) // data.screen_w
+                    button = buttons[idx]
                     # Clicked save, make sure we have at least one non-start path
-                    if idx == len(types) - 1 and len(paths) >= 2:
-                        return paths.copy()
+                    if button == "Save & Exit" and level.len >= 2:
+                        return level
+                    # Select background image
+                    elif button == "Background":
+                        file = choose_file([".png", ".jpg"])
+                        if file:
+                            level.img = file
+                        draw()
                     # Clicked undo
-                    elif idx == len(types) - 2:
-                        if len(paths) > 0:
-                            paths = paths[:-1]
-                        elif len(last_path_list) > 0:
-                            paths = last_path_list
-                            last_path_list = []
+                    elif button == "Undo":
+                        if level.len > 0:
+                            level.paths.pop(-1)
+                        elif last_level.len > 0:
+                            level = last_level
+                            last_level = Level()
                         else:
                             continue
                         # Change the index so that it recreates the current path object
-                        if len(paths) == 0:
+                        if level.len == 0:
                             current = Start()
                             selected = "Start"
                             draw_options()
@@ -111,18 +123,18 @@ def new_level(path_list=()):
                             if selected == "Start":
                                 current = Start()
                             elif selected == "Line":
-                                current = Line(start=paths[-1].get_end())
+                                current = Line(start=level.end)
                             elif selected == "Circle":
                                 current = Circle()
                         mode = 0
                         draw_level()
-                    elif selected != types[idx] and len(paths) > 0:
-                        selected = types[idx]
+                    elif selected != buttons[idx] and level.len > 0:
+                        selected = buttons[idx]
                         draw_options()
                         if selected == "Start":
                             current = Start()
                         elif selected == "Line":
-                            current = Line(start=paths[-1].get_end())
+                            current = Line(start=level.end)
                         elif selected == "Circle":
                             current = Circle()
                         mode = 0
@@ -150,7 +162,7 @@ def new_level(path_list=()):
                 elif current.idx == CIRCLE:
                     if mode == 0:
                         # Get end of last segment
-                        end = paths[-1].get_end()
+                        end = level.end
                         for i in range(2):
                             if abs(end[i] - pos[i]) < .025:
                                 pos[i] = end[i]

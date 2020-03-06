@@ -2,7 +2,7 @@ from sys import byteorder
 from os.path import isfile
 import pygame as pg
 from pygame.locals import *
-from Game.level_objects import draw_paths, draw_spawn_list, load_paths, load_spawn_list
+from Game.level_objects import draw_spawn_list, load_spawn_list, Level
 from MainScreen.new_level import new_level
 from MainScreen.new_wave import new_wave
 import data
@@ -143,11 +143,8 @@ def update_title():
 
 def save_data():
     with open(data.LEVELS, "wb+") as file:
-        for paths in level_data[levels]:
-            byte_data = len(paths).to_bytes(1, byteorder)
-            for p in paths:
-                byte_data += p.to_bytes()
-            file.write(byte_data)
+        for level in level_data[levels]:
+            file.write(level.to_bytes())
     with open(data.WAVES, "wb+") as file:
         for wave in level_data[spawns]:
             byte_data = len(wave).to_bytes(1, byteorder)
@@ -164,9 +161,10 @@ def choose_level():
         with open(data.LEVELS, 'rb') as file:
             file_data = file.read()
         # Loop through the data
-        while len(file_data) > 0:
-            arr, file_data = load_paths(file_data)
-            level_data[levels].append(arr)
+        while file_data:
+            level = Level()
+            file_data = level.from_bytes(file_data)
+            level_data[levels].append(level)
     if isfile(data.WAVES):
         with open(data.WAVES, 'rb') as file:
             file_data = file.read()
@@ -197,7 +195,7 @@ def choose_level():
                     if 0 <= idx < len(array) and idx != hovering[i]:
                         hovering[i] = idx
                         if i == levels:
-                            previews[i] = draw_paths(data.screen_w // 4, array[idx])
+                            previews[i] = array[idx].draw(data.screen_w // 4)
                         else:
                             previews[i] = draw_spawn_list(array[idx], data.screen_w // 4, w=rects[i].w - 1)
                         pg.display.get_surface().fill((0, 0, 0), preview_rects[i])
@@ -230,9 +228,8 @@ def choose_level():
                                                 del spawn_blacklist[j]
                                     draw()
                                 elif edit:
-                                    obj_list = level_data[i][idx]
-                                    result = new_level(path_list=obj_list) if i == levels else new_wave(
-                                        spawn_list=obj_list)
+                                    obj = level_data[i][idx]
+                                    result = new_level(lvl=obj) if i == levels else new_wave(spawn_list=obj)
                                     if result:
                                         level_data[i][idx] = result
                                     resize()
