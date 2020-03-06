@@ -104,6 +104,7 @@ def new_level(lvl=None):
                         file = choose_file([".png", ".jpg"])
                         if file:
                             level.img = file
+                        data.calculate_dimensions(False)
                         draw()
                     # Clicked undo
                     elif button == "Undo":
