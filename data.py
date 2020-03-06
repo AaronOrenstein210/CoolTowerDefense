@@ -15,6 +15,7 @@ off_x, off_y = 0, 0
 lvlDriver = None
 enemies, towers = {}, {}
 shoot_audio = hit_audio = music_audio = None
+grass_bkgrnd = None
 
 
 def init():

@@ -4,7 +4,7 @@
 from os.path import isfile
 from struct import pack, unpack
 from sys import byteorder
-from random import randint
+from random import randint, seed
 import math
 import pygame as pg
 import data
@@ -54,6 +54,7 @@ class Level:
     def __init__(self):
         self.img = ""
         self.paths = []
+        self.seed = randint(1, 10000)
 
     @property
     def start(self):
@@ -74,16 +75,7 @@ class Level:
             img = data.scale_to_fit(pg.image.load(self.img), w=w, h=w)
             s.blit(img, img.get_rect(center=(w // 2, w // 2)))
         else:
-            # Fill the screen randomly with grass texture
-            img_w = data.screen_w // 5
-            img = pg.transform.scale(pg.image.load("res/grassblock.png"), (img_w, img_w))
-            y_pos = 0
-            while y_pos < data.screen_w:
-                x_pos = 0
-                while x_pos < data.screen_w:
-                    s.blit(img, (x_pos, y_pos))
-                    x_pos += randint(img_w // 2, img_w)
-                y_pos += randint(img_w // 2, img_w)
+            s.blit(data.scale_to_fit(pg.image.load("res/grass_block.png"), w=w, h=w), (0, 0))
         line_w = w // 40
         for p in self.paths:
             p.draw(s, line_w)
