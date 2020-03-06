@@ -111,7 +111,7 @@ class LevelDriver:
                                             self.enemies.append(type(data.enemies[idx])())
                                             self.enemies[-1].set_progress(j.path, j.progress)
                                     self.add_money(1)
-                                pg.mixer.Channel(2).play(pg.mixer.Sound("res/burp.wav"), 1)
+                                pg.mixer.Channel(2).play(data.hit_audio)
                                 break
                 for i in self.enemies:
                     if not self.move_enemy(i, dt):
@@ -493,6 +493,7 @@ class LevelDriver:
         self.reset()
 
 
+# Simple wrapper for ui elements that need to be dragged
 class DragObject:
     def __init__(self):
         self.rect = pg.Rect(0, 0, 0, 0)

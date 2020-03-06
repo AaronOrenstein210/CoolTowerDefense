@@ -14,6 +14,7 @@ WAVES = "saves/waves.bin"
 off_x, off_y = 0, 0
 lvlDriver = None
 enemies, towers = {}, {}
+shoot_audio = hit_audio = music_audio = None
 
 
 def init():
@@ -39,6 +40,11 @@ def init():
                 inst = obj()
                 towers[inst.idx] = inst
 
+    global shoot_audio, hit_audio, music_audio
+    shoot_audio = pg.mixer.Sound("res/laser.wav")
+    hit_audio = pg.mixer.Sound("res/hit.wav")
+    music_audio = pg.mixer.Sound("res/duck_song.wav")
+
 
 # Resizes screen
 # playing tells whether we are playing the game or not
@@ -53,11 +59,6 @@ def resize(w, h, playing):
     w, h = max(w, 500), max(h, 500)
     pg.display.set_mode((w, h), RESIZABLE)
     calculate_dimensions(playing)
-
-
-# Spawns the given enemy
-def spawn(enemy):
-    lvlDriver.enemies.append(enemy)
 
 
 # Calculates screen offsets and width based on if we are playing or not

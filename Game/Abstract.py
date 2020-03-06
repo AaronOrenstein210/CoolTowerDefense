@@ -204,7 +204,7 @@ class Tower(Sprite):
                     continue
                 arr = self.shoot(enemy)
                 if arr:
-                    pg.mixer.Channel(1).play(pg.mixer.Sound("res/laser.wav"), 1)
+                    pg.mixer.Channel(1).play(data.shoot_audio)
                 for projectile in arr:
                     self.modify_projectile(projectile)
                     data.lvlDriver.projectiles.append(projectile)
