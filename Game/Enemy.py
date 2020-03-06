@@ -42,7 +42,7 @@ class Enemy5(Enemy):
 
 class Enemy6(Enemy):
     def __init__(self):
-        super().__init__(ENEMY_6, dim=(.1, .1), velocity=.1, img="res/tankClass.png", strength=20)
+        super().__init__(ENEMY_6, dim=(.1, .1), velocity=.1, img="res/tankClass.png", strength=500)
         self.color = (0, 187, 212)
 
     def die(self):

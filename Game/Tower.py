@@ -170,7 +170,7 @@ class DuckTowerBFG(Tower):
                         description="Range covers the whol screen")]
 
     def __init__(self, pos=(0, 0)):
-        super().__init__(BFG, pos=pos, dim=(.1, .1), img="res/bfgpixel.png", cooldown=1000, cost=1,
+        super().__init__(BFG, pos=pos, dim=(.1, .1), img="res/bfgpixel.png", cooldown=1000, cost=1000,
                          shoot_range=.4)
 
     def upgrade(self):
