@@ -93,24 +93,24 @@ class LevelDriver:
                     else:
                         for j in self.enemies:
                             if i.polygon.collides_polygon(j.polygon):
-                                self.enemies.remove(j)
-                                arr1, arr2 = j.destroy(), []
-                                prev_dmg = i.damage
-                                i.damage -= 1
-                                while i.damage > 0 and not all(a == -1 for a in arr1):
-                                    for idx in arr1:
-                                        if idx != -1:
-                                            arr2 += data.enemies[idx].destroy()
-                                    arr1 = arr2.copy()
-                                    arr2.clear()
-                                    i.damage -= 1
-                                if i.damage <= 0:
+                                # We didn't kill the enemy
+                                if i.damage < j.strength:
                                     self.projectiles.remove(i)
-                                for idx in arr1:
-                                    if idx != -1:
-                                        self.enemies.append(type(data.enemies[idx])())
-                                        self.enemies[-1].set_progress(j.path, j.progress)
-                                self.add_money(prev_dmg - i.damage)
+                                    j.strength -= i.damage
+                                # We killed the enemy exactly
+                                else:
+                                    self.enemies.remove(j)
+                                    # Update projectile
+                                    if i.damage == j.strength:
+                                        self.projectiles.remove(i)
+                                    else:
+                                        i.damage -= j.strength
+                                    # Add new enemy spawns
+                                    for idx in j.die():
+                                        if idx != -1:
+                                            self.enemies.append(type(data.enemies[idx])())
+                                            self.enemies[-1].set_progress(j.path, j.progress)
+                                    self.add_money(1)
                                 pg.mixer.Channel(2).play(pg.mixer.Sound("res/burp.wav"), 1)
                                 break
                 for i in self.enemies:

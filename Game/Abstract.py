@@ -292,19 +292,12 @@ class Enemy(Sprite):
         self.v = velocity
         self.color = (0, 0, 0, 0)
 
-    #  This method reduces the strength by the damage amount
-    def hit(self, damage):
-        self.strength = self.strength - damage
-        if self.strength < 0:
-            self.strength = 0
-        return self.strength
-
     def set_progress(self, path, progress):
         self.path = path
         self.progress = progress
 
     # Get what enemies to spawn when this enemy dies
-    def destroy(self):
+    def die(self):
         from Game.Enemy import ENEMY_ORDER
         idx = ENEMY_ORDER.index(self.idx)
         return [idx - 1]

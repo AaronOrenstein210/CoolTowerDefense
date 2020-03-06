@@ -55,6 +55,11 @@ def resize(w, h, playing):
     calculate_dimensions(playing)
 
 
+# Spawns the given enemy
+def spawn(enemy):
+    lvlDriver.enemies.append(enemy)
+
+
 # Calculates screen offsets and width based on if we are playing or not
 def calculate_dimensions(playing):
     global screen_w, off_x, off_y
