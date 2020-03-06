@@ -75,7 +75,7 @@ class Level:
             img = data.scale_to_fit(pg.image.load(self.img), w=w, h=w)
             s.blit(img, img.get_rect(center=(w // 2, w // 2)))
         else:
-            s.blit(data.scale_to_fit(pg.image.load("res/grass_block.png"), w=w, h=w), (0, 0))
+            s.blit(data.scale_to_fit(pg.image.load("res/levels/grass_block.png"), w=w, h=w), (0, 0))
         line_w = w // 40
         for p in self.paths:
             p.draw(s, line_w)
