@@ -340,8 +340,7 @@ class LevelDriver:
 
     # Draws the enemy path
     def draw_background(self):
-        self.background = pg.Surface((data.screen_w, data.screen_w))
-        self.background.blit(self.level.draw(data.screen_w), (0, 0))
+        self.background = self.level.draw(data.screen_w)
 
     def resize(self):
         self.background = pg.transform.scale(self.background, (data.screen_w, data.screen_w))

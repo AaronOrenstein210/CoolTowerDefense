@@ -139,7 +139,10 @@ class Level:
 class Path:
     def __init__(self):
         self.idx = 0
-        self.length = 0
+
+    @property
+    def length(self):
+        return 0
 
     def draw(self, surface, line_w):
         pass
@@ -167,6 +170,10 @@ class Line(Path):
         self.start = start
         self.end = end
 
+    @property
+    def length(self):
+        return data.get_distance(self.start, self.end)
+
     def draw(self, surface, line_w):
         w = surface.get_size()[0]
         pos_i = [int(self.start[0] * w), int(self.start[1] * w)]
@@ -191,7 +198,6 @@ class Line(Path):
     def from_bytes(self, path_data):
         self.start = unpack('f' * 2, path_data[:8])
         self.end = unpack('f' * 2, path_data[8:16])
-        self.length = data.get_distance(self.start, self.end)
         return path_data[16:]
 
 
@@ -203,6 +209,10 @@ class Circle(Path):
         self.idx = CIRCLE
         self.center, self.radius = [0, 0], 0
         self.theta_i, self.theta_f = 0, 2 * math.pi
+
+    @property
+    def length(self):
+        return abs((self.theta_f - self.theta_i) * self.radius)
 
     def draw(self, surface, line_w):
         from data import TWO_PI
@@ -247,7 +257,6 @@ class Circle(Path):
     def from_bytes(self, path_data):
         self.center = unpack('f' * 2, path_data[:8])
         self.radius, self.theta_i, self.theta_f = unpack('f' * 3, path_data[8:20])
-        self.length = abs((self.theta_f - self.theta_i) * self.radius)
         return path_data[20:]
 
 
