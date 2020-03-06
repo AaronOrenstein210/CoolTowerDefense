@@ -17,7 +17,7 @@ pg.display.set_mode((data.MIN_W, data.MIN_W), RESIZABLE)
 # Main function which helps specific ui screens release their variables
 def main():
     while choose_level():
-        pg.mixer.Channel(0).play(pg.mixer.Sound("res/duck_song.wav"), -1)
+        pg.mixer.Channel(0).play(data.music_audio, -1)
         run_level()
         for i in range(3):
             pg.mixer.Channel(i).stop()

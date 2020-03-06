@@ -1,47 +1,14 @@
 # Created on 27 January 2020
 # Created by Poopy
 
+from os.path import isfile
 from struct import pack, unpack
 from sys import byteorder
+from random import randint
 import math
 import pygame as pg
 import data
 from Game.Enemy import ENEMY_ORDER
-
-
-# Loads a level from bytes
-def load_paths(file_data):
-    paths = []
-    num = int.from_bytes(file_data[:1], byteorder)
-    file_data = file_data[1:]
-    for i in range(num):
-        if len(file_data) == 0:
-            print("Missing bytes")
-            break
-        # Get the path type and initialize its object
-        idx = int.from_bytes(file_data[:1], byteorder)
-        if idx in constructors.keys():
-            paths.append(constructors[idx]())
-        else:
-            print("Unknown path type")
-            break
-        # Read path data
-        file_data = file_data[1:]
-        try:
-            file_data = paths[-1].from_bytes(file_data)
-        except IndexError:
-            print("Missing Bytes")
-            break
-    return paths, file_data
-
-
-# Draws a list of paths
-def draw_paths(w, paths):
-    s = pg.Surface((w, w), pg.SRCALPHA)
-    line_w = w // 40
-    for p in paths:
-        p.draw(s, line_w)
-    return s
 
 
 # Loads a spawn list from bytes
@@ -83,7 +50,100 @@ def draw_spawn_list(spawn_list, h, w=-1, draw_chances=True):
 START, LINE, CIRCLE = range(3)
 
 
-# Stores path_data for a specific segment of the enemy path
+class Level:
+    def __init__(self):
+        self.img = ""
+        self.paths = []
+
+    @property
+    def start(self):
+        return self.paths[0].get_start() if self.paths else [0, 0]
+
+    @property
+    def end(self):
+        return self.paths[-1].get_end() if self.paths else [0, 0]
+
+    @property
+    def len(self):
+        return len(self.paths)
+
+    # Draws this level
+    def draw(self, w):
+        s = pg.Surface((w, w), pg.SRCALPHA)
+        if isfile(self.img) and (self.img.endswith(".png") or self.img.endswith(".jpg")):
+            img = data.scale_to_fit(pg.image.load(self.img), w=w, h=w)
+            s.blit(img, img.get_rect(center=(w // 2, w // 2)))
+        else:
+            # Fill the screen randomly with grass texture
+            img_w = data.screen_w // 5
+            img = pg.transform.scale(pg.image.load("res/grassblock.png"), (img_w, img_w))
+            y_pos = 0
+            while y_pos < data.screen_w:
+                x_pos = 0
+                while x_pos < data.screen_w:
+                    s.blit(img, (x_pos, y_pos))
+                    x_pos += randint(img_w // 2, img_w)
+                y_pos += randint(img_w // 2, img_w)
+        line_w = w // 40
+        for p in self.paths:
+            p.draw(s, line_w)
+        return s
+
+    def add(self, path):
+        self.paths.append(path)
+
+    def to_bytes(self):
+        result = bytearray()
+        result.extend(len(self.img).to_bytes(1, byteorder))
+        result.extend(self.img.encode('ascii'))
+        result.extend(len(self.paths).to_bytes(1, byteorder))
+        for p in self.paths:
+            result.extend(p.to_bytes())
+        return result
+
+    # Loads from bytes, returns remaining bytes
+    def from_bytes(self, file_data):
+        # Reset variables
+        self.img = ""
+        self.paths.clear()
+        # Load background image
+        if len(file_data) == 0:
+            print("No data")
+            return ""
+        str_len = int.from_bytes(file_data[:1], byteorder)
+        if len(file_data) < str_len:
+            print("Missing src image string")
+            return ""
+        self.img = file_data[1:str_len + 1].decode("ascii")
+        file_data = file_data[str_len + 1:]
+        # Load paths
+        if len(file_data) == 0:
+            print("No path data")
+            return ""
+        num = int.from_bytes(file_data[:1], byteorder)
+        file_data = file_data[1:]
+        for i in range(num):
+            if len(file_data) == 0:
+                print("Missing data for path {} / {}".format(i + 1, num))
+                return ""
+            # Get the path type and initialize its object
+            idx = int.from_bytes(file_data[:1], byteorder)
+            if idx in constructors.keys():
+                self.paths.append(constructors[idx]())
+            else:
+                print("Unknown path type")
+                return ""
+                # Read path data
+            file_data = file_data[1:]
+            try:
+                file_data = self.paths[-1].from_bytes(file_data)
+            except Exception:
+                print("Incomplete data for path {} / {}".format(i + 1, num))
+                return ""
+        return file_data
+
+
+# Stores path data for a specific segment of the enemy path
 class Path:
     def __init__(self):
         self.idx = 0

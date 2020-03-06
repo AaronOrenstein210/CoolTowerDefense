@@ -4,7 +4,7 @@ from random import randint
 from pygame.locals import *
 from Game.level_objects import *
 from Game.Tower import TOWER_ORDER
-from Game.Enemy import ENEMY_ORDER, Enemy
+from Game.Enemy import Enemy
 from random import uniform
 import data
 
@@ -66,7 +66,7 @@ class LevelDriver:
         self.selected_tower = None
 
         self.time = 0
-        self.paths = []
+        self.level = Level()
         self.waves = []
         self.wave_num = 0
         self.finished_lvl = False
@@ -93,25 +93,25 @@ class LevelDriver:
                     else:
                         for j in self.enemies:
                             if i.polygon.collides_polygon(j.polygon):
-                                self.enemies.remove(j)
-                                arr1, arr2 = j.destroy(), []
-                                prev_dmg = i.damage
-                                i.damage -= 1
-                                while i.damage > 0 and not all(a == -1 for a in arr1):
-                                    for idx in arr1:
-                                        if idx != -1:
-                                            arr2 += data.enemies[idx].destroy()
-                                    arr1 = arr2.copy()
-                                    arr2.clear()
-                                    i.damage -= 1
-                                if i.damage <= 0:
+                                # We didn't kill the enemy
+                                if i.damage < j.strength:
                                     self.projectiles.remove(i)
-                                for idx in arr1:
-                                    if idx != -1:
-                                        self.enemies.append(type(data.enemies[idx])())
-                                        self.enemies[-1].set_progress(j.path, j.progress)
-                                self.add_money(prev_dmg - i.damage)
-                                pg.mixer.Channel(2).play(pg.mixer.Sound("res/burp.wav"), 1)
+                                    j.strength -= i.damage
+                                # We killed the enemy exactly
+                                else:
+                                    self.enemies.remove(j)
+                                    # Update projectile
+                                    if i.damage == j.strength:
+                                        self.projectiles.remove(i)
+                                    else:
+                                        i.damage -= j.strength
+                                    # Add new enemy spawns
+                                    for idx in j.die():
+                                        if idx != -1:
+                                            self.enemies.append(type(data.enemies[idx])())
+                                            self.enemies[-1].set_progress(j.path, j.progress)
+                                    self.add_money(1)
+                                pg.mixer.Channel(2).play(data.hit_audio)
                                 break
                 for i in self.enemies:
                     if not self.move_enemy(i, dt):
@@ -142,10 +142,7 @@ class LevelDriver:
 
     # Gets the start of the enemy path
     def get_start(self):
-        if len(self.paths) == 0:
-            return [0, 0]
-        else:
-            return self.paths[0].get_start()
+        return self.level.start
 
     # Spawns enemies based on the passage of time
     def spawn_enemies(self, dt):
@@ -202,17 +199,20 @@ class LevelDriver:
     # Updates an enemy's position along the path
     def move_enemy(self, enemy, dt):
         d = enemy.v * dt / 1000
+        path = self.level.paths[enemy.path]
         while d > 0:
-            to_end = self.paths[enemy.path].length * (1 - enemy.progress)
+            to_end = path.length * (1 - enemy.progress)
             if d >= to_end:
                 enemy.path += 1
                 enemy.progress = 0
-                if enemy.path >= len(self.paths):
+                if enemy.path >= self.level.len:
                     return False
+                else:
+                    path = self.level.paths[enemy.path]
             else:
-                enemy.progress += d / self.paths[enemy.path].length
+                enemy.progress += d / path.length
             d -= to_end
-        enemy.set_pos(self.paths[enemy.path].get_pos(enemy.progress))
+        enemy.set_pos(path.get_pos(enemy.progress))
         return True
 
     # Draw the screen
@@ -341,17 +341,7 @@ class LevelDriver:
     # Draws the enemy path
     def draw_background(self):
         self.background = pg.Surface((data.screen_w, data.screen_w))
-        # Fill the screen randomly with grass texture
-        img_w = data.screen_w // 5
-        img = pg.transform.scale(pg.image.load("res/grassblock.png"), (img_w, img_w))
-        y_pos = 0
-        while y_pos < data.screen_w:
-            x_pos = 0
-            while x_pos < data.screen_w:
-                self.background.blit(img, (x_pos, y_pos))
-                x_pos += randint(img_w // 2, img_w)
-            y_pos += randint(img_w // 2, img_w)
-        self.background.blit(draw_paths(data.screen_w, self.paths), (0, 0))
+        self.background.blit(self.level.draw(data.screen_w), (0, 0))
 
     def resize(self):
         self.background = pg.transform.scale(self.background, (data.screen_w, data.screen_w))
@@ -486,13 +476,14 @@ class LevelDriver:
         self.resize()
 
     # Sets level data
-    def set_level(self, paths, waves):
-        self.paths = paths
+    def set_level(self, level, waves):
+        self.level = level
         self.waves = waves
         self.draw_background()
         self.reset()
 
 
+# Simple wrapper for ui elements that need to be dragged
 class DragObject:
     def __init__(self):
         self.rect = pg.Rect(0, 0, 0, 0)

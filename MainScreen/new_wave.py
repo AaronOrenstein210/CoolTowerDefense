@@ -182,7 +182,7 @@ def new_wave(spawn_list=()):
                             reset_current()
                         elif rects["Save"].collidepoint(*pos):
                             if len(spawns) > 0:
-                                return spawns
+                                return spawns.copy()
                         else:
                             continue
                         draw()

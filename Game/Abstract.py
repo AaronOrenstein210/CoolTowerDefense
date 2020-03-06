@@ -204,7 +204,7 @@ class Tower(Sprite):
                     continue
                 arr = self.shoot(enemy)
                 if arr:
-                    pg.mixer.Channel(1).play(pg.mixer.Sound("res/laser.wav"), 1)
+                    pg.mixer.Channel(1).play(data.shoot_audio)
                 for projectile in arr:
                     self.modify_projectile(projectile)
                     data.lvlDriver.projectiles.append(projectile)
@@ -292,19 +292,12 @@ class Enemy(Sprite):
         self.v = velocity
         self.color = (0, 0, 0, 0)
 
-    #  This method reduces the strength by the damage amount
-    def hit(self, damage):
-        self.strength = self.strength - damage
-        if self.strength < 0:
-            self.strength = 0
-        return self.strength
-
     def set_progress(self, path, progress):
         self.path = path
         self.progress = progress
 
     # Get what enemies to spawn when this enemy dies
-    def destroy(self):
+    def die(self):
         from Game.Enemy import ENEMY_ORDER
         idx = ENEMY_ORDER.index(self.idx)
         return [idx - 1]

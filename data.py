@@ -14,6 +14,7 @@ WAVES = "saves/waves.bin"
 off_x, off_y = 0, 0
 lvlDriver = None
 enemies, towers = {}, {}
+shoot_audio = hit_audio = music_audio = None
 
 
 def init():
@@ -38,6 +39,11 @@ def init():
             if "Tower." in str(obj):
                 inst = obj()
                 towers[inst.idx] = inst
+
+    global shoot_audio, hit_audio, music_audio
+    shoot_audio = pg.mixer.Sound("res/laser.wav")
+    hit_audio = pg.mixer.Sound("res/hit.wav")
+    music_audio = pg.mixer.Sound("res/duck_song.wav")
 
 
 # Resizes screen
