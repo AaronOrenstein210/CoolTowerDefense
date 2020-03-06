@@ -80,7 +80,7 @@ def new_level(lvl=None):
                         # If we are overriding other level, save them for undo button
                         if level.len > 1:
                             last_level = level
-                        level = Level()
+                        level.paths.clear()
                         level.add(current)
                         current = Start()
                     elif current.idx == LINE:
@@ -104,14 +104,15 @@ def new_level(lvl=None):
                         file = choose_file([".png", ".jpg"])
                         if file:
                             level.img = file
+                        data.calculate_dimensions(False)
                         draw()
                     # Clicked undo
                     elif button == "Undo":
                         if level.len > 0:
                             level.paths.pop(-1)
                         elif last_level.len > 0:
-                            level = last_level
-                            last_level = Level()
+                            level.paths = last_level.paths.copy()
+                            last_level.paths.clear()
                         else:
                             continue
                         # Change the index so that it recreates the current path object

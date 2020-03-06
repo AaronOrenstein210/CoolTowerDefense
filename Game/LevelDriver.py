@@ -95,16 +95,13 @@ class LevelDriver:
                             if i.polygon.collides_polygon(j.polygon):
                                 # We didn't kill the enemy
                                 if i.damage < j.strength:
-                                    self.projectiles.remove(i)
                                     j.strength -= i.damage
+                                    i.damage -= j.strength
                                 # We killed the enemy exactly
                                 else:
                                     self.enemies.remove(j)
                                     # Update projectile
-                                    if i.damage == j.strength:
-                                        self.projectiles.remove(i)
-                                    else:
-                                        i.damage -= j.strength
+                                    i.damage -= j.strength
                                     # Add new enemy spawns
                                     for idx in j.die():
                                         if idx != -1:
@@ -112,7 +109,9 @@ class LevelDriver:
                                             self.enemies[-1].set_progress(j.path, j.progress)
                                     self.add_money(1)
                                 pg.mixer.Channel(2).play(data.hit_audio)
-                                break
+                                if i.damage <= 0:
+                                    self.projectiles.remove(i)
+                                    break
                 for i in self.enemies:
                     if not self.move_enemy(i, dt):
                         self.damage(i.strength)
@@ -340,8 +339,7 @@ class LevelDriver:
 
     # Draws the enemy path
     def draw_background(self):
-        self.background = pg.Surface((data.screen_w, data.screen_w))
-        self.background.blit(self.level.draw(data.screen_w), (0, 0))
+        self.background = self.level.draw(data.screen_w)
 
     def resize(self):
         self.background = pg.transform.scale(self.background, (data.screen_w, data.screen_w))
