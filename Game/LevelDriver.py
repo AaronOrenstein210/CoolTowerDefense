@@ -341,16 +341,6 @@ class LevelDriver:
     # Draws the enemy path
     def draw_background(self):
         self.background = pg.Surface((data.screen_w, data.screen_w))
-        # Fill the screen randomly with grass texture
-        img_w = data.screen_w // 5
-        img = pg.transform.scale(pg.image.load("res/grassblock.png"), (img_w, img_w))
-        y_pos = data.screen_w
-        while y_pos < data.screen_w:
-            x_pos = 0
-            while x_pos < data.screen_w:
-                self.background.blit(img, (x_pos, y_pos))
-                x_pos += randint(img_w // 2, img_w)
-            y_pos += randint(img_w // 2, img_w)
         self.background.blit(self.level.draw(data.screen_w), (0, 0))
 
     def resize(self):

@@ -4,6 +4,7 @@
 from os.path import isfile
 from struct import pack, unpack
 from sys import byteorder
+from random import randint
 import math
 import pygame as pg
 import data
@@ -72,6 +73,17 @@ class Level:
         if isfile(self.img) and (self.img.endswith(".png") or self.img.endswith(".jpg")):
             img = data.scale_to_fit(pg.image.load(self.img), w=w, h=w)
             s.blit(img, img.get_rect(center=(w // 2, w // 2)))
+        else:
+            # Fill the screen randomly with grass texture
+            img_w = data.screen_w // 5
+            img = pg.transform.scale(pg.image.load("res/grassblock.png"), (img_w, img_w))
+            y_pos = 0
+            while y_pos < data.screen_w:
+                x_pos = 0
+                while x_pos < data.screen_w:
+                    s.blit(img, (x_pos, y_pos))
+                    x_pos += randint(img_w // 2, img_w)
+                y_pos += randint(img_w // 2, img_w)
         line_w = w // 40
         for p in self.paths:
             p.draw(s, line_w)
@@ -100,8 +112,8 @@ class Level:
             return ""
         str_len = int.from_bytes(file_data[:1], byteorder)
         if len(file_data) < str_len:
-                print("Missing src image string")
-                return ""
+            print("Missing src image string")
+            return ""
         self.img = file_data[1:str_len + 1].decode("ascii")
         file_data = file_data[str_len + 1:]
         # Load paths
