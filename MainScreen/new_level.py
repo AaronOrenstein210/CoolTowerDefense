@@ -1,3 +1,4 @@
+from shutil import copyfile
 from pygame.locals import *
 from Game.level_objects import *
 from MainScreen.choose_file import choose_file
@@ -103,7 +104,27 @@ def new_level(lvl=None):
                     elif button == "Background":
                         file = choose_file([".png", ".jpg"])
                         if file:
-                            level.img = file
+                            # Get parts of the file
+                            name = file[file.rfind("/") + 1:]
+                            extension = name[name.index("."):]
+                            name = name[:-len(extension)]
+                            # Target file
+                            target = "res/levels/" + name + extension
+                            # Make sure we don't overwrite a file
+                            i = -1
+                            while isfile(target):
+                                with open(file, 'rb') as f1, open(target, 'rb') as f2:
+                                    # Files are the same, jus use this file
+                                    if f1.read() == f2.read():
+                                        break
+                                    # Files are different, change the name
+                                    else:
+                                        i += 1
+                                        target = "res/levels/" + name + "_{}".format(i) + extension
+                            # If the target isn't an existing file, copy our old file to it
+                            if not isfile(target):
+                                copyfile(file, target)
+                            level.img = target
                         data.calculate_dimensions(False)
                         draw()
                     # Clicked undo

@@ -102,6 +102,8 @@ def choose_file(types=()):
                                 else:
                                     path += files[idx]
                                 if draw():
+                                    w = pg.display.get_surface().get_size()[0]
+                                    pg.draw.rect(surface, (0, 0, 0), (0, line_h * selected, w, line_h), 2)
                                     selected = -1
                                 else:
                                     path = temp
@@ -110,7 +112,8 @@ def choose_file(types=()):
                         else:
                             # Unselect and reselect
                             dim = pg.display.get_surface().get_size()
-                            pg.draw.rect(surface, (0, 0, 0), (0, line_h * selected, dim[0], line_h), 2)
+                            if selected != -1:
+                                pg.draw.rect(surface, (0, 0, 0), (0, line_h * selected, dim[0], line_h), 2)
                             selected = idx
                             pg.draw.rect(surface, (200, 200, 0), (0, line_h * selected, dim[0], line_h), 2)
                             redraw()
