@@ -14,7 +14,7 @@ LOST, PLAYING, WON = -1, 0, 1
 # Used to show the level path when paused
 class TestEnemy(Enemy):
     def __init__(self):
-        super().__init__(-1, strength=0, velocity=3, dim=(.05, .05), img="res/test_enemy.png")
+        super().__init__(-1, hp=0, velocity=3, w=.05, img="res/test_enemy.png")
 
     def reset(self, pos):
         self.path = 0
@@ -94,14 +94,14 @@ class LevelDriver:
                         for j in self.enemies:
                             if i.polygon.collides_polygon(j.polygon):
                                 # We didn't kill the enemy
-                                if i.damage < j.strength:
-                                    j.strength -= i.damage
-                                    i.damage -= j.strength
+                                if i.damage < j.hp:
+                                    j.hp -= i.damage
+                                    i.damage -= j.hp
                                 # We killed the enemy exactly
                                 else:
                                     self.enemies.remove(j)
                                     # Update projectile
-                                    i.damage -= j.strength
+                                    i.damage -= j.hp
                                     # Add new enemy spawns
                                     for idx in j.die():
                                         if idx != -1:
@@ -114,7 +114,14 @@ class LevelDriver:
                                     break
                 for i in self.enemies:
                     if not self.move_enemy(i, dt):
-                        self.damage(i.strength)
+                        dmg = i.hp
+                        arr = i.die()
+                        for val in arr:
+                            if val != -1:
+                                enemy = data.enemies[val]
+                                dmg += enemy.hp
+                                arr += enemy.die()
+                        self.damage(dmg)
                         self.enemies.remove(i)
                         # Check lost
                         if self.hp <= 0:
@@ -352,6 +359,8 @@ class LevelDriver:
 
     def select_tower(self, tower):
         self.selected_tower = None if self.selected_tower is tower else tower
+        if self.selected_tower:
+            self.selected_tower.set_up_upgrades()
 
     # Handles and event
     def input(self, event):

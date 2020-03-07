@@ -6,17 +6,17 @@ from Game.collision import Polygon
 
 
 class Sprite:
-    def __init__(self, pos=(0, 0), dim=(.1, .1), angle=0, img=""):
+    def __init__(self, pos=(0, 0), w=.1, angle=0, img=""):
         self.pos = pos
-        self.dim = dim
         self.polygon = None
         self.angle = angle
 
-        img_dim = (int(dim[0] * data.screen_w), int(dim[1] * data.screen_w))
+        w_ = int(w * data.screen_w)
         if isfile(img) and (img.endswith(".png") or img.endswith(".jpg")):
-            self.img = data.scale_to_fit(pg.image.load(img), w=img_dim[0], h=img_dim[1])
+            self.img = data.scale_to_fit(pg.image.load(img), w=w_)
         else:
-            self.img = pg.Surface(img_dim)
+            self.img = pg.Surface((w_, w_))
+        self.dim = [w, self.img.get_size()[1] / data.screen_w]
         # Just blit this surface, not self.img
         self.blit_img = self.img
 
@@ -32,13 +32,16 @@ class Sprite:
 
     def set_angle(self, angle):
         self.angle = angle
-        half_w, half_h = self.dim[0] / 2, self.dim[1] / 2
-        points = []
-        for signs in [[-1, 1], [1, 1], [1, -1], [-1, -1]]:
-            points.append(rotate_point([self.pos[0] + signs[0] * half_w,
-                                        self.pos[1] + signs[1] * half_h], self.pos, angle))
-        self.polygon = Polygon(points)
-        self.blit_img = pg.transform.rotate(self.img, self.angle + 90)
+        # Recalculate polygon
+        self.set_pos(self.pos)
+        self.blit_img = pg.transform.rotate(self.img, self.angle - 90)
+
+    def set_img(self, img):
+        w = self.dim[0] * data.screen_w
+        self.img = data.scale_to_fit(img, w=w)
+        self.dim[1] = self.img.get_size()[1] / data.screen_w
+        # Recalculate polygon and blit image
+        self.set_angle(self.angle)
 
     def resize(self):
         img_dim = [int(d * data.screen_w) for d in self.dim]
@@ -50,8 +53,6 @@ targeting_names = ["First", "Closest", "Strongest"]
 
 
 class Tower(Sprite):
-    upgrades = []
-
     def __init__(self, idx, cooldown=1000, cost=10, shoot_range=.1, **kwargs):
         super().__init__(**kwargs)
         self.idx = idx
@@ -72,8 +73,6 @@ class Tower(Sprite):
         # Determines how to pick enemy targets
         self.targeting = targeting_names[0]
 
-        self.set_up_upgrades()
-
     @property
     def upgrade_w(self):
         return data.screen_w // 5
@@ -81,6 +80,16 @@ class Tower(Sprite):
     @property
     def text_h(self):
         return self.tower_r.h // 3
+
+    def set_img(self, img):
+        super().set_img(img)
+        self.draw_upgrade_top()
+
+    # Returns the array of upgrades for this tower
+    # At run time, this will be called and the result stored
+    # For every unique tower type
+    def get_upgrades(self):
+        return []
 
     def resize(self):
         super().resize()
@@ -106,14 +115,14 @@ class Tower(Sprite):
         # Draw upgrade description if hovering over it
         if self.upgrade_r.collidepoint(*pos):
             idx = (pos[1] - self.upgrade_r.y + self.scroll) // self.upgrade_w
-            if idx < len(self.upgrades):
+            if idx < len(data.upgrades[self.idx]):
                 topleft = [self.upgrade_r.x, self.upgrade_r.y + idx * self.upgrade_w + self.scroll]
                 topleft[0] += self.upgrade_w if self.pos[0] >= .5 else -2 * self.upgrade_w
-                d.blit(self.upgrades[idx].description_s, topleft)
+                d.blit(data.upgrades[self.idx][idx].description_s, topleft)
 
-    # Draws the surface containing this tower's upgrades
-    def set_up_upgrades(self):
-        w = self.upgrade_w
+    # Draws the top of the upgrade menu
+    def draw_upgrade_top(self):
+        text_h, w = self.text_h, self.upgrade_w
         # Draw tower info surface menu surface
         self.tower_r = pg.Rect(data.off_x, data.off_y, w, w * 2 // 3)
         self.tower_s = pg.Surface((w, w * self.tower_r.h))
@@ -125,15 +134,22 @@ class Tower(Sprite):
         self.tower_font = data.get_scaled_font(w, text_h, "Targeting: " + data.get_widest_string(targeting_names))
         text = self.tower_font.render("Targeting: " + self.targeting, 1, (255, 255, 255))
         self.tower_s.blit(text, text.get_rect(center=(w // 2, self.tower_r.h - text_h // 2)))
+        # Check which side to draw the upgrade menu
+        if self.pos[0] < .5:
+            self.tower_r.move_ip(data.screen_w - w, 0)
+
+    # Draws the surface containing this tower's upgrades
+    def set_up_upgrades(self):
+        w = self.upgrade_w
+        self.draw_upgrade_top()
         # Draw upgrade menu surface
-        self.upgrade_s = pg.Surface((w, w * len(self.upgrades)))
-        for i, upgrade in enumerate(self.upgrades):
+        self.upgrade_s = pg.Surface((w, w * len(data.upgrades[self.idx])))
+        for i, upgrade in enumerate(data.upgrades[self.idx]):
             upgrade.draw_img(self.upgrade_s, pg.Rect(0, i * w, w, w), i <= self.upgrade_lvl)
         self.upgrade_r = pg.Rect(data.off_x, self.tower_r.bottom, w, data.screen_w)
         # Check if the rectangles should be on the other side of the screen
         if self.pos[0] < .5:
             self.upgrade_r.move_ip(data.screen_w - w, 0)
-            self.tower_r.move_ip(data.screen_w - w, 0)
 
     # Changes upgrade surfcae scroll
     def scroll_upgrades(self, up):
@@ -162,19 +178,21 @@ class Tower(Sprite):
                 self.tower_s.blit(text, text.get_rect(center=rect.center))
         elif self.upgrade_r.collidepoint(*pos):
             idx = (pos[1] - self.upgrade_r.y + self.scroll) // self.upgrade_w
-            if idx < len(self.upgrades) and idx == self.upgrade_lvl + 1 and \
-                    self.upgrades[idx].cost <= data.lvlDriver.money:
-                self.upgrades[idx].draw_img(self.upgrade_s,
-                                            pg.Rect(0, idx * self.upgrade_w, self.upgrade_w, self.upgrade_w), True)
+            upgrades = data.upgrades[self.idx]
+            if idx < len(upgrades) and idx == self.upgrade_lvl + 1 and \
+                    upgrades[idx].cost <= data.lvlDriver.money:
+                upgrades[idx].draw_img(self.upgrade_s,
+                                       pg.Rect(0, idx * self.upgrade_w, self.upgrade_w, self.upgrade_w), True)
                 self.upgrade()
-                data.lvlDriver.add_money(-self.upgrades[idx].cost)
+                data.lvlDriver.add_money(-upgrades[idx].cost)
         else:
             return False
         return True
 
-    # Performs an upgrade TODO: Change image on upgrade
+    # Performs an upgrade
     def upgrade(self):
-        pass
+        self.upgrade_lvl += 1
+        self.set_img(data.upgrades[self.idx][self.upgrade_lvl].img)
 
     # Return a list of projectiles to shoot at the given enemy
     def shoot(self, enemy):
@@ -202,12 +220,15 @@ class Tower(Sprite):
                     enemy = strongest_enemy(in_range)
                 else:
                     continue
+                # Shoot the projectile(s)
                 arr = self.shoot(enemy)
                 if arr:
                     pg.mixer.Channel(1).play(data.shoot_audio)
                 for projectile in arr:
                     self.modify_projectile(projectile)
                     data.lvlDriver.projectiles.append(projectile)
+                # Rotate to face the enemy
+                self.set_angle(data.get_angle_pixels(self.pos, enemy.pos) * 360 // data.TWO_PI)
 
 
 class Upgrade:
@@ -217,10 +238,10 @@ class Upgrade:
         # Break up description by "\n"'s
         self.description = description.split("\n")
 
+        self.img = None
         if isfile(img) and (img.endswith(".png") or img.endswith(".jpg")):
             self.img = pg.image.load(img)
-        else:
-            self.img = pg.Surface((10, 10))
+
         self.description_s = None
 
     def draw_img(self, s, rect, bought):
@@ -281,12 +302,12 @@ class Projectile(Sprite):
 
 
 class Enemy(Sprite):
-    def __init__(self, idx, strength=1, velocity=.1, **kwargs):
+    def __init__(self, idx, hp=1, velocity=.1, **kwargs):
         super().__init__(**kwargs)
         if data.lvlDriver is not None:
             self.set_pos(data.lvlDriver.get_start())
         self.idx = idx
-        self.strength = strength
+        self.hp = hp
         self.path = 0
         self.progress = 0
         self.v = velocity
