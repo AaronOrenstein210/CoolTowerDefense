@@ -13,7 +13,7 @@ WAVES = "saves/waves.bin"
 # Offsets needed to keep the game screen square
 off_x, off_y = 0, 0
 lvlDriver = None
-enemies, towers = {}, {}
+enemies, towers, upgrades = {}, {}, {}
 shoot_audio = hit_audio = music_audio = None
 grass_bkgrnd = None
 
@@ -28,6 +28,7 @@ def init():
     # Compile a list of enemies and towers
     enemies.clear()
     towers.clear()
+    upgrades.clear()
     from Game import Enemy
     from Game import Tower
     for name, obj in getmembers(Enemy):
@@ -40,6 +41,15 @@ def init():
             if "Tower." in str(obj):
                 inst = obj()
                 towers[inst.idx] = inst
+                arr = inst.get_upgrades()
+                # If and upgrade has no image, set it to the previous upgrade's image
+                for i, u in enumerate(arr):
+                    if not u.img:
+                        if i == 0:
+                            u.img = inst.img
+                        else:
+                            u.img = arr[i - 1].img
+                upgrades[inst.idx] = arr
 
     global shoot_audio, hit_audio, music_audio
     shoot_audio = pg.mixer.Sound("res/laser.wav")
