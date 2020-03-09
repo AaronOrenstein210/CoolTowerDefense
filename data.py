@@ -134,6 +134,7 @@ def get_distance(p1, p2):
 
 # Gets the biggest font size that fits the text within max_w and max_h
 def get_scaled_font(max_w, max_h, text, font_name="Times New Roman"):
+    # pg.font.Font("Cookiemonster.ttf", 6)
     font_size = 1
     font = pg.font.SysFont(font_name, font_size)
     w, h = font.size(text)
